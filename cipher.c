@@ -63,6 +63,7 @@ struct sshcipher_ctx {
 	EVP_CIPHER_CTX *evp;
 	struct chachapoly_ctx cp_ctx; /* XXX union with evp? */
 	struct aesctr_ctx ac_ctx; /* XXX union with evp? */
+	struct intermac_ctx im_ctx; /* IM EXTENSION */
 	const struct sshcipher *cipher;
 };
 
@@ -79,6 +80,7 @@ struct sshcipher {
 #define CFLAG_CHACHAPOLY	(1<<1)
 #define CFLAG_AESCTR		(1<<2)
 #define CFLAG_NONE		(1<<3)
+#define CFLAG_INTERMAC	(1<<4) /* IM EXTENSION */
 #ifdef WITH_OPENSSL
 	const EVP_CIPHER	*(*evptype)(void);
 #else
@@ -123,6 +125,10 @@ static const struct sshcipher ciphers[] = {
 			SSH_CIPHER_SSH2, 16, 16, 12, 16, 0, 0, EVP_aes_128_gcm },
 	{ "aes256-gcm@openssh.com",
 			SSH_CIPHER_SSH2, 16, 32, 12, 16, 0, 0, EVP_aes_256_gcm },
+	{"im-aes128-gcm",
+			SSH_CIPHER_SSH2, 128, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION block_size used as chunk length */
+	{"im-chacha-poly",
+			SSH_CIPHER_SSH2, 128, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 # endif /* OPENSSL_HAVE_EVPGCM */
 #else /* WITH_OPENSSL */
 	{ "aes128-ctr",	SSH_CIPHER_SSH2, 16, 16, 0, 0, 0, CFLAG_AESCTR, NULL },
@@ -137,6 +143,34 @@ static const struct sshcipher ciphers[] = {
 };
 
 /*--*/
+
+/* IM EXTENSION */
+int cipher_is_intermac(struct sshcipher_ctx *cc) {
+
+	return (cc->cipher->flags & CFLAG_INTERMAC) != 0;
+}
+
+struct intermac_ctx * cipher_get_intermac_context(struct sshcipher_ctx *cc) {
+
+	return &cc->im_ctx;
+}
+
+int cipher_im_block_size(struct sshcipher_ctx *cc) {
+
+	u_char *name = cc->cipher->name;
+	u_int name_length = strlen(name);
+
+	if (strlen("im-aes128-gcm") == name_length &&
+		memcmp("im-aes128-gcm", name, name_length)) {
+		return 16;
+	}
+	else if (strlen("im-chacha-poly") == name_length &&
+				memcmp("im-chacha-poly", name, name_length)) {
+		return 64;
+	}
+
+	return SSH_ERR_INTERNAL_ERROR;
+}
 
 /* Returns a comma-separated list of supported ciphers. */
 char *
@@ -185,7 +219,7 @@ cipher_seclen(const struct sshcipher *c)
 	return cipher_keylen(c);
 }
 
-u_int
+u_int       
 cipher_authlen(const struct sshcipher *c)
 {
 	return (c->auth_len);
@@ -198,8 +232,8 @@ cipher_ivlen(const struct sshcipher *c)
 	 * Default is cipher block size, except for chacha20+poly1305 that
 	 * needs no IV. XXX make iv_len == -1 default?
 	 */
-	return (c->iv_len != 0 || (c->flags & CFLAG_CHACHAPOLY) != 0) ?
-	    c->iv_len : c->block_size;
+	return (c->iv_len != 0 || (c->flags & CFLAG_CHACHAPOLY) != 0 || (c->flags & CFLAG_INTERMAC) != 0) ?
+	    c->iv_len : c->block_size; /* IM EXTENSION */
 }
 
 u_int
@@ -329,7 +363,7 @@ cipher_init(struct sshcipher_ctx **ccp, const struct sshcipher *cipher,
 	int klen;
 	u_char *junk, *discard;
 #endif
-
+	//debug3("entered cipher_init()");
 	*ccp = NULL;
 	if ((cc = calloc(sizeof(*cc), 1)) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
@@ -349,6 +383,26 @@ cipher_init(struct sshcipher_ctx **ccp, const struct sshcipher *cipher,
 	}
 
 	cc->cipher = cipher;
+
+	//debug3("value cipher_init(): %d", cc->cipher->flags & CFLAG_INTERMAC);
+	if ((cc->cipher->flags & CFLAG_INTERMAC) != 0) { /* IM EXTENSION block_size used as chunk length */
+
+		struct intermac_ctx * _im_ctx = NULL;
+
+		//debug("IM init cipher_crypt()");
+
+		if (im_initialise(&_im_ctx, key, cipher->block_size, cipher->name, do_encrypt) != 0) {
+			ret = SSH_ERR_INTERNAL_ERROR;
+		}
+
+		//debug3("IM init done cipher_crypt()");
+
+		cc->im_ctx = *_im_ctx;
+
+		ret = 0;
+		goto out;
+	}	
+	//debug3("After im cipher_init()");
 	if ((cc->cipher->flags & CFLAG_CHACHAPOLY) != 0) {
 		ret = chachapoly_init(&cc->cp_ctx, key, keylen);
 		goto out;
@@ -450,7 +504,7 @@ cipher_crypt(struct sshcipher_ctx *cc, u_int seqnr, u_char *dest,
 	}
 #ifndef WITH_OPENSSL
 	if ((cc->cipher->flags & CFLAG_AESCTR) != 0) {
-		if (aadlen)
+		if (aadlen) 
 			memcpy(dest, src, aadlen);
 		aesctr_encrypt_bytes(&cc->ac_ctx, src + aadlen,
 		    dest + aadlen, len);
@@ -526,6 +580,9 @@ cipher_free(struct sshcipher_ctx *cc)
 	else if ((cc->cipher->flags & CFLAG_AESCTR) != 0)
 		explicit_bzero(&cc->ac_ctx, sizeof(cc->ac_ctx));
 #ifdef WITH_OPENSSL
+	if ((cc->cipher->flags & CFLAG_INTERMAC) != 0) { /* IM INTERMAC TODO this needs to be updated */
+		im_cleanup(&cc->im_ctx);
+	}
 	if (cc->evp != NULL) {
 		EVP_CIPHER_CTX_free(cc->evp);
 		cc->evp = NULL;
@@ -575,6 +632,8 @@ cipher_get_keyiv_len(const struct sshcipher_ctx *cc)
 	else if ((cc->cipher->flags & CFLAG_AESCTR) != 0)
 		ivlen = sizeof(cc->ac_ctx.ctr);
 #ifdef WITH_OPENSSL
+	else if ((cc->cipher->flags & CFLAG_INTERMAC) != 0) /* IM EXTENSION */
+		ivlen = 0;
 	else
 		ivlen = EVP_CIPHER_CTX_iv_length(cc->evp);
 #endif /* WITH_OPENSSL */
@@ -586,6 +645,10 @@ cipher_get_keyiv(struct sshcipher_ctx *cc, u_char *iv, u_int len)
 {
 	const struct sshcipher *c = cc->cipher;
 #ifdef WITH_OPENSSL
+	if ((cc->cipher->flags & CFLAG_INTERMAC) != 0) { /* IM EXTENSION */
+		return 0;
+	}
+
  	int evplen;
 #endif
 
@@ -647,6 +710,8 @@ cipher_set_keyiv(struct sshcipher_ctx *cc, const u_char *iv)
 #endif
 
 	if ((cc->cipher->flags & CFLAG_CHACHAPOLY) != 0)
+		return 0;
+	if ((cc->cipher->flags & CFLAG_INTERMAC) != 0)
 		return 0;
 	if ((cc->cipher->flags & CFLAG_NONE) != 0)
 		return 0;

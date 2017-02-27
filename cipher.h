@@ -42,6 +42,8 @@
 #include "cipher-chachapoly.h"
 #include "cipher-aesctr.h"
 
+#include "../intermaclib/im_core.h" /* IM EXTENSION */
+
 /*
  * Cipher types for SSH-1.  New types can be added, but old types should not
  * be removed for compatibility.  The maximum allowed value is 31.
@@ -64,6 +66,10 @@
 
 struct sshcipher;
 struct sshcipher_ctx;
+
+int cipher_is_intermac(struct sshcipher_ctx *); /* IM EXTENSION */ 
+struct intermac_ctx * cipher_get_intermac_context(struct sshcipher_ctx *);  /* IM EXTENSION */
+int cipher_im_block_size(struct sshcipher_ctx *); /* IM EXTENSION */
 
 u_int	 cipher_mask_ssh1(int);
 const struct sshcipher *cipher_by_name(const char *);
