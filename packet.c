@@ -1169,9 +1169,10 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 	struct sshcomp *comp = NULL;
 	int r, block_size;
 
-	struct intermac_ctx *im_ctx = NULL; /* IM EXTENSION */
-	u_int im_length; /* IM EXTENSION */
-	int im_is_intermac = 0; /* IM EXTENSION */
+	/* IM EXTENSION */
+	struct intermac_ctx *im_ctx = NULL; 
+	u_int im_length; 
+	int im_is_intermac = 0; 
 
 	if (state->newkeys[MODE_OUT] != NULL) {
 		enc  = &state->newkeys[MODE_OUT]->enc;
@@ -1225,7 +1226,7 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 			goto out;
 
 		DBG(debug("send: len (CT) %d (includes padlen %d, aadlen %d)",
-		    im_length, 0-, 0));
+		    im_length, 0, 0));
 
 		if (im_encrypt(im_ctx, cp, sshbuf_ptr(state->outgoing_packet) + 5, 
 			sshbuf_len(state->outgoing_packet) - 5) != 0 ) /* Ignore length field and padding length field */
@@ -1771,12 +1772,13 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 	struct sshcomp *comp = NULL;
 	int r;
 
+	/* IM EXTENSION */
 	struct intermac_ctx *im_ctx = NULL;
-	u_char *im_dst = NULL; /* IM EXTENSION */
-	u_int im_length_decrypted_packet = 0; /* IM EXTENSION */
-	u_int im_this_processed = 0; /* IM EXTENSION */
-	u_int im_length = 0; /* IM EXTENSION */
-	int im_is_intermac = 0; /* IM EXTENSION */
+	u_char *im_dst = NULL; 
+	u_int im_length_decrypted_packet = 0; 
+	u_int im_this_processed = 0;
+	u_int im_length = 0; 
+	int im_is_intermac = 0; 
 
 
 	if (state->mux)
@@ -1800,12 +1802,22 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 
 	if (im_is_intermac) { /* IM EXTENSION */
 
-		//debug3("Intermac ssh_packet_read_poll2()");
-
 		im_ctx = cipher_get_intermac_context(state->receive_context);
 
-		u_char _im_dst;
-		im_dst = &_im_dst;
+		/* 
+		 * Abuse the state variable 'packlen' 
+		 * to signal when a new ciphertext is being processed
+		 */
+		if (state->packlen == 0) {
+			sshbuf_reset(state->incoming_packet);
+			state->packlen = 1;			
+		}
+
+		im_dst = sshbuf_mutable_ptr(state->incoming_packet);
+
+		if (im_dst == NULL) {
+			return SSH_ERR_INTERNAL_ERROR;
+		}
 
 		if (im_decrypt(im_ctx, sshbuf_ptr(state->input), 
 			sshbuf_len(state->input), 0, &im_this_processed, &im_dst, 
@@ -1813,15 +1825,14 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 			return SSH_ERR_INTERNAL_ERROR;
 		}
 
-		//debug3("Decrypted ssh_packet_read_poll2()");
-
 		if (im_length_decrypted_packet > 0) {
-
-			//debug3("Finish packet ssh_packet_read_poll2()");
-
-			sshbuf_reset(state->incoming_packet);
-			state->incoming_packet = sshbuf_from((u_char*) im_dst, im_length_decrypted_packet);
-			/* OpenSSH should automatically free pointer 'dst' */
+			/* 
+			 * This is rather hask'ish, but the native 
+			 * implementation of 'sshbuf_from' returns 
+			 * a const pointer that is read only (in the sense 
+			 * of OpenSSH buffer system)
+			 */
+			state->incoming_packet = sshbuf_from_im((u_char*) im_dst, im_length_decrypted_packet);
 
 			if (state->incoming_packet == NULL) {
 				return SSH_ERR_INTERNAL_ERROR;
@@ -1835,12 +1846,10 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 				goto out;
 		}
 		else {
-			//debug3("Packet not received in full ssh_packet_read_poll2()");
 			return 0;
 		}
 	}
 	else {
-
 		maclen = mac && mac->enabled ? mac->mac_len : 0;
 		block_size = enc ? enc->block_size : 8;
 		aadlen = (mac && mac->enabled && mac->etm) || authlen ? 4 : 0;
@@ -1966,7 +1975,6 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 				goto out;
 		}
 	}
-
 	if (seqnr_p != NULL)
 		*seqnr_p = state->p_read.seqnr;
 	if (++state->p_read.seqnr == 0)

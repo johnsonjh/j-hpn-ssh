@@ -155,6 +155,10 @@ struct intermac_ctx * cipher_get_intermac_context(struct sshcipher_ctx *cc) {
 	return &cc->im_ctx;
 }
 
+/*  
+ * IM ETENSION  
+ * This should not be the responsibility of the user 
+ */
 int cipher_im_block_size(struct sshcipher_ctx *cc) {
 
 	u_char *name = cc->cipher->name;
@@ -363,7 +367,6 @@ cipher_init(struct sshcipher_ctx **ccp, const struct sshcipher *cipher,
 	int klen;
 	u_char *junk, *discard;
 #endif
-	//debug3("entered cipher_init()");
 	*ccp = NULL;
 	if ((cc = calloc(sizeof(*cc), 1)) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
@@ -384,25 +387,19 @@ cipher_init(struct sshcipher_ctx **ccp, const struct sshcipher *cipher,
 
 	cc->cipher = cipher;
 
-	//debug3("value cipher_init(): %d", cc->cipher->flags & CFLAG_INTERMAC);
 	if ((cc->cipher->flags & CFLAG_INTERMAC) != 0) { /* IM EXTENSION block_size used as chunk length */
 
 		struct intermac_ctx * _im_ctx = NULL;
 
-		//debug("IM init cipher_crypt()");
-
 		if (im_initialise(&_im_ctx, key, cipher->block_size, cipher->name, do_encrypt) != 0) {
 			ret = SSH_ERR_INTERNAL_ERROR;
 		}
-
-		//debug3("IM init done cipher_crypt()");
 
 		cc->im_ctx = *_im_ctx;
 
 		ret = 0;
 		goto out;
 	}	
-	//debug3("After im cipher_init()");
 	if ((cc->cipher->flags & CFLAG_CHACHAPOLY) != 0) {
 		ret = chachapoly_init(&cc->cp_ctx, key, keylen);
 		goto out;

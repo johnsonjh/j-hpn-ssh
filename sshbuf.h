@@ -59,6 +59,9 @@ struct sshbuf {
 void sshbuf_init(struct sshbuf *buf);
 #endif
 
+
+struct sshbuf * sshbuf_from_im(void *blob, size_t len); /* IM EXTENSION */
+
 /*
  * Create a new sshbuf buffer.
  * Returns pointer to buffer on success, or NULL on allocation failure.

@@ -102,6 +102,24 @@ sshbuf_from(const void *blob, size_t len)
 	return ret;
 }
 
+struct sshbuf * /* IM EXTENSION */
+sshbuf_from_im(void *blob, size_t len)
+{
+	struct sshbuf *ret;
+
+	if (blob == NULL || len > SSHBUF_SIZE_MAX ||
+	    (ret = calloc(sizeof(*ret), 1)) == NULL)
+		return NULL;
+	ret->alloc = ret->size = len;
+	ret->readonly = 0;
+	ret->refcount = 1;
+	ret->parent = NULL;
+	ret->cd = ret->d = blob;
+	ret->alloc = len;
+	ret->max_size = SSHBUF_SIZE_MAX;
+	return ret;
+}
+
 int
 sshbuf_set_parent(struct sshbuf *child, struct sshbuf *parent)
 {
@@ -387,7 +405,7 @@ sshbuf_consume(struct sshbuf *buf, size_t len)
 	if ((r = sshbuf_check_sanity(buf)) != 0)
 		return r;
 	if (len == 0)
-		return 0;
+		return 0;/* IM EXTENSION */
 	if (len > sshbuf_len(buf))
 		return SSH_ERR_MESSAGE_INCOMPLETE;
 	buf->off += len;
