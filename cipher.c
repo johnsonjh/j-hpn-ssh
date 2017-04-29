@@ -214,14 +214,12 @@ char* cipher_im_get_name(char* cipher_name) {
 
 	if (cipher_name_length >= cp_len) {
 		if (memcmp("im-chacha-poly", cipher_name, cp_len) == 0) {
-			debug3("InterMac cipher name: %s", "im-chacha-poly");
 			return "im-chacha-poly";
 		}
 	}
 	
 	if (cipher_name_length >= gcm_len) {
 		if (memcmp("im-aes128-gcm", cipher_name, gcm_len) == 0){
-			debug3("InterMac cipher name: %s", "im-aes128-gcm");
 			return "im-aes128-gcm";
 		}
 	}

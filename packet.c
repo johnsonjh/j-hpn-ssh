@@ -1826,8 +1826,6 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 	u_int im_size_decrypted_packet = 0; 
 	u_int im_total_allocated = 0;
 	u_int im_this_processed = 0;
-	u_int im_length = 0; 
-	u_int im_buffer_reserve = 0;
 	int im_is_intermac = 0; 
 
 
@@ -1854,69 +1852,33 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 
 		im_ctx = cipher_get_intermac_context(state->receive_context);
 
-		/* 
-		 * Abuse the state-variable 'packlen' 
-		 * to signal when a new packet is being processed
-		 */
-		/*if (state->packlen == 0) {
-			sshbuf_reset(state->incoming_packet);
-			state->packlen = 1;			
-		}
-
-		if (im_get_decrypt_buffer_length(im_ctx, sshbuf_len(state->input), 0, 
-			&im_buffer_reserve) != 0) {
-			return SSH_ERR_INTERNAL_ERROR;
-		}
-
-		if ((r = sshbuf_reserve(state->incoming_packet, im_buffer_reserve, 
-			NULL)) != 0)
-			goto out;
-		
-		if (im_decrypt(im_ctx, sshbuf_ptr(state->input), 
-			sshbuf_len(state->input), 0, &im_this_processed, sshbuf_mutable_ptr(state->incoming_packet), 
-				&im_length_decrypted_packet) != 0) {
-			return SSH_ERR_INTERNAL_ERROR;
-		}
-		*/
-
 		if (im_decrypt(im_ctx, sshbuf_ptr(state->input), 
 			sshbuf_len(state->input), 0, &im_this_processed, &im_decrypted_packet, 
 				&im_size_decrypted_packet, &im_total_allocated) != 0) {
 			return SSH_ERR_INTERNAL_ERROR;
 		}
 
+		/*
+		 * Use state->packlen to store the amount of bytes
+		 * we decrypt from inout 
+		 */
 		state->packlen = state->packlen + im_this_processed;
 
 		if (im_size_decrypted_packet > 0) {
 
+			/* Populate an OpenSSH buffer with InterMac decryption result */
 			state->incoming_packet = sshbuf_from_im(im_decrypted_packet, 
 					im_size_decrypted_packet, im_total_allocated);
 			if (state->incoming_packet == NULL) {
 				return SSH_ERR_INTERNAL_ERROR;
 			}
 
+			/* Remove decrypted bytes from input */
 			if ((r = sshbuf_consume(state->input, state->packlen)) != 0)
 				goto out;
 
+			/* Reset for next decryption */
 			state->packlen = 0;
-
-			/*
-			if (state->incoming_packet == NULL) {
-				return SSH_ERR_INTERNAL_ERROR;
-			} 
-
-			if (im_get_length(im_ctx, im_length_decrypted_packet, &im_length) != 0) {
-				return SSH_ERR_INTERNAL_ERROR;
-			}
-
-			if ((r = sshbuf_consume(state->input, im_length)) != 0)
-				goto out;
-			*/
-			/* This is rather hask'ish */
-			/*if ((r = sshbuf_consume_end(state->incoming_packet, 
-				sshbuf_len(state->incoming_packet) - im_length_decrypted_packet) != 0))
-				goto out;
-				*/
 		}
 		else {
 			return 0;
