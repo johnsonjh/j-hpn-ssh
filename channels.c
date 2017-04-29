@@ -2410,6 +2410,7 @@ channel_output_poll(void)
 				len = c->remote_window;
 			if (len > c->remote_maxpacket)
 				len = c->remote_maxpacket;
+			sshbuf_dump(&c->extended, stderr);
 			packet_start(SSH2_MSG_CHANNEL_EXTENDED_DATA);
 			packet_put_int(c->remote_id);
 			packet_put_int(SSH2_EXTENDED_DATA_STDERR);

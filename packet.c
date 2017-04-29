@@ -110,6 +110,10 @@ struct packet {
 };
 
 struct session_state {
+	u_int channel_data_started;
+	size_t total_sent;
+	u_int eof_seen;
+
 	/*
 	 * This variable contains the file descriptors used for
 	 * communicating with the other side.  connection_in is used for
@@ -1152,6 +1156,26 @@ ssh_packet_log_type(u_char type)
 	}
 }
 
+void record_bytes(struct session_state *state, u_char type, size_t bytes) {
+
+	if (type == SSH2_MSG_CHANNEL_REQUEST) {
+		state->channel_data_started = 0;
+		state->total_sent = 0;
+		state->eof_seen = 0;
+	}
+	if (type == SSH2_MSG_CHANNEL_DATA) {
+		state->channel_data_started = 1;
+		state->total_sent += bytes;
+	}
+	if (type == SSH2_MSG_CHANNEL_EOF && state->channel_data_started && !state->eof_seen) {
+		fprintf(stderr, "Number of bytes sent: %zu\n", state->total_sent);
+		state->eof_seen = 1;
+		state->channel_data_started = 0;
+		state->total_sent = 0;
+	}
+
+}
+
 /*
  * Finalize packet in SSH2 format (compress, mac, encrypt, enqueue)
  */
@@ -1171,6 +1195,7 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 
 	/* IM EXTENSION */
 	struct intermac_ctx *im_ctx = NULL; 
+	u_char *im_ct = NULL;
 	u_int im_length; 
 	int im_is_intermac = 0; 
 
@@ -1185,13 +1210,27 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 	block_size = enc ? enc->block_size : 8;
 	aadlen = (mac && mac->enabled && mac->etm) || authlen ? 4 : 0;
 
+
 	type = (sshbuf_ptr(state->outgoing_packet))[5];
-	if (ssh_packet_log_type(type))
+/*	if (ssh_packet_log_type(type))
 		debug3("send packet: type %u", type);
+
+*/
+	im_is_intermac = cipher_is_intermac(state->send_context); /* IM EXTENSION */
+
+/*
+	if (state->server_side) {
+		fprintf(stderr, "send/plain[%d]:\r\n", type);
+		sshbuf_dump(state->outgoing_packet, stderr);
+	}
+*/
+
+if (!im_is_intermac) {
 #ifdef PACKET_DEBUG
 	fprintf(stderr, "plain:     ");
 	sshbuf_dump(state->outgoing_packet, stderr);
 #endif
+}
 	if (comp && comp->enabled) {
 		len = sshbuf_len(state->outgoing_packet);
 		/* skip header, compress only payload */
@@ -1211,25 +1250,30 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 		    sshbuf_len(state->outgoing_packet)));
 	}
 
-	im_is_intermac = cipher_is_intermac(state->send_context); /* IM EXTENSION */
-
 	if (im_is_intermac) { /* IM EXTTENSION */
 
 		im_ctx = cipher_get_intermac_context(state->send_context);
 
-		if (im_get_length(im_ctx, sshbuf_len(state->outgoing_packet) - 5, &im_length) != 0) {
-			r = SSH_ERR_INTERNAL_ERROR;
+		//if (im_get_length(im_ctx, sshbuf_len(state->outgoing_packet) - 5, &im_length) != 0) {
+		//	r = SSH_ERR_INTERNAL_ERROR;
+		//	goto out;
+		//}
+
+		//if ((r = sshbuf_reserve(state->output, im_length, &cp)) != 0)
+		//	goto out;
+
+		/* Ignore length field and padding length field */
+		if ((r = sshbuf_consume(state->outgoing_packet, 5)) != 0)
 			goto out;
-		}
 
-		if ((r = sshbuf_reserve(state->output, im_length, &cp)) != 0)
+		if (im_encrypt(im_ctx, &im_ct, &im_length, sshbuf_ptr(state->outgoing_packet), 
+			sshbuf_len(state->outgoing_packet)) != 0 ) 
 			goto out;
 
-		DBG(debug("send: len (CT) %d (includes padlen %d, aadlen %d)",
-		    im_length, 0, 0));
-
-		if (im_encrypt(im_ctx, cp, sshbuf_ptr(state->outgoing_packet) + 5, 
-			sshbuf_len(state->outgoing_packet) - 5) != 0 ) /* Ignore length field and padding length field */
+		/* Append to OpenSSH output buffer */
+		//if ((r = sshbuf_reserve(state->output, im_length, NULL)) != 0)
+		//	goto out;
+		if ((r = sshbuf_put(state->output, im_ct, im_length)) != 0)
 			goto out;
 	} 
 	else {
@@ -1338,6 +1382,10 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 		state->p_send.bytes += len;		
 	}
 	sshbuf_reset(state->outgoing_packet);
+
+	if (!state->server_side) {
+		record_bytes(state, type, sshbuf_len(state->output));
+	}
 
 	if (type == SSH2_MSG_NEWKEYS)
 		r = ssh_set_newkeys(ssh, MODE_OUT);
@@ -1774,10 +1822,12 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 
 	/* IM EXTENSION */
 	struct intermac_ctx *im_ctx = NULL;
-	u_char *im_dst = NULL; 
-	u_int im_length_decrypted_packet = 0; 
+	u_char *im_decrypted_packet = NULL;
+	u_int im_size_decrypted_packet = 0; 
+	u_int im_total_allocated = 0;
 	u_int im_this_processed = 0;
 	u_int im_length = 0; 
+	u_int im_buffer_reserve = 0;
 	int im_is_intermac = 0; 
 
 
@@ -1805,38 +1855,55 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 		im_ctx = cipher_get_intermac_context(state->receive_context);
 
 		/* 
-		 * Abuse the state variable 'packlen' 
-		 * to signal when a new ciphertext is being processed
+		 * Abuse the state-variable 'packlen' 
+		 * to signal when a new packet is being processed
 		 */
-		if (state->packlen == 0) {
+		/*if (state->packlen == 0) {
 			sshbuf_reset(state->incoming_packet);
 			state->packlen = 1;			
 		}
 
-		im_dst = sshbuf_mutable_ptr(state->incoming_packet);
-
-		if (im_dst == NULL) {
+		if (im_get_decrypt_buffer_length(im_ctx, sshbuf_len(state->input), 0, 
+			&im_buffer_reserve) != 0) {
 			return SSH_ERR_INTERNAL_ERROR;
 		}
 
+		if ((r = sshbuf_reserve(state->incoming_packet, im_buffer_reserve, 
+			NULL)) != 0)
+			goto out;
+		
 		if (im_decrypt(im_ctx, sshbuf_ptr(state->input), 
-			sshbuf_len(state->input), 0, &im_this_processed, &im_dst, 
+			sshbuf_len(state->input), 0, &im_this_processed, sshbuf_mutable_ptr(state->incoming_packet), 
 				&im_length_decrypted_packet) != 0) {
 			return SSH_ERR_INTERNAL_ERROR;
 		}
+		*/
 
-		if (im_length_decrypted_packet > 0) {
-			/* 
-			 * This is rather hask'ish, but the native 
-			 * implementation of 'sshbuf_from' returns 
-			 * a const pointer that is read only (in the sense 
-			 * of OpenSSH buffer system)
-			 */
-			state->incoming_packet = sshbuf_from_im((u_char*) im_dst, im_length_decrypted_packet);
+		if (im_decrypt(im_ctx, sshbuf_ptr(state->input), 
+			sshbuf_len(state->input), 0, &im_this_processed, &im_decrypted_packet, 
+				&im_size_decrypted_packet, &im_total_allocated) != 0) {
+			return SSH_ERR_INTERNAL_ERROR;
+		}
 
+		state->packlen = state->packlen + im_this_processed;
+
+		if (im_size_decrypted_packet > 0) {
+
+			state->incoming_packet = sshbuf_from_im(im_decrypted_packet, 
+					im_size_decrypted_packet, im_total_allocated);
 			if (state->incoming_packet == NULL) {
 				return SSH_ERR_INTERNAL_ERROR;
 			}
+
+			if ((r = sshbuf_consume(state->input, state->packlen)) != 0)
+				goto out;
+
+			state->packlen = 0;
+
+			/*
+			if (state->incoming_packet == NULL) {
+				return SSH_ERR_INTERNAL_ERROR;
+			} 
 
 			if (im_get_length(im_ctx, im_length_decrypted_packet, &im_length) != 0) {
 				return SSH_ERR_INTERNAL_ERROR;
@@ -1844,6 +1911,12 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 
 			if ((r = sshbuf_consume(state->input, im_length)) != 0)
 				goto out;
+			*/
+			/* This is rather hask'ish */
+			/*if ((r = sshbuf_consume_end(state->incoming_packet, 
+				sshbuf_len(state->incoming_packet) - im_length_decrypted_packet) != 0))
+				goto out;
+				*/
 		}
 		else {
 			return 0;
@@ -1984,8 +2057,8 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 			return SSH_ERR_NEED_REKEY;
 
 	if (im_is_intermac) { /* IM EXTENSION */
-		state->p_send.blocks += im_length_decrypted_packet / (enc->block_size);
-		state->p_send.bytes += im_length_decrypted_packet;
+		state->p_send.blocks += im_size_decrypted_packet / (enc->block_size);
+		state->p_send.bytes += im_size_decrypted_packet;
 	}
 	else {
 		state->p_read.blocks += (state->packlen + 4) / block_size;
@@ -2028,8 +2101,9 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 	 */
 	if ((r = sshbuf_get_u8(state->incoming_packet, typep)) != 0)
 		goto out;
-	if (ssh_packet_log_type(*typep))
-		debug3("receive packet: type %u", *typep);
+	//if (ssh_packet_log_type(*typep))
+	//	debug3("receive packet: type %u", *typep);
+	//fprintf(stderr, "receive packet: type %u\n", *typep);
 	if (*typep < SSH2_MSG_MIN || *typep >= SSH2_MSG_LOCAL_MIN) {
 		if ((r = sshpkt_disconnect(ssh,
 		    "Invalid ssh2 packet type: %d", *typep)) != 0 ||
@@ -2051,7 +2125,11 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 #endif
 	/* reset for next packet */
 	state->packlen = 0;
-
+/*	if (state->server_side){ INTERMAC EXTENSION
+		fprintf(stderr, "read/plain[%d]:\r\n", *typep);
+		sshbuf_dump(state->incoming_packet, stderr);		
+	}
+*/
 	/* do we need to rekey? */
 	if (ssh_packet_need_rekeying(ssh, 0)) {
 		debug3("%s: rekex triggered", __func__);

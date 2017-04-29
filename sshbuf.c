@@ -103,7 +103,7 @@ sshbuf_from(const void *blob, size_t len)
 }
 
 struct sshbuf * /* IM EXTENSION */
-sshbuf_from_im(void *blob, size_t len)
+sshbuf_from_im(void *blob, size_t len, u_int allocated)
 {
 	struct sshbuf *ret;
 
@@ -115,7 +115,7 @@ sshbuf_from_im(void *blob, size_t len)
 	ret->refcount = 1;
 	ret->parent = NULL;
 	ret->cd = ret->d = blob;
-	ret->alloc = len;
+	ret->alloc = allocated;
 	ret->max_size = SSHBUF_SIZE_MAX;
 	return ret;
 }
@@ -211,6 +211,7 @@ sshbuf_reset(struct sshbuf *buf)
 		buf->off = buf->size;
 		return;
 	}
+
 	if (sshbuf_check_sanity(buf) == 0)
 		explicit_bzero(buf->d, buf->alloc);
 	buf->off = buf->size = 0;

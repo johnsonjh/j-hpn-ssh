@@ -147,7 +147,7 @@ int showprogress = 1;
 int throughlocal = 0;
 
 /* This is the program to execute for the secured connection. ("ssh" or -S) */
-char *ssh_program = _PATH_SSH_PROGRAM;
+char *ssh_program = "/home/himsen/Projects/openssh-portable-intermac/ssh";
 
 /* This is used to store the pid of ssh_program */
 pid_t do_cmd_pid = -1;
@@ -190,10 +190,8 @@ do_local_cmd(arglist *a)
 		fatal("do_local_cmd: no arguments");
 
 	if (verbose_mode) {
-		fprintf(stderr, "Executing:");
 		for (i = 0; i < a->num; i++)
 			fmprintf(stderr, " %s", a->list[i]);
-		fprintf(stderr, "\n");
 	}
 	if ((pid = fork()) == -1)
 		fatal("do_local_cmd: fork: %s", strerror(errno));
@@ -496,7 +494,6 @@ main(int argc, char **argv)
 			exit(1);
 		}
 	}
-
 	remin = STDIN_FILENO;
 	remout = STDOUT_FILENO;
 
@@ -608,7 +605,6 @@ toremote(char *targ, int argc, char **argv)
 		thost = arg;
 		tuser = NULL;
 	}
-
 	if (tuser != NULL && !okname(tuser)) {
 		free(arg);
 		return;

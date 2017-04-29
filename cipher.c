@@ -125,10 +125,30 @@ static const struct sshcipher ciphers[] = {
 			SSH_CIPHER_SSH2, 16, 16, 12, 16, 0, 0, EVP_aes_128_gcm },
 	{ "aes256-gcm@openssh.com",
 			SSH_CIPHER_SSH2, 16, 32, 12, 16, 0, 0, EVP_aes_256_gcm },
-	{"im-aes128-gcm",
+	{"im-aes128-gcm-128",
 			SSH_CIPHER_SSH2, 128, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION block_size used as chunk length */
-	{"im-chacha-poly",
+	{"im-chacha-poly-128",
 			SSH_CIPHER_SSH2, 128, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-aes128-gcm-256",
+			SSH_CIPHER_SSH2, 256, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION block_size used as chunk length */
+	{"im-chacha-poly-256",
+			SSH_CIPHER_SSH2, 256, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-chacha-poly-512",
+			SSH_CIPHER_SSH2, 512, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-aes128-gcm-512",
+			SSH_CIPHER_SSH2, 512, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-chacha-poly-1024",
+			SSH_CIPHER_SSH2, 1024, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-aes128-gcm-1024",
+			SSH_CIPHER_SSH2, 1024, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-chacha-poly-2048",
+			SSH_CIPHER_SSH2, 2048, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-aes128-gcm-2048",
+			SSH_CIPHER_SSH2, 2048, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-chacha-poly-4096",
+			SSH_CIPHER_SSH2, 4096, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
+	{"im-aes128-gcm-4096",
+			SSH_CIPHER_SSH2, 4096, 16, 0, 1, 0, CFLAG_INTERMAC, NULL}, /* IM EXTENSION */
 # endif /* OPENSSL_HAVE_EVPGCM */
 #else /* WITH_OPENSSL */
 	{ "aes128-ctr",	SSH_CIPHER_SSH2, 16, 16, 0, 0, 0, CFLAG_AESCTR, NULL },
@@ -150,18 +170,24 @@ int cipher_is_intermac(struct sshcipher_ctx *cc) {
 	return (cc->cipher->flags & CFLAG_INTERMAC) != 0;
 }
 
+/* IM EXTENSION */
 struct intermac_ctx * cipher_get_intermac_context(struct sshcipher_ctx *cc) {
 
 	return &cc->im_ctx;
 }
 
 /*  
- * IM ETENSION  
+ * IM EXTENSION  
  * This should not be the responsibility of the user 
  */
 int cipher_im_block_size(struct sshcipher_ctx *cc) {
 
-	u_char *name = cc->cipher->name;
+	u_char *name = cipher_im_get_name(cc->cipher->name);
+
+	if (name == NULL) {
+		return SSH_ERR_INTERNAL_ERROR;
+	}
+
 	u_int name_length = strlen(name);
 
 	if (strlen("im-aes128-gcm") == name_length &&
@@ -174,6 +200,33 @@ int cipher_im_block_size(struct sshcipher_ctx *cc) {
 	}
 
 	return SSH_ERR_INTERNAL_ERROR;
+}
+
+/* 
+ * IM EXTENSION
+ * Is there an easier way to do this?
+ */
+char* cipher_im_get_name(char* cipher_name) {
+
+	u_int cp_len = strlen("im-chacha-poly");
+	u_int gcm_len = strlen("im-aes128-gcm");
+	u_int cipher_name_length = strlen(cipher_name);
+
+	if (cipher_name_length >= cp_len) {
+		if (memcmp("im-chacha-poly", cipher_name, cp_len) == 0) {
+			debug3("InterMac cipher name: %s", "im-chacha-poly");
+			return "im-chacha-poly";
+		}
+	}
+	
+	if (cipher_name_length >= gcm_len) {
+		if (memcmp("im-aes128-gcm", cipher_name, gcm_len) == 0){
+			debug3("InterMac cipher name: %s", "im-aes128-gcm");
+			return "im-aes128-gcm";
+		}
+	}
+
+	return NULL;
 }
 
 /* Returns a comma-separated list of supported ciphers. */
@@ -390,8 +443,13 @@ cipher_init(struct sshcipher_ctx **ccp, const struct sshcipher *cipher,
 	if ((cc->cipher->flags & CFLAG_INTERMAC) != 0) { /* IM EXTENSION block_size used as chunk length */
 
 		struct intermac_ctx * _im_ctx = NULL;
+		char* cipher_name = cipher_im_get_name(cipher->name);
 
-		if (im_initialise(&_im_ctx, key, cipher->block_size, cipher->name, do_encrypt) != 0) {
+		if (cipher_name == NULL) {
+			return SSH_ERR_INTERNAL_ERROR;
+		}
+
+		if (im_initialise(&_im_ctx, key, cipher->block_size, cipher_name, do_encrypt) != 0) {
 			ret = SSH_ERR_INTERNAL_ERROR;
 		}
 

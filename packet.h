@@ -80,7 +80,7 @@ struct ssh {
 	/* APP data */
 	void *app_data;
 };
-
+void record_bytes(struct session_state*, u_char, size_t);
 typedef int (ssh_packet_hook_fn)(struct ssh *, struct sshbuf *,
     u_char *, void *);
 

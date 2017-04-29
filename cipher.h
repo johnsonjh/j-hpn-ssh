@@ -70,6 +70,7 @@ struct sshcipher_ctx;
 int cipher_is_intermac(struct sshcipher_ctx *); /* IM EXTENSION */ 
 struct intermac_ctx * cipher_get_intermac_context(struct sshcipher_ctx *);  /* IM EXTENSION */
 int cipher_im_block_size(struct sshcipher_ctx *); /* IM EXTENSION */
+char* cipher_im_get_name(char*); /* IM EXTENSION */
 
 u_int	 cipher_mask_ssh1(int);
 const struct sshcipher *cipher_by_name(const char *);

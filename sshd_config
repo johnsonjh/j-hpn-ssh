@@ -11,8 +11,10 @@
 # default value.
 
 #Port 22
+Port 22221
 #AddressFamily any
 #ListenAddress 0.0.0.0
+ListenAddress 127.0.0.1
 #ListenAddress ::
 
 #HostKey /etc/ssh/ssh_host_rsa_key
@@ -23,6 +25,10 @@
 # Ciphers and keying
 #RekeyLimit default none
 
+Ciphers aes128-ctr,aes128-cbc,im-chacha-poly-128,im-aes128-gcm-128,im-chacha-poly-256,im-aes128-gcm-256,im-chacha-poly-512,im-aes128-gcm-512,im-chacha-poly-1024,im-aes128-gcm-1024,im-chacha-poly-2048,im-aes128-gcm-2048,im-chacha-poly-4096,im-aes128-gcm-4096,aes128-gcm@openssh.com,chacha20-poly1305@openssh.com,3des-cbc,aes256-ctr
+
+MACs hmac-md5,hmac-md5-etm@openssh.com,umac-64-etm@openssh.com,hmac-sha1,hmac-sha2-512,hmac-ripemd160
+
 # Logging
 #SyslogFacility AUTH
 #LogLevel INFO
@@ -31,6 +37,7 @@
 
 #LoginGraceTime 2m
 #PermitRootLogin prohibit-password
+PermitRootLogin no
 #StrictModes yes
 #MaxAuthTries 6
 #MaxSessions 10
@@ -39,7 +46,8 @@
 
 # The default is to check both .ssh/authorized_keys and .ssh/authorized_keys2
 # but this is overridden so installations will only check .ssh/authorized_keys
-AuthorizedKeysFile	.ssh/authorized_keys
+#AuthorizedKeysFile	.ssh/authorized_keys
+AuthorizedKeysFile	.ssh/dev_authorized_keys
 
 #AuthorizedPrincipalsFile none
 
@@ -94,6 +102,7 @@ AuthorizedKeysFile	.ssh/authorized_keys
 #TCPKeepAlive yes
 #UseLogin no
 #UsePrivilegeSeparation sandbox
+UsePrivilegeSeparation no
 #PermitUserEnvironment no
 #Compression delayed
 #ClientAliveInterval 0
@@ -109,7 +118,7 @@ AuthorizedKeysFile	.ssh/authorized_keys
 #Banner none
 
 # override default of no subsystems
-Subsystem	sftp	/usr/libexec/sftp-server
+#Subsystem	sftp	/usr/libexec/sftp-server
 
 # Example of overriding settings on a per-user basis
 #Match User anoncvs
