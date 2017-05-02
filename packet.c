@@ -1860,7 +1860,7 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 
 		/*
 		 * Use state->packlen to store the amount of bytes
-		 * we decrypt from inout 
+		 * we decrypt from input buffer 
 		 */
 		state->packlen = state->packlen + im_this_processed;
 
@@ -2018,7 +2018,7 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 		if (!(ssh->compat & SSH_BUG_NOREKEY))
 			return SSH_ERR_NEED_REKEY;
 
-	if (im_is_intermac) { /* IM EXTENSION */
+	if (im_is_intermac) { /* IM EXTENSION TODO: what are we actually computing here? */
 		state->p_send.blocks += im_size_decrypted_packet / (enc->block_size);
 		state->p_send.bytes += im_size_decrypted_packet;
 	}
@@ -2063,9 +2063,8 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 	 */
 	if ((r = sshbuf_get_u8(state->incoming_packet, typep)) != 0)
 		goto out;
-	//if (ssh_packet_log_type(*typep))
-	//	debug3("receive packet: type %u", *typep);
-	//fprintf(stderr, "receive packet: type %u\n", *typep);
+	if (ssh_packet_log_type(*typep))
+		debug3("receive packet: type %u", *typep);
 	if (*typep < SSH2_MSG_MIN || *typep >= SSH2_MSG_LOCAL_MIN) {
 		if ((r = sshpkt_disconnect(ssh,
 		    "Invalid ssh2 packet type: %d", *typep)) != 0 ||
@@ -2087,11 +2086,7 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 #endif
 	/* reset for next packet */
 	state->packlen = 0;
-/*	if (state->server_side){ INTERMAC EXTENSION
-		fprintf(stderr, "read/plain[%d]:\r\n", *typep);
-		sshbuf_dump(state->incoming_packet, stderr);		
-	}
-*/
+
 	/* do we need to rekey? */
 	if (ssh_packet_need_rekeying(ssh, 0)) {
 		debug3("%s: rekex triggered", __func__);
