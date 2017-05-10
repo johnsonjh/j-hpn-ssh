@@ -633,9 +633,8 @@ cipher_free(struct sshcipher_ctx *cc)
 	else if ((cc->cipher->flags & CFLAG_AESCTR) != 0)
 		explicit_bzero(&cc->ac_ctx, sizeof(cc->ac_ctx));
 #ifdef WITH_OPENSSL
-	if ((cc->cipher->flags & CFLAG_INTERMAC) != 0) { /* IM INTERMAC TODO this needs to be updated */
+	if ((cc->cipher->flags & CFLAG_INTERMAC) != 0) /* INTERMAC EXTENSION */
 		im_cleanup(&cc->im_ctx);
-	}
 	if (cc->evp != NULL) {
 		EVP_CIPHER_CTX_free(cc->evp);
 		cc->evp = NULL;

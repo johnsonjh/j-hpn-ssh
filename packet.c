@@ -595,7 +595,8 @@ ssh_packet_close(struct ssh *ssh)
 	sshbuf_free(state->input);
 	sshbuf_free(state->output);
 	sshbuf_free(state->outgoing_packet);
-	sshbuf_free(state->incoming_packet);
+	if (!cipher_is_intermac(state->receive_context)) /* IM EXTENSION */
+		sshbuf_free(state->incoming_packet);
 	for (mode = 0; mode < MODE_MAX; mode++)
 		kex_free_newkeys(state->newkeys[mode]);
 	if (state->compression_buffer) {
