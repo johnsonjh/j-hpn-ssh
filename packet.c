@@ -1255,25 +1255,16 @@ if (!im_is_intermac) {
 
 		im_ctx = cipher_get_intermac_context(state->send_context);
 
-		//if (im_get_length(im_ctx, sshbuf_len(state->outgoing_packet) - 5, &im_length) != 0) {
-		//	r = SSH_ERR_INTERNAL_ERROR;
-		//	goto out;
-		//}
-
-		//if ((r = sshbuf_reserve(state->output, im_length, &cp)) != 0)
-		//	goto out;
-
 		/* Ignore length field and padding length field */
 		if ((r = sshbuf_consume(state->outgoing_packet, 5)) != 0)
 			goto out;
 
+		/* InterMac Encrypt */
 		if (im_encrypt(im_ctx, &im_ct, &im_length, sshbuf_ptr(state->outgoing_packet), 
 			sshbuf_len(state->outgoing_packet)) != 0 ) 
 			goto out;
 
 		/* Append to OpenSSH output buffer */
-		//if ((r = sshbuf_reserve(state->output, im_length, NULL)) != 0)
-		//	goto out;
 		if ((r = sshbuf_put(state->output, im_ct, im_length)) != 0)
 			goto out;
 	} 

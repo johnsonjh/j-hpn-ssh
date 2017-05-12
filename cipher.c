@@ -63,7 +63,7 @@ struct sshcipher_ctx {
 	EVP_CIPHER_CTX *evp;
 	struct chachapoly_ctx cp_ctx; /* XXX union with evp? */
 	struct aesctr_ctx ac_ctx; /* XXX union with evp? */
-	struct intermac_ctx im_ctx; /* IM EXTENSION */
+	struct intermac_ctx *im_ctx; /* IM EXTENSION */
 	const struct sshcipher *cipher;
 };
 
@@ -173,13 +173,10 @@ int cipher_is_intermac(struct sshcipher_ctx *cc) {
 /* IM EXTENSION */
 struct intermac_ctx * cipher_get_intermac_context(struct sshcipher_ctx *cc) {
 
-	return &cc->im_ctx;
+	return cc->im_ctx;
 }
 
-/*  
- * IM EXTENSION  
- * This should not be the responsibility of the user 
- */
+/* IM EXTENSION */
 int cipher_im_block_size(struct sshcipher_ctx *cc) {
 
 	u_char *name = cipher_im_get_name(cc->cipher->name);
@@ -451,7 +448,7 @@ cipher_init(struct sshcipher_ctx **ccp, const struct sshcipher *cipher,
 			ret = SSH_ERR_INTERNAL_ERROR;
 		}
 
-		cc->im_ctx = *_im_ctx;
+		cc->im_ctx = _im_ctx;
 
 		ret = 0;
 		goto out;
@@ -634,7 +631,7 @@ cipher_free(struct sshcipher_ctx *cc)
 		explicit_bzero(&cc->ac_ctx, sizeof(cc->ac_ctx));
 #ifdef WITH_OPENSSL
 	if ((cc->cipher->flags & CFLAG_INTERMAC) != 0) /* INTERMAC EXTENSION */
-		im_cleanup(&cc->im_ctx);
+		im_cleanup(cc->im_ctx);
 	if (cc->evp != NULL) {
 		EVP_CIPHER_CTX_free(cc->evp);
 		cc->evp = NULL;
