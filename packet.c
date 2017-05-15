@@ -110,10 +110,6 @@ struct packet {
 };
 
 struct session_state {
-	u_int channel_data_started;
-	size_t total_sent;
-	u_int eof_seen;
-
 	/*
 	 * This variable contains the file descriptors used for
 	 * communicating with the other side.  connection_in is used for
@@ -230,6 +226,12 @@ struct session_state {
 	void *hook_in_ctx;
 
 	TAILQ_HEAD(, packet) outgoing;
+
+	/* CAPTURE */
+	size_t sent_raw;
+	size_t sent_encrypted;
+	u_int channel_data_started;
+	u_int eof_seen;
 };
 
 struct ssh *
@@ -1157,22 +1159,31 @@ ssh_packet_log_type(u_char type)
 	}
 }
 
-void record_bytes(struct session_state *state, u_char type, size_t bytes) {
+/*
+ * CAPTURE
+ * Patch to record the amount of application data bytes sent 
+ * both raw from application and the encrypted (SSH/intermac encoded) 
+ * application data.
+ */
+void record_bytes(struct session_state *state, u_char type, size_t bytes, int raw) {
 
 	if (type == SSH2_MSG_CHANNEL_REQUEST) {
-		state->channel_data_started = 0;
-		state->total_sent = 0;
-		state->eof_seen = 0;
+		state->channel_data_started = 0; /* Indicates start of capture */
+		state->sent_raw = 0;
+		state->sent_encrypted = 0;
+		state->eof_seen = 0; /* Indicates end of capture */
 	}
 	if (type == SSH2_MSG_CHANNEL_DATA) {
 		state->channel_data_started = 1;
-		state->total_sent += bytes;
+		if (raw) 
+			state->sent_raw += bytes; /* Raw data from application */
+		else
+			state->sent_encrypted += bytes; /* Encrypted (ssh/intermac encoded) data from application */
 	}
 	if (type == SSH2_MSG_CHANNEL_EOF && state->channel_data_started && !state->eof_seen) {
-		fprintf(stderr, "Number of bytes sent: %zu\n", state->total_sent);
+		fprintf(stderr, "Bytes raw sent: %zu\n", state->sent_raw);
+		fprintf(stderr, "Bytes encrypted sent: %zu\n", state->sent_encrypted);
 		state->eof_seen = 1;
-		state->channel_data_started = 0;
-		state->total_sent = 0;
 	}
 
 }
@@ -1211,27 +1222,26 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 	block_size = enc ? enc->block_size : 8;
 	aadlen = (mac && mac->enabled && mac->etm) || authlen ? 4 : 0;
 
-
 	type = (sshbuf_ptr(state->outgoing_packet))[5];
-/*	if (ssh_packet_log_type(type))
+	if (ssh_packet_log_type(type))
 		debug3("send packet: type %u", type);
 
-*/
 	im_is_intermac = cipher_is_intermac(state->send_context); /* IM EXTENSION */
 
-/*
-	if (state->server_side) {
-		fprintf(stderr, "send/plain[%d]:\r\n", type);
-		sshbuf_dump(state->outgoing_packet, stderr);
+	/* CAPTURE amount of raw bytes */
+	if (!state->server_side) {
+		/* 
+		 * NOTE subtracting 6 because of packet_length_field, 
+		 * padding_length_field and type field. 
+		 */
+		record_bytes(state, type, sshbuf_len(state->outgoing_packet) - 6, 1);
 	}
-*/
 
-if (!im_is_intermac) {
 #ifdef PACKET_DEBUG
 	fprintf(stderr, "plain:     ");
 	sshbuf_dump(state->outgoing_packet, stderr);
 #endif
-}
+
 	if (comp && comp->enabled) {
 		len = sshbuf_len(state->outgoing_packet);
 		/* skip header, compress only payload */
@@ -1375,8 +1385,9 @@ if (!im_is_intermac) {
 	}
 	sshbuf_reset(state->outgoing_packet);
 
+	/* CAPTURE amount of encrypted (ssh/intermac encoded) data */
 	if (!state->server_side) {
-		record_bytes(state, type, sshbuf_len(state->output));
+		record_bytes(state, type, sshbuf_len(state->output), 0);
 	}
 
 	if (type == SSH2_MSG_NEWKEYS)
