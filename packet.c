@@ -230,6 +230,8 @@ struct session_state {
 	/* CAPTURE */
 	size_t sent_raw;
 	size_t sent_encrypted;
+	size_t receive_raw;
+	size_t receive_encrypted;
 	u_int channel_data_started;
 	u_int eof_seen;
 };
@@ -1165,7 +1167,7 @@ ssh_packet_log_type(u_char type)
  * both raw from application and the encrypted (SSH/intermac encoded) 
  * application data.
  */
-void record_bytes(struct session_state *state, u_char type, size_t bytes, int raw) {
+void record_bytes_sent(struct session_state *state, u_char type, size_t bytes, int raw) {
 
 	if (type == SSH2_MSG_CHANNEL_REQUEST) {
 		state->channel_data_started = 0; /* Indicates start of capture */
@@ -1183,6 +1185,28 @@ void record_bytes(struct session_state *state, u_char type, size_t bytes, int ra
 	if (type == SSH2_MSG_CHANNEL_EOF && state->channel_data_started && !state->eof_seen) {
 		fprintf(stderr, "Bytes raw sent: %zu\n", state->sent_raw);
 		fprintf(stderr, "Bytes encrypted sent: %zu\n", state->sent_encrypted);
+		state->eof_seen = 1;
+	}
+}
+
+void record_bytes_receive(struct session_state *state, u_char type, size_t bytes, int raw) {
+
+	if (type == SSH2_MSG_CHANNEL_REQUEST) {
+		state->channel_data_started = 0; /* Indicates start of capture */
+		state->receive_raw = 0;
+		state->receive_encrypted = 0;
+		state->eof_seen = 0; /* Indicates end of capture */
+	}
+	if (type == SSH2_MSG_CHANNEL_DATA) {
+		state->channel_data_started = 1;
+		if (raw) 
+			state->receive_raw += bytes; /* Raw data from application */
+		else
+			state->receive_encrypted += bytes; /* Encrypted (ssh/intermac encoded) data from application */
+	}
+	if (type == SSH2_MSG_CHANNEL_EOF && state->channel_data_started && !state->eof_seen) {
+		fprintf(stderr, "Bytes raw received: %zu\n", state->receive_raw);
+		fprintf(stderr, "Bytes encrypted receive: %zu\n", state->receive_encrypted);
 		state->eof_seen = 1;
 	}
 
@@ -1234,7 +1258,7 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 		 * NOTE subtracting 6 because of packet_length_field, 
 		 * padding_length_field and type field. 
 		 */
-		record_bytes(state, type, sshbuf_len(state->outgoing_packet) - 6, 1);
+		record_bytes_sent(state, type, sshbuf_len(state->outgoing_packet) - 6, 1);
 	}
 
 #ifdef PACKET_DEBUG
@@ -1387,7 +1411,7 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 
 	/* CAPTURE amount of encrypted (ssh/intermac encoded) data */
 	if (!state->server_side) {
-		record_bytes(state, type, sshbuf_len(state->output), 0);
+		record_bytes_sent(state, type, sshbuf_len(state->output), 0);
 	}
 
 	if (type == SSH2_MSG_NEWKEYS)
@@ -1830,6 +1854,7 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 	u_int im_total_allocated = 0;
 	u_int im_this_processed = 0;
 	int im_is_intermac = 0; 
+	u_int this_encrypted_received = 0; /* Used for performance tests */
 
 
 	if (state->mux)
@@ -1879,6 +1904,9 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 			/* Remove decrypted bytes from input */
 			if ((r = sshbuf_consume(state->input, state->packlen)) != 0)
 				goto out;
+
+			/* Performance tests */
+			this_encrypted_received = state->packlen;
 
 			/* Reset for next decryption */
 			state->packlen = 0;
@@ -1973,6 +2001,10 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 		fprintf(stderr, "read_poll enc/full: ");
 		sshbuf_dump(state->input, stderr);
 	#endif
+
+		/* Used for performance tests */
+		this_encrypted_received = aadlen + need + authlen + maclen;
+
 		/* EtM: check mac over encrypted input */
 		if (mac && mac->enabled && mac->etm) {
 			if ((r = mac_check(mac, state->p_read.seqnr,
@@ -2075,6 +2107,20 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 			return r;
 		return SSH_ERR_PROTOCOL_ERROR;
 	}
+
+	if (!state->server_side) {
+		/* 
+		 * NOTE subtracting 6 because of packet_length_field, 
+		 * padding_length_field and type field. 
+		 */
+		record_bytes_receive(state, *typep, sshbuf_len(state->incoming_packet), 1);
+	}
+
+	/* CAPTURE amount of encrypted (ssh/intermac encoded) data */
+	if (!state->server_side) {
+		record_bytes_receive(state, *typep, this_encrypted_received, 0);
+	}
+
 	if (state->hook_in != NULL &&
 	    (r = state->hook_in(ssh, state->incoming_packet, typep,
 	    state->hook_in_ctx)) != 0)
