@@ -1152,7 +1152,7 @@ int
 ssh_packet_log_type(u_char type)
 {
 	switch (type) {
-	case SSH2_MSG_CHANNEL_DATA:
+	//case SSH2_MSG_CHANNEL_DATA:
 	case SSH2_MSG_CHANNEL_EXTENDED_DATA:
 	case SSH2_MSG_CHANNEL_WINDOW_ADJUST:
 		return 0;
@@ -1191,7 +1191,7 @@ void record_bytes_sent(struct session_state *state, u_char type, size_t bytes, i
 
 void record_bytes_receive(struct session_state *state, u_char type, size_t bytes, int raw) {
 
-	if (type == SSH2_MSG_CHANNEL_REQUEST) {
+	if (type == SSH2_MSG_CHANNEL_SUCCESS && state->channel_data_started) {
 		state->channel_data_started = 0; /* Indicates start of capture */
 		state->receive_raw = 0;
 		state->receive_encrypted = 0;
@@ -1204,9 +1204,9 @@ void record_bytes_receive(struct session_state *state, u_char type, size_t bytes
 		else
 			state->receive_encrypted += bytes; /* Encrypted (ssh/intermac encoded) data from application */
 	}
-	if (type == SSH2_MSG_CHANNEL_EOF && state->channel_data_started && !state->eof_seen) {
+	if (type == SSH2_MSG_CHANNEL_REQUEST && state->channel_data_started && !state->eof_seen) {
 		fprintf(stderr, "Bytes raw received: %zu\n", state->receive_raw);
-		fprintf(stderr, "Bytes encrypted receive: %zu\n", state->receive_encrypted);
+		fprintf(stderr, "Bytes encrypted received: %zu\n", state->receive_encrypted);
 		state->eof_seen = 1;
 	}
 
