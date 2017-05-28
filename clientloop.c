@@ -1792,8 +1792,10 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 		    obytes / total_time, ibytes / total_time);
 	*/
 	/* CAPTURE patched to not print received data */
-	if (total_time > 0)
+	if (total_time > 0) {
 		verbose("Bytes per second sent: %.1f", obytes / total_time);
+		verbose("Bytes per second received: %.1f", ibytes / total_time);
+	}
 	/* Return the exit status of the program. */
 	debug("Exit status %d", exit_status);
 	return exit_status;
