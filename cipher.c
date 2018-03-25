@@ -410,6 +410,8 @@ cipher_init(struct sshcipher_ctx **ccp, const struct sshcipher *cipher,
 {
 	struct sshcipher_ctx *cc = NULL;
 	int ret = SSH_ERR_INTERNAL_ERROR;
+	struct intermac_ctx * im_ctx = NULL;
+	char* cipher_name = NULL;
 #ifdef WITH_OPENSSL
 	const EVP_CIPHER *type;
 	int klen;
@@ -435,20 +437,22 @@ cipher_init(struct sshcipher_ctx **ccp, const struct sshcipher *cipher,
 
 	cc->cipher = cipher;
 
-	if ((cc->cipher->flags & CFLAG_INTERMAC) != 0) { /* IM EXTENSION block_size used as chunk length */
+	if ((cc->cipher->flags & CFLAG_INTERMAC) != 0) { /* IM EXTENSION */
 
-		struct intermac_ctx * _im_ctx = NULL;
-		char* cipher_name = cipher_im_get_name(cipher->name);
+		cipher_name = cipher_im_get_name(cipher->name);
 
 		if (cipher_name == NULL) {
-			return SSH_ERR_INTERNAL_ERROR;
-		}
-
-		if (im_initialise(&_im_ctx, key, cipher->block_size, cipher_name, do_encrypt) != 0) {
 			ret = SSH_ERR_INTERNAL_ERROR;
+			goto out;
 		}
 
-		cc->im_ctx = _im_ctx;
+		/* cipher->block_size stores the chunk length for the chosen InterMAC cipher suite */
+		if (im_initialise(&im_ctx, key, cipher->block_size, cipher_name, do_encrypt) != 0) {
+			ret = SSH_ERR_INTERNAL_ERROR;
+			goto out;
+		}
+
+		cc->im_ctx = im_ctx;
 
 		ret = 0;
 		goto out;
@@ -527,6 +531,8 @@ cipher_init(struct sshcipher_ctx **ccp, const struct sshcipher *cipher,
 			if (cc->evp != NULL)
 				EVP_CIPHER_CTX_free(cc->evp);
 #endif /* WITH_OPENSSL */
+			if (im_ctx != NULL) /* IM EXTENSION */
+				im_cleanup(im_ctx);
 			explicit_bzero(cc, sizeof(*cc));
 			free(cc);
 		}
