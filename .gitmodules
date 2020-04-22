@@ -1,0 +1,6 @@
+[submodule "crystals/dilithium"]
+	path = crystals/dilithium
+	url = git@github.com:jzaehrin/dilithium.git
+[submodule "crystals/kyber"]
+	path = crystals/kyber
+	url = git@github.com:jzaehrin/kyber.git
