@@ -69,6 +69,7 @@ enum sshkey_types {
 	KEY_ECDSA_SK_CERT,
 	KEY_ED25519_SK,
 	KEY_ED25519_SK_CERT,
+	KEY_DILITHIUM,
 	KEY_UNSPEC
 };
 
@@ -133,6 +134,9 @@ struct sshkey {
 	/* KEY_ED25519 and KEY_ED25519_SK */
 	u_char	*ed25519_sk;
 	u_char	*ed25519_pk;
+	/* KEY_DILITHIUM */
+	u_char  *dilithium_sk;
+	u_char  *dilithium_pk;
 	/* KEY_XMSS */
 	char	*xmss_name;
 	char	*xmss_filename;	/* for state file updates */

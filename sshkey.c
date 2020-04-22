@@ -36,6 +36,8 @@
 #include <openssl/pem.h>
 #endif
 
+#include "crystals/dilithium/avx2/api.h"
+
 #include "crypto_api.h"
 
 #include <errno.h>
@@ -111,6 +113,8 @@ static const struct keytype keytypes[] = {
 	    KEY_ED25519_SK, 0, 0, 0 },
 	{ "sk-ssh-ed25519-cert-v01@openssh.com", "ED25519-SK-CERT", NULL,
 	    KEY_ED25519_SK_CERT, 0, 1, 0 },
+	{ "ssh-dilithium4", "DILITHIUM", NULL,
+		KEY_DILITHIUM, 0, 0, 0},
 #ifdef WITH_XMSS
 	{ "ssh-xmss@openssh.com", "XMSS", NULL, KEY_XMSS, 0, 0, 0 },
 	{ "ssh-xmss-cert-v01@openssh.com", "XMSS-CERT", NULL,
@@ -557,6 +561,8 @@ sshkey_new(int type)
 	k->cert = NULL;
 	k->ed25519_sk = NULL;
 	k->ed25519_pk = NULL;
+	k->dilithium_sk = NULL;
+	k->dilithium_pk = NULL;
 	k->xmss_sk = NULL;
 	k->xmss_pk = NULL;
 	switch (k->type) {
@@ -588,6 +594,7 @@ sshkey_new(int type)
 	case KEY_ED25519_CERT:
 	case KEY_ED25519_SK:
 	case KEY_ED25519_SK_CERT:
+	case KEY_DILITHIUM:
 	case KEY_XMSS:
 	case KEY_XMSS_CERT:
 		/* no need to prealloc */
@@ -886,6 +893,14 @@ to_blob_buf(const struct sshkey *key, struct sshbuf *b, int force_plain,
 				return ret;
 		}
 		break;
+	case KEY_DILITHIUM:
+		if(key->dilithium_pk == NULL)
+			return SSH_ERR_INVALID_ARGUMENT;
+		if ((ret = sshbuf_put_cstring(b, typename)) != 0 ||
+		    (ret = sshbuf_put_string(b, key->dilithium_pk, CRYPTO_PUBLICKEYBYTES)) != 0)
+			return ret;
+		break;
+
 #ifdef WITH_XMSS
 	case KEY_XMSS:
 		if (key->xmss_name == NULL || key->xmss_pk == NULL ||
@@ -1708,6 +1723,17 @@ ecdsa_generate_private_key(u_int bits, int *nid, EC_KEY **ecdsap)
 # endif /* OPENSSL_HAS_ECC */
 #endif /* WITH_OPENSSL */
 
+static int
+crytals_generate_keypair(unsigned char ** pk, unsigned char ** sk) {
+	if ((*pk = malloc(CRYPTO_PUBLICKEYBYTES)) == NULL ||
+	    (*sk = malloc(CRYPTO_SECRETKEYBYTES)) == NULL) {
+		fprintf(stdout, "error");
+		return SSH_ERR_ALLOC_FAIL;
+	}
+
+	return crypto_sign_keypair(*pk, *sk);
+}
+
 int
 sshkey_generate(int type, u_int bits, struct sshkey **keyp)
 {
@@ -1728,6 +1754,9 @@ sshkey_generate(int type, u_int bits, struct sshkey **keyp)
 		}
 		crypto_sign_ed25519_keypair(k->ed25519_pk, k->ed25519_sk);
 		ret = 0;
+		break;
+	case KEY_DILITHIUM:
+		ret = crytals_generate_keypair(&k->dilithium_pk, &k->dilithium_sk);
 		break;
 #ifdef WITH_XMSS
 	case KEY_XMSS:
@@ -1927,6 +1956,15 @@ sshkey_from_private(const struct sshkey *k, struct sshkey **pkp)
 		/* Append security-key application string */
 		if ((n->sk_application = strdup(k->sk_application)) == NULL)
 			goto out;
+		break;
+	case KEY_DILITHIUM:
+		if (k->dilithium_pk != NULL) {
+			if ((n->dilithium_pk = malloc(CRYPTO_PUBLICKEYBYTES)) == NULL) {
+				r = SSH_ERR_ALLOC_FAIL;
+				goto out;
+			}
+			memcpy(n->dilithium_pk, k->dilithium_pk, CRYPTO_PUBLICKEYBYTES);
+		}	
 		break;
 #ifdef WITH_XMSS
 	case KEY_XMSS:
@@ -3316,6 +3354,11 @@ sshkey_private_serialize_opt(struct sshkey *key, struct sshbuf *buf,
 		    (r = sshbuf_put_stringb(b, key->sk_reserved)) != 0)
 			goto out;
 		break;
+	case KEY_DILITHIUM:
+		if ((r = sshbuf_put_string(b, key->dilithium_pk, CRYPTO_PUBLICKEYBYTES)) != 0 ||
+			(r = sshbuf_put_string(b, key->dilithium_sk, CRYPTO_SECRETKEYBYTES)) != 0)
+			goto out;
+		break;
 #ifdef WITH_XMSS
 	case KEY_XMSS:
 		if (key->xmss_name == NULL) {
@@ -4524,6 +4567,7 @@ sshkey_private_to_fileblob(struct sshkey *key, struct sshbuf *blob,
 #endif /* WITH_OPENSSL */
 	case KEY_ED25519:
 	case KEY_ED25519_SK:
+	case KEY_DILITHIUM:
 #ifdef WITH_XMSS
 	case KEY_XMSS:
 #endif /* WITH_XMSS */

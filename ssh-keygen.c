@@ -285,6 +285,9 @@ ask_filename(struct passwd *pw, const char *prompt)
 		case KEY_ED25519_CERT:
 			name = _PATH_SSH_CLIENT_ID_ED25519;
 			break;
+		case KEY_DILITHIUM:
+			name = _PATH_SSH_CLIENT_ID_DILITHIUM;
+			break;
 		case KEY_ED25519_SK:
 		case KEY_ED25519_SK_CERT:
 			name = _PATH_SSH_CLIENT_ID_ED25519_SK;
