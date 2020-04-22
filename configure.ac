@@ -148,6 +148,11 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([[int main(void) { return 0; }]])],
 	[ AC_MSG_RESULT([no])
 	  WERROR="" ]
 )
+
+# DILITHIUM
+CPPFLAGS="$CPPFLAGS -I./crystals/dilithium/avx2 -DDILITHIUM_MODE=4"
+LIBS="$LIBS -L./crystals/dilithium/avx2 -lpqcrystals_dilithium4_avx2"
+
 CFLAGS="$saved_CFLAGS"
 
 if test "$GCC" = "yes" || test "$GCC" = "egcs"; then
@@ -355,7 +360,7 @@ AC_ARG_WITH([libs],
 	[
 		if test -n "$withval"  &&  test "x$withval" != "xno"  &&  \
 		    test "x${withval}" != "xyes"; then
-			LIBS="$LIBS $withval"
+			"$LIBS $withval"
 		fi
 	]
 )
@@ -798,7 +803,7 @@ main() { if (NSVersionOfRunTimeLibrary("System") >= (60 << 16))
 	check_for_openpty_ctty_bug=1
 	dnl Target SUSv3/POSIX.1-2001 plus BSD specifics.
 	dnl _DEFAULT_SOURCE is the new name for _BSD_SOURCE
-	CPPFLAGS="$CPPFLAGS -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_DEFAULT_SOURCE"
+	CPPFLAGS="$CPPFLAGS -D_XOPEN_SOURCE=600 -D_BSD_SOURCE -D_DEFAULT_SOURCE -DDILITHIUM_MODE=4"
 	AC_DEFINE([PAM_TTY_KLUDGE], [1],
 		[Work around problematic Linux PAM modules handling of PAM_TTY])
 	AC_DEFINE([LOCKED_PASSWD_PREFIX], ["!"],
