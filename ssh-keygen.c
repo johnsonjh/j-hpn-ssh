@@ -87,6 +87,13 @@
 #define DEFAULT_BITS_DSA	1024
 #define DEFAULT_BITS_ECDSA	256
 
+/*
+ * Default number of bits in the dilithium key. These value can be overridden
+ * on the command line with selecting the algorithm
+ * (dilithium4, dilithium3, dilithium2, dilithium1)
+ */
+#define DEFAULT_BITS_DILITHIUM 21608
+
 static int quiet = 0;
 
 /* Flag indicating that we just want to see the key fingerprint */
@@ -183,10 +190,9 @@ type_bits_valid(int type, const char *name, u_int32_t *bitsp)
 	if (type == KEY_UNSPEC)
 		fatal("unknown key type %s", key_type_name);
 	if (*bitsp == 0) {
-#ifdef WITH_OPENSSL
 		u_int nid;
-
 		switch(type) {
+#ifdef WITH_OPENSSL
 		case KEY_DSA:
 			*bitsp = DEFAULT_BITS_DSA;
 			break;
@@ -200,11 +206,22 @@ type_bits_valid(int type, const char *name, u_int32_t *bitsp)
 		case KEY_RSA:
 			*bitsp = DEFAULT_BITS;
 			break;
-		}
 #endif
+		case KEY_DILITHIUM:
+			if (name != NULL &&
+				(nid = sshkey_dilithium_nid_from_name(name)) > 0)
+				*bitsp = sshkey_dilithium_nid_to_bits(nid);
+			if (*bitsp == 0)
+				*bitsp = DEFAULT_BITS_DILITHIUM;
+			break;
+		}
 	}
-#ifdef WITH_OPENSSL
 	switch (type) {
+	case KEY_DILITHIUM:
+		if (sshkey_dilithium_bits_to_nid(*bitsp) == -1)
+			fatal("Invalid dilithium key length: valid lengths are 11096, 16352, 21608 or 26928 bits");
+		break;
+#ifdef WITH_OPENSSL
 	case KEY_DSA:
 		if (*bitsp != 1024)
 			fatal("Invalid DSA key length: must be 1024 bits");

@@ -48,6 +48,8 @@
 # define EC_POINT	void
 #endif /* WITH_OPENSSL */
 
+#include "crystals/dilithium/avx2/generic_api.h"
+
 #define SSH_RSA_MINIMUM_MODULUS_SIZE	1024
 #define SSH_KEY_MAX_SIGN_DATA_SIZE	(1 << 20)
 
@@ -135,8 +137,7 @@ struct sshkey {
 	u_char	*ed25519_sk;
 	u_char	*ed25519_pk;
 	/* KEY_DILITHIUM */
-	u_char  *dilithium_sk;
-	u_char  *dilithium_pk;
+	DILITHIUM *dilithium;
 	/* KEY_XMSS */
 	char	*xmss_name;
 	char	*xmss_filename;	/* for state file updates */
@@ -244,6 +245,10 @@ int	 sshkey_verify(const struct sshkey *, const u_char *, size_t,
 int	 sshkey_check_sigtype(const u_char *, size_t, const char *);
 const char *sshkey_sigalg_by_name(const char *);
 int	 sshkey_get_sigtype(const u_char *, size_t, char **);
+
+int  sshkey_dilithium_nid_from_name(const char *);
+int  sshkey_dilithium_nid_to_bits(int);
+int  sshkey_dilithium_bits_to_nid(int);
 
 /* for debug */
 void	sshkey_dump_ec_point(const EC_GROUP *, const EC_POINT *);
