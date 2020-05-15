@@ -31,3 +31,4 @@ ssh-sk-helper
 sshd
 !regress/misc/fuzz-harness/Makefile
 tags
+make_and_run.sh
