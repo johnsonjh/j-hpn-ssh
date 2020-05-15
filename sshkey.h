@@ -125,6 +125,7 @@ struct sshkey_cert {
 /* XXX opaquify? */
 struct sshkey {
 	int	 type;
+	int  variant;
 	int	 flags;
 	/* KEY_RSA */
 	RSA	*rsa;
@@ -246,9 +247,10 @@ int	 sshkey_check_sigtype(const u_char *, size_t, const char *);
 const char *sshkey_sigalg_by_name(const char *);
 int	 sshkey_get_sigtype(const u_char *, size_t, char **);
 
-int  sshkey_dilithium_nid_from_name(const char *);
-int  sshkey_dilithium_nid_to_bits(int);
-int  sshkey_dilithium_bits_to_nid(int);
+/* Dilithium */
+int  sshkey_dilithium_variant_from_name(const char *);
+int  sshkey_dilithium_variant_to_bits(int);
+int  sshkey_dilithium_bits_to_variant(int);
 
 /* for debug */
 void	sshkey_dump_ec_point(const EC_GROUP *, const EC_POINT *);

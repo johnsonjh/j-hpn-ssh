@@ -191,6 +191,7 @@ type_bits_valid(int type, const char *name, u_int32_t *bitsp)
 		fatal("unknown key type %s", key_type_name);
 	if (*bitsp == 0) {
 		u_int nid;
+		int variant;
 		switch(type) {
 #ifdef WITH_OPENSSL
 		case KEY_DSA:
@@ -209,8 +210,8 @@ type_bits_valid(int type, const char *name, u_int32_t *bitsp)
 #endif
 		case KEY_DILITHIUM:
 			if (name != NULL &&
-				(nid = sshkey_dilithium_nid_from_name(name)) > 0)
-				*bitsp = sshkey_dilithium_nid_to_bits(nid);
+				(variant = sshkey_dilithium_variant_from_name(name)) > 0)
+				*bitsp = sshkey_dilithium_variant_to_bits(variant);
 			if (*bitsp == 0)
 				*bitsp = DEFAULT_BITS_DILITHIUM;
 			break;
@@ -218,7 +219,7 @@ type_bits_valid(int type, const char *name, u_int32_t *bitsp)
 	}
 	switch (type) {
 	case KEY_DILITHIUM:
-		if (sshkey_dilithium_bits_to_nid(*bitsp) == -1)
+		if (sshkey_dilithium_bits_to_variant(*bitsp) == -1)
 			fatal("Invalid dilithium key length: valid lengths are 11096, 16352, 21608 or 26928 bits");
 		break;
 #ifdef WITH_OPENSSL

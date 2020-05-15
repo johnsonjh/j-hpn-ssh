@@ -99,70 +99,71 @@ struct keytype {
 	const char *shortname;
 	const char *sigalg;
 	int type;
+	int variant; /* variant of the algorithm */
 	int nid;
 	int cert;
 	int sigonly;
 };
 static const struct keytype keytypes[] = {
-	{ "ssh-ed25519", "ED25519", NULL, KEY_ED25519, 0, 0, 0 },
+	{ "ssh-ed25519", "ED25519", NULL, KEY_ED25519, 0, 0, 0, 0 },
 	{ "ssh-ed25519-cert-v01@openssh.com", "ED25519-CERT", NULL,
-	    KEY_ED25519_CERT, 0, 1, 0 },
+	    KEY_ED25519_CERT, 0, 0, 1, 0 },
 	{ "sk-ssh-ed25519@openssh.com", "ED25519-SK", NULL,
-	    KEY_ED25519_SK, 0, 0, 0 },
+	    KEY_ED25519_SK, 0, 0, 0, 0 },
 	{ "sk-ssh-ed25519-cert-v01@openssh.com", "ED25519-SK-CERT", NULL,
-	    KEY_ED25519_SK_CERT, 0, 1, 0 },
+	    KEY_ED25519_SK_CERT, 0, 0, 1, 0 },
 	{ "dilithium3", "DILITHIUM", NULL, /* Priority to recommended type */
-		KEY_DILITHIUM, DILITHIUM3, 0, 0},
+		KEY_DILITHIUM, DILITHIUM3, 0, 0, 0},
 	{ "dilithium4", "DILITHIUM", NULL,
-		KEY_DILITHIUM, DILITHIUM4, 0, 0},
+		KEY_DILITHIUM, DILITHIUM4, 0, 0, 0},
 	{ "dilithium2", "DILITHIUM", NULL,
-		KEY_DILITHIUM, DILITHIUM2, 0, 0},
+		KEY_DILITHIUM, DILITHIUM2, 0, 0, 0},
 	{ "dilithium1", "DILITHIUM", NULL,
-		KEY_DILITHIUM, DILITHIUM1, 0, 0},
+		KEY_DILITHIUM, DILITHIUM1, 0, 0, 0},
 #ifdef WITH_XMSS
 	{ "ssh-xmss@openssh.com", "XMSS", NULL, KEY_XMSS, 0, 0, 0 },
 	{ "ssh-xmss-cert-v01@openssh.com", "XMSS-CERT", NULL,
 	    KEY_XMSS_CERT, 0, 1, 0 },
 #endif /* WITH_XMSS */
 #ifdef WITH_OPENSSL
-	{ "ssh-rsa", "RSA", NULL, KEY_RSA, 0, 0, 0 },
-	{ "rsa-sha2-256", "RSA", NULL, KEY_RSA, 0, 0, 1 },
-	{ "rsa-sha2-512", "RSA", NULL, KEY_RSA, 0, 0, 1 },
-	{ "ssh-dss", "DSA", NULL, KEY_DSA, 0, 0, 0 },
+	{ "ssh-rsa", "RSA", NULL, KEY_RSA, 0, 0, 0, 0 },
+	{ "rsa-sha2-256", "RSA", NULL, KEY_RSA, 0, 0, 0, 1 },
+	{ "rsa-sha2-512", "RSA", NULL, KEY_RSA, 0, 0, 0, 1 },
+	{ "ssh-dss", "DSA", NULL, KEY_DSA, 0, 0, 0, 0 },
 # ifdef OPENSSL_HAS_ECC
 	{ "ecdsa-sha2-nistp256", "ECDSA", NULL,
-	    KEY_ECDSA, NID_X9_62_prime256v1, 0, 0 },
+	    KEY_ECDSA, 0, NID_X9_62_prime256v1, 0, 0 },
 	{ "ecdsa-sha2-nistp384", "ECDSA", NULL,
-	    KEY_ECDSA, NID_secp384r1, 0, 0 },
+	    KEY_ECDSA, 0, NID_secp384r1, 0, 0 },
 #  ifdef OPENSSL_HAS_NISTP521
 	{ "ecdsa-sha2-nistp521", "ECDSA", NULL,
-	    KEY_ECDSA, NID_secp521r1, 0, 0 },
+	    KEY_ECDSA, 0, NID_secp521r1, 0, 0 },
 #  endif /* OPENSSL_HAS_NISTP521 */
 	{ "sk-ecdsa-sha2-nistp256@openssh.com", "ECDSA-SK", NULL,
-	    KEY_ECDSA_SK, NID_X9_62_prime256v1, 0, 0 },
+	    KEY_ECDSA_SK, 0, NID_X9_62_prime256v1, 0, 0 },
 # endif /* OPENSSL_HAS_ECC */
 	{ "ssh-rsa-cert-v01@openssh.com", "RSA-CERT", NULL,
-	    KEY_RSA_CERT, 0, 1, 0 },
+	    KEY_RSA_CERT, 0, 0, 1, 0 },
 	{ "rsa-sha2-256-cert-v01@openssh.com", "RSA-CERT",
-	    "rsa-sha2-256", KEY_RSA_CERT, 0, 1, 1 },
+	    "rsa-sha2-256", 0, KEY_RSA_CERT, 0, 1, 1 },
 	{ "rsa-sha2-512-cert-v01@openssh.com", "RSA-CERT",
-	    "rsa-sha2-512", KEY_RSA_CERT, 0, 1, 1 },
+	    "rsa-sha2-512", 0, KEY_RSA_CERT, 0, 1, 1 },
 	{ "ssh-dss-cert-v01@openssh.com", "DSA-CERT", NULL,
-	    KEY_DSA_CERT, 0, 1, 0 },
+	    KEY_DSA_CERT, 0, 0, 1, 0 },
 # ifdef OPENSSL_HAS_ECC
 	{ "ecdsa-sha2-nistp256-cert-v01@openssh.com", "ECDSA-CERT", NULL,
-	    KEY_ECDSA_CERT, NID_X9_62_prime256v1, 1, 0 },
+	    KEY_ECDSA_CERT, 0, NID_X9_62_prime256v1, 1, 0 },
 	{ "ecdsa-sha2-nistp384-cert-v01@openssh.com", "ECDSA-CERT", NULL,
-	    KEY_ECDSA_CERT, NID_secp384r1, 1, 0 },
+	    KEY_ECDSA_CERT, 0, NID_secp384r1, 1, 0 },
 #  ifdef OPENSSL_HAS_NISTP521
 	{ "ecdsa-sha2-nistp521-cert-v01@openssh.com", "ECDSA-CERT", NULL,
-	   KEY_ECDSA_CERT, NID_secp521r1, 1, 0 },
+	   KEY_ECDSA_CERT, 0, NID_secp521r1, 1, 0 },
 #  endif /* OPENSSL_HAS_NISTP521 */
 	{ "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com", "ECDSA-SK-CERT", NULL,
-	    KEY_ECDSA_SK_CERT, NID_X9_62_prime256v1, 1, 0 },
+	    KEY_ECDSA_SK_CERT, 0, NID_X9_62_prime256v1, 1, 0 },
 # endif /* OPENSSL_HAS_ECC */
 #endif /* WITH_OPENSSL */
-	{ NULL, NULL, NULL, -1, -1, 0, 0 }
+	{ NULL, NULL, NULL, -1, -1, -1, 0, 0 }
 };
 
 const char *
@@ -178,12 +179,12 @@ sshkey_type(const struct sshkey *k)
 }
 
 static const char *
-sshkey_ssh_name_from_type_nid(int type, int nid)
+sshkey_ssh_name_from_type_variant_nid(int type, int variant, int nid)
 {
 	const struct keytype *kt;
 
 	for (kt = keytypes; kt->type != -1; kt++) {
-		if (kt->type == type && (kt->nid == 0 || kt->nid == nid))
+		if (kt->type == type && (kt->variant == 0 || kt->variant == variant) && (kt->nid == 0 || kt->nid == nid))
 			return kt->name;
 	}
 	return "ssh-unknown";
@@ -204,14 +205,14 @@ sshkey_type_is_cert(int type)
 const char *
 sshkey_ssh_name(const struct sshkey *k)
 {
-	return sshkey_ssh_name_from_type_nid(k->type, k->ecdsa_nid);
+	return sshkey_ssh_name_from_type_variant_nid(k->type, k->variant, k->ecdsa_nid);
 }
 
 const char *
 sshkey_ssh_name_plain(const struct sshkey *k)
 {
-	return sshkey_ssh_name_from_type_nid(sshkey_type_plain(k->type),
-	    k->ecdsa_nid);
+	return sshkey_ssh_name_from_type_variant_nid(sshkey_type_plain(k->type),
+	    k->variant, k->ecdsa_nid);
 }
 
 int
@@ -507,20 +508,20 @@ sshkey_ec_nid_to_hash_alg(int nid)
 }
 #endif /* WITH_OPENSSL */
 
-int  sshkey_dilithium_nid_from_name(const char * name) {
+int  sshkey_dilithium_variant_from_name(const char * name) {
 	const struct keytype *kt;
 
 	for (kt = keytypes; kt->type != -1; kt++) {
 		if (kt->type != KEY_DILITHIUM)
 			continue;
 		if (kt->name != NULL && strcmp(name, kt->name) == 0)
-			return kt->nid;
+			return kt->variant;
 	}
 
 	return -1;
 }
-int  sshkey_dilithium_nid_to_bits(int nid) {
-	switch (nid) {
+int  sshkey_dilithium_variant_to_bits(int variant) {
+	switch (variant) {
 	case DILITHIUM4:
 		return 26928;
 	case DILITHIUM3:
@@ -533,7 +534,7 @@ int  sshkey_dilithium_nid_to_bits(int nid) {
 		return 0;
 	}
 }
-int  sshkey_dilithium_bits_to_nid(int bits) {
+int  sshkey_dilithium_bits_to_variant(int bits) {
 	switch (bits) {
 	case 26928:
 		return DILITHIUM4;
@@ -548,9 +549,9 @@ int  sshkey_dilithium_bits_to_nid(int bits) {
 	}
 }
 const char *
-sshkey_dilithium_nid_to_name(int nid)
+sshkey_dilithium_variant_to_name(int variant)
 {
-	switch (nid) {
+	switch (variant) {
 	case DILITHIUM1:
 		return "dilithium1";
 	case DILITHIUM2:
@@ -616,6 +617,7 @@ sshkey_new(int type)
 	if ((k = calloc(1, sizeof(*k))) == NULL)
 		return NULL;
 	k->type = type;
+	k->variant = -1;
 	k->ecdsa = NULL;
 	k->ecdsa_nid = -1;
 	k->dsa = NULL;
@@ -891,7 +893,7 @@ to_blob_buf(const struct sshkey *key, struct sshbuf *b, int force_plain,
 			return SSH_ERR_KEY_LACKS_CERTBLOB;
 	}
 	type = force_plain ? sshkey_type_plain(key->type) : key->type;
-	typename = sshkey_ssh_name_from_type_nid(type, key->ecdsa_nid);
+	typename = sshkey_ssh_name_from_type_variant_nid(type, key->variant, key->ecdsa_nid);
 
 	switch (type) {
 #ifdef WITH_OPENSSL
@@ -1795,11 +1797,11 @@ ecdsa_generate_private_key(u_int bits, int *nid, EC_KEY **ecdsap)
 #endif /* WITH_OPENSSL */
 
 static int
-dilithium_generate_keypair(u_int bits, int *nid, DILITHIUM **dilithiump) {
+dilithium_generate_keypair(u_int bits, int *variant, DILITHIUM **dilithiump) {
 	DILITHIUM *private;
 	int ret = SSH_ERR_INTERNAL_ERROR;
 
-	if ((*nid = sshkey_dilithium_bits_to_nid(bits)) == -1)
+	if ((*variant = sshkey_dilithium_bits_to_variant(bits)) == -1)
 		return SSH_ERR_KEY_LENGTH;
 
 	if ((private = dilithium_new()) == NULL) {
@@ -1807,7 +1809,7 @@ dilithium_generate_keypair(u_int bits, int *nid, DILITHIUM **dilithiump) {
 		goto out;
 	}
 
-	if (dilithium_prepare(private, *nid) != 0) {
+	if (dilithium_prepare(private, *variant) != 0) {
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
@@ -1847,7 +1849,7 @@ sshkey_generate(int type, u_int bits, struct sshkey **keyp)
 		ret = 0;
 		break;
 	case KEY_DILITHIUM:
-		ret = dilithium_generate_keypair(bits, &k->ecdsa_nid, &k->dilithium);
+		ret = dilithium_generate_keypair(bits, &k->variant, &k->dilithium);
 		break;
 #ifdef WITH_XMSS
 	case KEY_XMSS:
@@ -2050,7 +2052,7 @@ sshkey_from_private(const struct sshkey *k, struct sshkey **pkp)
 		break;
 	case KEY_DILITHIUM:
 		if (k->dilithium->pk != NULL) {
-			n->ecdsa_nid = k->ecdsa_nid;
+			n->variant = k->variant;
 			n->dilithium->type = k->dilithium->type;
 			if ((n->dilithium->pk = malloc(dilithium_pk_bytes(k->dilithium))) == NULL) {
 				r = SSH_ERR_ALLOC_FAIL;
@@ -2823,8 +2825,8 @@ sshkey_sigalg_by_name(const char *name)
 			return kt->sigalg;
 		if (!kt->cert)
 			return kt->name;
-		return sshkey_ssh_name_from_type_nid(
-		    sshkey_type_plain(kt->type), kt->nid);
+		return sshkey_ssh_name_from_type_variant_nid(
+		    sshkey_type_plain(kt->type), kt->variant, kt->nid);
 	}
 	return NULL;
 }
@@ -3448,7 +3450,7 @@ sshkey_private_serialize_opt(struct sshkey *key, struct sshbuf *buf,
 			goto out;
 		break;
 	case KEY_DILITHIUM:
-		if ((r = sshbuf_put_cstring(b, sshkey_dilithium_nid_to_name(key->type))) != 0 ||
+		if ((r = sshbuf_put_cstring(b, sshkey_dilithium_variant_to_name(key->variant))) != 0 ||
 			(r = sshbuf_put_string(b, key->dilithium->sk, dilithium_sk_bytes(key->dilithium))) != 0)
 			goto out;
 		break;
