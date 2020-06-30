@@ -251,6 +251,7 @@ int	 sshkey_get_sigtype(const u_char *, size_t, char **);
 int  sshkey_dilithium_variant_from_name(const char *);
 int  sshkey_dilithium_variant_to_bits(int);
 int  sshkey_dilithium_bits_to_variant(int);
+int sshkey_dilithium_variant_to_hash_alg(int);
 
 /* for debug */
 void	sshkey_dump_ec_point(const EC_GROUP *, const EC_POINT *);
@@ -306,6 +307,11 @@ int ssh_dss_verify(const struct sshkey *key,
 int ssh_ecdsa_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
     const u_char *data, size_t datalen, u_int compat);
 int ssh_ecdsa_verify(const struct sshkey *key,
+    const u_char *signature, size_t signaturelen,
+    const u_char *data, size_t datalen, u_int compat);
+int ssh_dilithium_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
+    const u_char *data, size_t datalen, u_int compat);
+int ssh_dilithium_verify(const struct sshkey *key,
     const u_char *signature, size_t signaturelen,
     const u_char *data, size_t datalen, u_int compat);
 int ssh_ecdsa_sk_verify(const struct sshkey *key,

@@ -520,6 +520,7 @@ int  sshkey_dilithium_variant_from_name(const char * name) {
 
 	return -1;
 }
+
 int  sshkey_dilithium_variant_to_bits(int variant) {
 	switch (variant) {
 	case DILITHIUM4:
@@ -563,6 +564,11 @@ sshkey_dilithium_variant_to_name(int variant)
 	default:
 		return NULL;
 	}
+}
+
+int
+sshkey_dilithium_variant_to_hash_alg(int variant) {
+	return SSH_DIGEST_SHA512;
 }
 
 static void
@@ -837,6 +843,12 @@ sshkey_equal_public(const struct sshkey *a, const struct sshkey *b)
 		return 1;
 # endif /* OPENSSL_HAS_ECC */
 #endif /* WITH_OPENSSL */
+	case KEY_DILITHIUM:
+		if (a->dilithium == NULL || b->dilithium == NULL || a->dilithium->pk == NULL ||
+			b->dilithium->pk == NULL || a->variant != b->variant)
+			return 0;
+
+		return memcmp(a->dilithium->pk, b->dilithium->pk, dilithium_pk_bytes(a->dilithium)) == 0;
 	case KEY_ED25519_SK:
 	case KEY_ED25519_SK_CERT:
 		if (a->sk_application == NULL || b->sk_application == NULL)
@@ -1416,6 +1428,7 @@ sshkey_read(struct sshkey *ret, char **cpp)
 	case KEY_ECDSA_CERT:
 	case KEY_ECDSA_SK_CERT:
 	case KEY_RSA_CERT:
+	case KEY_DILITHIUM:
 	case KEY_ED25519_CERT:
 	case KEY_ED25519_SK_CERT:
 #ifdef WITH_XMSS
@@ -1533,6 +1546,12 @@ sshkey_read(struct sshkey *ret, char **cpp)
 		break;
 # endif /* OPENSSL_HAS_ECC */
 #endif /* WITH_OPENSSL */
+	case KEY_DILITHIUM:
+		dilithium_free(ret->dilithium);
+		ret->dilithium = k->dilithium;
+		ret->variant = k->variant;
+		k->dilithium = NULL;
+		k->variant = -1;
 	case KEY_ED25519:
 		freezero(ret->ed25519_pk, ED25519_PK_SZ);
 		ret->ed25519_pk = k->ed25519_pk;
@@ -2628,6 +2647,20 @@ sshkey_from_blob_internal(struct sshbuf *b, struct sshkey **keyp,
 		break;
 # endif /* OPENSSL_HAS_ECC */
 #endif /* WITH_OPENSSL */
+	case KEY_DILITHIUM:
+		if ((key = sshkey_new(type)) == NULL) {
+			ret = SSH_ERR_ALLOC_FAIL;
+			goto out;
+		}
+
+		key->variant = key->dilithium->type = sshkey_dilithium_variant_from_name(ktype);
+
+		if (sshbuf_get_string(b, &(key->dilithium->pk), NULL) != 0) {
+			ret = SSH_ERR_INVALID_FORMAT;
+			goto out;
+		}
+
+		break;
 	case KEY_ED25519_CERT:
 	case KEY_ED25519_SK_CERT:
 		/* Skip nonce */
@@ -2888,6 +2921,9 @@ sshkey_sign(struct sshkey *key,
 		r = ssh_rsa_sign(key, sigp, lenp, data, datalen, alg);
 		break;
 #endif /* WITH_OPENSSL */
+	case KEY_DILITHIUM:
+		r = ssh_dilithium_sign(key, sigp, lenp, data, datalen, compat);
+		break;
 	case KEY_ED25519:
 	case KEY_ED25519_CERT:
 		r = ssh_ed25519_sign(key, sigp, lenp, data, datalen, compat);
@@ -2946,6 +2982,8 @@ sshkey_verify(const struct sshkey *key,
 	case KEY_RSA:
 		return ssh_rsa_verify(key, sig, siglen, data, dlen, alg);
 #endif /* WITH_OPENSSL */
+	case KEY_DILITHIUM:
+		return ssh_dilithium_verify(key, sig, siglen, data, dlen, compat);
 	case KEY_ED25519:
 	case KEY_ED25519_CERT:
 		return ssh_ed25519_verify(key, sig, siglen, data, dlen, compat);
@@ -3450,7 +3488,7 @@ sshkey_private_serialize_opt(struct sshkey *key, struct sshbuf *buf,
 			goto out;
 		break;
 	case KEY_DILITHIUM:
-		if ((r = sshbuf_put_cstring(b, sshkey_dilithium_variant_to_name(key->variant))) != 0 ||
+		if ((r = sshbuf_put_string(b, key->dilithium->pk, dilithium_pk_bytes(key->dilithium))) != 0 ||
 			(r = sshbuf_put_string(b, key->dilithium->sk, dilithium_sk_bytes(key->dilithium))) != 0)
 			goto out;
 		break;
@@ -3730,6 +3768,18 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 			goto out;
 		break;
 #endif /* WITH_OPENSSL */
+	case KEY_DILITHIUM:
+		if ((k = sshkey_new(type)) == NULL) {
+			r = SSH_ERR_ALLOC_FAIL;
+			goto out;
+		}
+
+		k->variant = k->dilithium->type = sshkey_dilithium_variant_from_name(tname);
+
+		if	((r = sshbuf_get_string(buf, &(k->dilithium->pk), NULL)) != 0 ||
+			 (r = sshbuf_get_string(buf, &(k->dilithium->sk), NULL)) != 0)
+			goto out;
+		break;
 	case KEY_ED25519:
 		if ((k = sshkey_new(type)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
