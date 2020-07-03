@@ -149,9 +149,9 @@ AC_COMPILE_IFELSE([AC_LANG_SOURCE([[int main(void) { return 0; }]])],
 	  WERROR="" ]
 )
 
-# DILITHIUM
-CPPFLAGS="$CPPFLAGS -I./crystals/dilithium/avx2 -DDILITHIUM_MODE=4"
-LIBS="$LIBS -L./crystals/dilithium/avx2 -lpqcrystals_dilithium_avx2"
+# DILITHIUM & KYBER
+CPPFLAGS="$CPPFLAGS -I./crystals/dilithium/avx2 -I./crystals/kyber/avx2"
+LIBS="$LIBS -L./crystals/dilithium/avx2 -lpqcrystals_dilithium_avx2 -L./crystals/kyber/avx2 -lpqcrystals_kyber_avx2"
 
 CFLAGS="$saved_CFLAGS"
 
