@@ -121,6 +121,7 @@ ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
 		ssh->kex->kex[KEX_ECDH_SHA2] = kex_gen_server;
 # endif
 #endif /* WITH_OPENSSL */
+		ssh->kex->kex[KEX_KYBER_SHA256] = kex_gen_3way_server;
 		ssh->kex->kex[KEX_C25519_SHA256] = kex_gen_server;
 		ssh->kex->kex[KEX_KEM_SNTRUP4591761X25519_SHA512] = kex_gen_server;
 		ssh->kex->load_host_public_key=&_ssh_host_public_key;
@@ -139,6 +140,7 @@ ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
 		ssh->kex->kex[KEX_ECDH_SHA2] = kex_gen_client;
 # endif
 #endif /* WITH_OPENSSL */
+		ssh->kex->kex[KEX_KYBER_SHA256] = kex_gen_3way_client;
 		ssh->kex->kex[KEX_C25519_SHA256] = kex_gen_client;
 		ssh->kex->kex[KEX_KEM_SNTRUP4591761X25519_SHA512] = kex_gen_client;
 		ssh->kex->verify_host_key =&_ssh_verify_host_key;

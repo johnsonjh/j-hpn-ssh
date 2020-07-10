@@ -107,6 +107,11 @@
 #define SSH2_MSG_KEX_ECDH_INIT				30
 #define SSH2_MSG_KEX_ECDH_REPLY				31
 
+/* 3way kex */
+#define SSH2_MSG_KEX_3WAY_INIT              35
+#define SSH2_MSG_KEX_3WAY_REPLY             36
+#define SSH2_MSG_KEX_3WAY_FINISH            37
+
 /* user authentication: generic */
 
 #define SSH2_MSG_USERAUTH_REQUEST			50

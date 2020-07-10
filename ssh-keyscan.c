@@ -292,6 +292,7 @@ keygrab_ssh2(con *c)
 	c->c_ssh->kex->kex[KEX_ECDH_SHA2] = kex_gen_client;
 # endif
 #endif
+	c->c_ssh->kex->kex[KEX_KYBER_SHA256] = kex_gen_3way_client;
 	c->c_ssh->kex->kex[KEX_C25519_SHA256] = kex_gen_client;
 	c->c_ssh->kex->kex[KEX_KEM_SNTRUP4591761X25519_SHA512] = kex_gen_client;
 	ssh_set_verify_host_key_callback(c->c_ssh, key_print_wrapper);

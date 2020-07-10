@@ -1713,6 +1713,7 @@ monitor_apply_keystate(struct ssh *ssh, struct monitor *pmonitor)
 		kex->kex[KEX_ECDH_SHA2] = kex_gen_server;
 # endif
 #endif /* WITH_OPENSSL */
+		kex->kex[KEX_KYBER_SHA256] = kex_gen_3way_server;
 		kex->kex[KEX_C25519_SHA256] = kex_gen_server;
 		kex->kex[KEX_KEM_SNTRUP4591761X25519_SHA512] = kex_gen_server;
 		kex->load_host_public_key=&get_hostkey_public_by_type;

@@ -113,6 +113,7 @@ static const struct kexalg kexalgs[] = {
 	{ KEX_SNTRUP4591761X25519_SHA512, KEX_KEM_SNTRUP4591761X25519_SHA512, 0,
 	    SSH_DIGEST_SHA512 },
 #endif /* HAVE_EVP_SHA256 || !WITH_OPENSSL */
+	{ KEX_KYBER_SHA256_NAME, KEX_KYBER_SHA256, 0, SSH_DIGEST_SHA256},
 	{ NULL, 0, -1, -1},
 };
 
@@ -687,6 +688,7 @@ kex_free(struct kex *kex)
 	EC_KEY_free(kex->ec_client_key);
 #endif /* OPENSSL_HAS_ECC */
 #endif /* WITH_OPENSSL */
+	kyber_free(kex->kyber);
 	for (mode = 0; mode < MODE_MAX; mode++) {
 		kex_free_newkeys(kex->newkeys[mode]);
 		kex->newkeys[mode] = NULL;

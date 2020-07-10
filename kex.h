@@ -28,6 +28,7 @@
 
 #include "mac.h"
 #include "crypto_api.h"
+#include "crystals/kyber/avx2/generic_api.h"
 
 #ifdef WITH_OPENSSL
 # include <openssl/bn.h>
@@ -63,6 +64,7 @@
 #define	KEX_CURVE25519_SHA256		"curve25519-sha256"
 #define	KEX_CURVE25519_SHA256_OLD	"curve25519-sha256@libssh.org"
 #define	KEX_SNTRUP4591761X25519_SHA512	"sntrup4591761x25519-sha512@tinyssh.org"
+#define KEX_KYBER_SHA256_NAME "kyber-sha256"
 
 #define COMP_NONE	0
 /* pre-auth compression (COMP_ZLIB) is only supported in the client */
@@ -102,6 +104,7 @@ enum kex_exchange {
 	KEX_ECDH_SHA2,
 	KEX_C25519_SHA256,
 	KEX_KEM_SNTRUP4591761X25519_SHA512,
+	KEX_KYBER_SHA256,
 	KEX_MAX
 };
 
@@ -149,6 +152,8 @@ struct kex {
 	struct sshbuf *peer;
 	struct sshbuf *client_version;
 	struct sshbuf *server_version;
+	struct sshbuf *tshared; /* Temporary shared secret for kex in 3 messages */
+	struct sshbuf *thash;
 	sig_atomic_t done;
 	u_int	flags;
 	int	hash_alg;
@@ -169,6 +174,7 @@ struct kex {
 	u_char c25519_client_key[CURVE25519_SIZE]; /* 25519 + KEM */
 	u_char c25519_client_pubkey[CURVE25519_SIZE]; /* 25519 */
 	u_char sntrup4591761_client_key[crypto_kem_sntrup4591761_SECRETKEYBYTES]; /* KEM */
+	KYBER *kyber;
 	struct sshbuf *client_pub;
 };
 
@@ -202,6 +208,8 @@ int	 kexgex_client(struct ssh *);
 int	 kexgex_server(struct ssh *);
 int	 kex_gen_client(struct ssh *);
 int	 kex_gen_server(struct ssh *);
+int  kex_gen_3way_client(struct ssh *);
+int  kex_gen_3way_server(struct ssh *);
 
 int	 kex_dh_keypair(struct kex *);
 int	 kex_dh_enc(struct kex *, const struct sshbuf *, struct sshbuf **,
@@ -217,6 +225,11 @@ int	 kex_c25519_keypair(struct kex *);
 int	 kex_c25519_enc(struct kex *, const struct sshbuf *, struct sshbuf **,
     struct sshbuf **);
 int	 kex_c25519_dec(struct kex *, const struct sshbuf *, struct sshbuf **);
+
+int	 kex_kyber_keypair(struct kex *);
+int kex_kyber_shared_to_client(struct kex *, const struct sshbuf *, struct sshbuf **, struct sshbuf **, struct sshbuf **);
+int kex_kyber_shared_to_server(struct kex *, const struct sshbuf *, const struct sshbuf *, struct sshbuf **, struct sshbuf **, struct sshbuf **);
+int kex_kyber_compute_shared(struct kex *, const struct sshbuf *, struct sshbuf **);
 
 int	 kex_kem_sntrup4591761x25519_keypair(struct kex *);
 int	 kex_kem_sntrup4591761x25519_enc(struct kex *, const struct sshbuf *,
