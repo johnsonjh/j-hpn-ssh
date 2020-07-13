@@ -2233,6 +2233,7 @@ kex_to_blob(struct sshbuf *m, struct kex *kex)
 	    (r = sshbuf_put_u32(m, kex->we_need)) != 0 ||
 	    (r = sshbuf_put_cstring(m, kex->hostkey_alg)) != 0 ||
 	    (r = sshbuf_put_u32(m, kex->hostkey_type)) != 0 ||
+	    (r = sshbuf_put_u32(m, kex->hostkey_variant)) != 0 ||
 	    (r = sshbuf_put_u32(m, kex->hostkey_nid)) != 0 ||
 	    (r = sshbuf_put_u32(m, kex->kex_type)) != 0 ||
 	    (r = sshbuf_put_stringb(m, kex->my)) != 0 ||
@@ -2395,6 +2396,7 @@ kex_from_blob(struct sshbuf *m, struct kex **kexp)
 	    (r = sshbuf_get_u32(m, &kex->we_need)) != 0 ||
 	    (r = sshbuf_get_cstring(m, &kex->hostkey_alg, NULL)) != 0 ||
 	    (r = sshbuf_get_u32(m, (u_int *)&kex->hostkey_type)) != 0 ||
+	    (r = sshbuf_get_u32(m, (u_int *)&kex->hostkey_variant)) != 0 ||
 	    (r = sshbuf_get_u32(m, (u_int *)&kex->hostkey_nid)) != 0 ||
 	    (r = sshbuf_get_u32(m, &kex->kex_type)) != 0 ||
 	    (r = sshbuf_get_stringb(m, kex->my)) != 0 ||

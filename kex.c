@@ -641,6 +641,7 @@ kex_new(void)
 		kex_free(kex);
 		return NULL;
 	}
+
 	return kex;
 }
 
@@ -698,6 +699,8 @@ kex_free(struct kex *kex)
 	sshbuf_free(kex->client_version);
 	sshbuf_free(kex->server_version);
 	sshbuf_free(kex->client_pub);
+	sshbuf_free(kex->tshared);
+	sshbuf_free(kex->thash);
 	free(kex->session_id);
 	free(kex->failed_choice);
 	free(kex->hostkey_alg);
@@ -853,6 +856,8 @@ choose_hostkeyalg(struct kex *k, char *client, char *server)
 		return SSH_ERR_INTERNAL_ERROR;
 	}
 	k->hostkey_nid = sshkey_ecdsa_nid_from_name(k->hostkey_alg);
+	k->hostkey_variant = sshkey_variant_from_name(k->hostkey_alg);
+
 	return 0;
 }
 
@@ -1106,9 +1111,9 @@ kex_load_hostkey(struct ssh *ssh, struct sshkey **prvp, struct sshkey **pubp)
 		return SSH_ERR_INVALID_ARGUMENT;
 	}
 	*pubp = kex->load_host_public_key(kex->hostkey_type,
-	    kex->hostkey_nid, ssh);
+	    kex->hostkey_variant, kex->hostkey_nid, ssh);
 	*prvp = kex->load_host_private_key(kex->hostkey_type,
-	    kex->hostkey_nid, ssh);
+	    kex->hostkey_variant, kex->hostkey_nid, ssh);
 	if (*pubp == NULL)
 		return SSH_ERR_NO_HOSTKEY_LOADED;
 	return 0;
@@ -1124,6 +1129,7 @@ kex_verify_host_key(struct ssh *ssh, struct sshkey *server_host_key)
 		return SSH_ERR_INVALID_ARGUMENT;
 	}
 	if (server_host_key->type != kex->hostkey_type ||
+		server_host_key->variant != kex->hostkey_variant ||
 	    (kex->hostkey_type == KEY_ECDSA &&
 	    server_host_key->ecdsa_nid != kex->hostkey_nid))
 		return SSH_ERR_KEY_TYPE_MISMATCH;

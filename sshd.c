@@ -642,6 +642,7 @@ list_hostkey_types(void)
 		case KEY_ECDSA_SK:
 		case KEY_ED25519_SK:
 		case KEY_XMSS:
+		case KEY_DILITHIUM:
 			append_hostkey_type(b, sshkey_ssh_name(key));
 			break;
 		}
@@ -675,7 +676,7 @@ list_hostkey_types(void)
 }
 
 static struct sshkey *
-get_hostkey_by_type(int type, int nid, int need_private, struct ssh *ssh)
+get_hostkey_by_type(int type, int variant, int nid, int need_private, struct ssh *ssh)
 {
 	u_int i;
 	struct sshkey *key;
@@ -697,7 +698,7 @@ get_hostkey_by_type(int type, int nid, int need_private, struct ssh *ssh)
 				key = sensitive_data.host_pubkeys[i];
 			break;
 		}
-		if (key == NULL || key->type != type)
+		if (key == NULL || key->type != type || key->variant != variant)
 			continue;
 		switch (type) {
 		case KEY_ECDSA:
@@ -716,15 +717,15 @@ get_hostkey_by_type(int type, int nid, int need_private, struct ssh *ssh)
 }
 
 struct sshkey *
-get_hostkey_public_by_type(int type, int nid, struct ssh *ssh)
+get_hostkey_public_by_type(int type, int variant, int nid, struct ssh *ssh)
 {
-	return get_hostkey_by_type(type, nid, 0, ssh);
+	return get_hostkey_by_type(type, variant, nid, 0, ssh);
 }
 
 struct sshkey *
-get_hostkey_private_by_type(int type, int nid, struct ssh *ssh)
+get_hostkey_private_by_type(int type, int variant, int nid, struct ssh *ssh)
 {
-	return get_hostkey_by_type(type, nid, 1, ssh);
+	return get_hostkey_by_type(type, variant, nid, 1, ssh);
 }
 
 struct sshkey *

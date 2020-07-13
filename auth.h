@@ -203,8 +203,8 @@ check_key_in_hostfiles(struct passwd *, struct sshkey *, const char *,
 /* hostkey handling */
 struct sshkey	*get_hostkey_by_index(int);
 struct sshkey	*get_hostkey_public_by_index(int, struct ssh *);
-struct sshkey	*get_hostkey_public_by_type(int, int, struct ssh *);
-struct sshkey	*get_hostkey_private_by_type(int, int, struct ssh *);
+struct sshkey	*get_hostkey_public_by_type(int, int, int, struct ssh *);
+struct sshkey	*get_hostkey_private_by_type(int, int, int, struct ssh *);
 int	 get_hostkey_index(struct sshkey *, int, struct ssh *);
 int	 sshd_hostkey_sign(struct ssh *, struct sshkey *, struct sshkey *,
     u_char **, size_t *, const u_char *, size_t, const char *);

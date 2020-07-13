@@ -145,6 +145,7 @@ struct kex {
 	char	*hostkey_alg;
 	int	hostkey_type;
 	int	hostkey_nid;
+	int hostkey_variant;
 	u_int	kex_type;
 	char	*server_sig_algs;
 	int	ext_info_c;
@@ -160,8 +161,8 @@ struct kex {
 	int	ec_nid;
 	char	*failed_choice;
 	int	(*verify_host_key)(struct sshkey *, struct ssh *);
-	struct sshkey *(*load_host_public_key)(int, int, struct ssh *);
-	struct sshkey *(*load_host_private_key)(int, int, struct ssh *);
+	struct sshkey *(*load_host_public_key)(int, int, int, struct ssh *);
+	struct sshkey *(*load_host_private_key)(int, int, int, struct ssh *);
 	int	(*host_key_index)(struct sshkey *, int, struct ssh *);
 	int	(*sign)(struct ssh *, struct sshkey *, struct sshkey *,
 	    u_char **, size_t *, const u_char *, size_t, const char *);
