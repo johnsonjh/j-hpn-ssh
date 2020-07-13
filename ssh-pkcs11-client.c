@@ -125,7 +125,7 @@ rsa_encrypt(int flen, const u_char *from, u_char *to, RSA *rsa, int padding)
 
 	if (padding != RSA_PKCS1_PADDING)
 		goto fail;
-	key = sshkey_new(KEY_UNSPEC);
+	key = sshkey_new(KEY_UNSPEC, 0);
 	if (key == NULL) {
 		error("%s: sshkey_new failed", __func__);
 		goto fail;
@@ -182,7 +182,7 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len, const BIGNUM *inv,
 		goto fail;
 	}
 
-	key = sshkey_new(KEY_UNSPEC);
+	key = sshkey_new(KEY_UNSPEC, 0);
 	if (key == NULL) {
 		error("%s: sshkey_new failed", __func__);
 		goto fail;

@@ -188,26 +188,26 @@ sshkey_tests(void)
 	struct sshbuf *b;
 
 	TEST_START("new invalid");
-	k1 = sshkey_new(-42);
+	k1 = sshkey_new(-42, -1);
 	ASSERT_PTR_EQ(k1, NULL);
 	TEST_DONE();
 
 	TEST_START("new/free KEY_UNSPEC");
-	k1 = sshkey_new(KEY_UNSPEC);
+	k1 = sshkey_new(KEY_UNSPEC, -1);
 	ASSERT_PTR_NE(k1, NULL);
 	sshkey_free(k1);
 	TEST_DONE();
 
 #ifdef WITH_OPENSSL
 	TEST_START("new/free KEY_RSA");
-	k1 = sshkey_new(KEY_RSA);
+	k1 = sshkey_new(KEY_RSA, 0);
 	ASSERT_PTR_NE(k1, NULL);
 	ASSERT_PTR_NE(k1->rsa, NULL);
 	sshkey_free(k1);
 	TEST_DONE();
 
 	TEST_START("new/free KEY_DSA");
-	k1 = sshkey_new(KEY_DSA);
+	k1 = sshkey_new(KEY_DSA, 0);
 	ASSERT_PTR_NE(k1, NULL);
 	ASSERT_PTR_NE(k1->dsa, NULL);
 	sshkey_free(k1);
@@ -215,7 +215,7 @@ sshkey_tests(void)
 
 #ifdef OPENSSL_HAS_ECC
 	TEST_START("new/free KEY_ECDSA");
-	k1 = sshkey_new(KEY_ECDSA);
+	k1 = sshkey_new(KEY_ECDSA, 0);
 	ASSERT_PTR_NE(k1, NULL);
 	ASSERT_PTR_EQ(k1->ecdsa, NULL);  /* Can't allocate without NID */
 	sshkey_free(k1);
@@ -223,7 +223,7 @@ sshkey_tests(void)
 #endif
 
 	TEST_START("new/free KEY_ED25519");
-	k1 = sshkey_new(KEY_ED25519);
+	k1 = sshkey_new(KEY_ED25519, 0);
 	ASSERT_PTR_NE(k1, NULL);
 	/* These should be blank until key loaded or generated */
 	ASSERT_PTR_EQ(k1->ed25519_sk, NULL);

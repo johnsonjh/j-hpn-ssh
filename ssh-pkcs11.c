@@ -793,7 +793,7 @@ pkcs11_fetch_ecdsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
 	if (pkcs11_ecdsa_wrap(p, slotidx, &key_attr[0], ec))
 		goto fail;
 
-	key = sshkey_new(KEY_UNSPEC);
+	key = sshkey_new(KEY_UNSPEC, 0);
 	if (key == NULL) {
 		error("sshkey_new failed");
 		goto fail;
@@ -889,7 +889,7 @@ pkcs11_fetch_rsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
 	if (pkcs11_rsa_wrap(p, slotidx, &key_attr[0], rsa))
 		goto fail;
 
-	key = sshkey_new(KEY_UNSPEC);
+	key = sshkey_new(KEY_UNSPEC, 0);
 	if (key == NULL) {
 		error("sshkey_new failed");
 		goto fail;
@@ -1004,7 +1004,7 @@ pkcs11_fetch_x509_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
 		if (pkcs11_rsa_wrap(p, slotidx, &cert_attr[0], rsa))
 			goto out;
 
-		key = sshkey_new(KEY_UNSPEC);
+		key = sshkey_new(KEY_UNSPEC, 0);
 		if (key == NULL) {
 			error("sshkey_new failed");
 			goto out;
@@ -1034,7 +1034,7 @@ pkcs11_fetch_x509_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
 		if (pkcs11_ecdsa_wrap(p, slotidx, &cert_attr[0], ec))
 			goto out;
 
-		key = sshkey_new(KEY_UNSPEC);
+		key = sshkey_new(KEY_UNSPEC, 0);
 		if (key == NULL) {
 			error("sshkey_new failed");
 			goto out;

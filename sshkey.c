@@ -422,6 +422,19 @@ sshkey_type_plain(int type)
 	}
 }
 
+int  sshkey_variant_from_name(const char * name) {
+	const struct keytype *kt;
+
+	for (kt = keytypes; kt->type != -1; kt++) {
+		if (kt->type != KEY_DILITHIUM)
+			continue;
+		if (kt->name != NULL && strcmp(name, kt->name) == 0)
+			return kt->variant;
+	}
+
+	return -1;
+}
+
 #ifdef WITH_OPENSSL
 /* XXX: these are really begging for a table-driven approach */
 int
@@ -507,19 +520,6 @@ sshkey_ec_nid_to_hash_alg(int nid)
 		return SSH_DIGEST_SHA512;
 }
 #endif /* WITH_OPENSSL */
-
-int  sshkey_dilithium_variant_from_name(const char * name) {
-	const struct keytype *kt;
-
-	for (kt = keytypes; kt->type != -1; kt++) {
-		if (kt->type != KEY_DILITHIUM)
-			continue;
-		if (kt->name != NULL && strcmp(name, kt->name) == 0)
-			return kt->variant;
-	}
-
-	return -1;
-}
 
 int  sshkey_dilithium_variant_to_bits(int variant) {
 	switch (variant) {
@@ -611,7 +611,7 @@ cert_new(void)
 }
 
 struct sshkey *
-sshkey_new(int type)
+sshkey_new(int type, int variant)
 {
 	struct sshkey *k;
 #ifdef WITH_OPENSSL
@@ -623,7 +623,7 @@ sshkey_new(int type)
 	if ((k = calloc(1, sizeof(*k))) == NULL)
 		return NULL;
 	k->type = type;
-	k->variant = -1;
+	k->variant = variant;
 	k->ecdsa = NULL;
 	k->ecdsa_nid = -1;
 	k->dsa = NULL;
@@ -1410,7 +1410,7 @@ sshkey_read(struct sshkey *ret, char **cpp)
 	struct sshkey *k;
 	char *cp, *blobcopy;
 	size_t space;
-	int r, type, curve_nid = -1;
+	int r, type, variant, curve_nid = -1;
 	struct sshbuf *blob;
 
 	if (ret == NULL)
@@ -1492,6 +1492,7 @@ sshkey_read(struct sshkey *ret, char **cpp)
 
 	/* Fill in ret from parsed key */
 	ret->type = type;
+	ret->variant = k->variant;
 	if (sshkey_is_cert(ret)) {
 		if (!sshkey_is_cert(k)) {
 			sshkey_free(k);
@@ -1549,7 +1550,6 @@ sshkey_read(struct sshkey *ret, char **cpp)
 	case KEY_DILITHIUM:
 		dilithium_free(ret->dilithium);
 		ret->dilithium = k->dilithium;
-		ret->variant = k->variant;
 		k->dilithium = NULL;
 		k->variant = -1;
 	case KEY_ED25519:
@@ -1855,7 +1855,7 @@ sshkey_generate(int type, u_int bits, struct sshkey **keyp)
 	if (keyp == NULL)
 		return SSH_ERR_INVALID_ARGUMENT;
 	*keyp = NULL;
-	if ((k = sshkey_new(KEY_UNSPEC)) == NULL)
+	if ((k = sshkey_new(KEY_UNSPEC, 0)) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
 	switch (type) {
 	case KEY_ED25519:
@@ -1984,7 +1984,7 @@ sshkey_from_private(const struct sshkey *k, struct sshkey **pkp)
 #endif /* WITH_OPENSSL */
 
 	*pkp = NULL;
-	if ((n = sshkey_new(k->type)) == NULL) {
+	if ((n = sshkey_new(k->type, k->variant)) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
@@ -2071,7 +2071,6 @@ sshkey_from_private(const struct sshkey *k, struct sshkey **pkp)
 		break;
 	case KEY_DILITHIUM:
 		if (k->dilithium->pk != NULL) {
-			n->variant = k->variant;
 			n->dilithium->type = k->dilithium->type;
 			if ((n->dilithium->pk = malloc(dilithium_pk_bytes(k->dilithium))) == NULL) {
 				r = SSH_ERR_ALLOC_FAIL;
@@ -2486,7 +2485,7 @@ static int
 sshkey_from_blob_internal(struct sshbuf *b, struct sshkey **keyp,
     int allow_cert)
 {
-	int type, ret = SSH_ERR_INTERNAL_ERROR;
+	int type, variant, ret = SSH_ERR_INTERNAL_ERROR;
 	char *ktype = NULL, *curve = NULL, *xmss_name = NULL;
 	struct sshkey *key = NULL;
 	size_t len;
@@ -2515,6 +2514,7 @@ sshkey_from_blob_internal(struct sshbuf *b, struct sshkey **keyp,
 	}
 
 	type = sshkey_type_from_name(ktype);
+	variant = sshkey_variant_from_name(ktype);
 	if (!allow_cert && sshkey_type_is_cert(type)) {
 		ret = SSH_ERR_KEY_CERT_INVALID_SIGN_KEY;
 		goto out;
@@ -2529,7 +2529,7 @@ sshkey_from_blob_internal(struct sshbuf *b, struct sshkey **keyp,
 		}
 		/* FALLTHROUGH */
 	case KEY_RSA:
-		if ((key = sshkey_new(type)) == NULL) {
+		if ((key = sshkey_new(type, variant)) == NULL) {
 			ret = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -2557,7 +2557,7 @@ sshkey_from_blob_internal(struct sshbuf *b, struct sshkey **keyp,
 		}
 		/* FALLTHROUGH */
 	case KEY_DSA:
-		if ((key = sshkey_new(type)) == NULL) {
+		if ((key = sshkey_new(type, variant)) == NULL) {
 			ret = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -2593,7 +2593,7 @@ sshkey_from_blob_internal(struct sshbuf *b, struct sshkey **keyp,
 		/* FALLTHROUGH */
 	case KEY_ECDSA:
 	case KEY_ECDSA_SK:
-		if ((key = sshkey_new(type)) == NULL) {
+		if ((key = sshkey_new(type, variant)) == NULL) {
 			ret = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -2648,12 +2648,12 @@ sshkey_from_blob_internal(struct sshbuf *b, struct sshkey **keyp,
 # endif /* OPENSSL_HAS_ECC */
 #endif /* WITH_OPENSSL */
 	case KEY_DILITHIUM:
-		if ((key = sshkey_new(type)) == NULL) {
+		if ((key = sshkey_new(type, variant)) == NULL) {
 			ret = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
 
-		key->variant = key->dilithium->type = sshkey_dilithium_variant_from_name(ktype);
+		key->dilithium->type = variant;
 
 		if (sshbuf_get_string(b, &(key->dilithium->pk), NULL) != 0) {
 			ret = SSH_ERR_INVALID_FORMAT;
@@ -2677,7 +2677,7 @@ sshkey_from_blob_internal(struct sshbuf *b, struct sshkey **keyp,
 			ret = SSH_ERR_INVALID_FORMAT;
 			goto out;
 		}
-		if ((key = sshkey_new(type)) == NULL) {
+		if ((key = sshkey_new(type, variant)) == NULL) {
 			ret = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -2706,7 +2706,7 @@ sshkey_from_blob_internal(struct sshbuf *b, struct sshkey **keyp,
 	case KEY_XMSS:
 		if ((ret = sshbuf_get_cstring(b, &xmss_name, NULL)) != 0)
 			goto out;
-		if ((key = sshkey_new(type)) == NULL) {
+		if ((key = sshkey_new(type, variant)) == NULL) {
 			ret = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -3554,7 +3554,7 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 	char *tname = NULL, *curve = NULL, *xmss_name = NULL;
 	struct sshkey *k = NULL;
 	size_t pklen = 0, sklen = 0;
-	int type, r = SSH_ERR_INTERNAL_ERROR;
+	int type, variant, r = SSH_ERR_INTERNAL_ERROR;
 	u_char *ed25519_pk = NULL, *ed25519_sk = NULL;
 	u_char *xmss_pk = NULL, *xmss_sk = NULL;
 #ifdef WITH_OPENSSL
@@ -3570,10 +3570,11 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 	if ((r = sshbuf_get_cstring(buf, &tname, NULL)) != 0)
 		goto out;
 	type = sshkey_type_from_name(tname);
+	variant = sshkey_variant_from_name(tname);
 	switch (type) {
 #ifdef WITH_OPENSSL
 	case KEY_DSA:
-		if ((k = sshkey_new(type)) == NULL) {
+		if ((k = sshkey_new(type, variant)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -3610,7 +3611,7 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 		break;
 # ifdef OPENSSL_HAS_ECC
 	case KEY_ECDSA:
-		if ((k = sshkey_new(type)) == NULL) {
+		if ((k = sshkey_new(type, variant)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -3660,7 +3661,7 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 			goto out;
 		break;
 	case KEY_ECDSA_SK:
-		if ((k = sshkey_new(type)) == NULL) {
+		if ((k = sshkey_new(type, variant)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -3715,7 +3716,7 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 		break;
 # endif /* OPENSSL_HAS_ECC */
 	case KEY_RSA:
-		if ((k = sshkey_new(type)) == NULL) {
+		if ((k = sshkey_new(type, variant)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -3769,19 +3770,19 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 		break;
 #endif /* WITH_OPENSSL */
 	case KEY_DILITHIUM:
-		if ((k = sshkey_new(type)) == NULL) {
+		if ((k = sshkey_new(type, variant)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
 
-		k->variant = k->dilithium->type = sshkey_dilithium_variant_from_name(tname);
+		k->dilithium->type = variant;
 
 		if	((r = sshbuf_get_string(buf, &(k->dilithium->pk), NULL)) != 0 ||
 			 (r = sshbuf_get_string(buf, &(k->dilithium->sk), NULL)) != 0)
 			goto out;
 		break;
 	case KEY_ED25519:
-		if ((k = sshkey_new(type)) == NULL) {
+		if ((k = sshkey_new(type, variant)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -3814,7 +3815,7 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 		ed25519_pk = ed25519_sk = NULL; /* transferred */
 		break;
 	case KEY_ED25519_SK:
-		if ((k = sshkey_new(type)) == NULL) {
+		if ((k = sshkey_new(type, variant)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -3866,7 +3867,7 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 		break;
 #ifdef WITH_XMSS
 	case KEY_XMSS:
-		if ((k = sshkey_new(type)) == NULL) {
+		if ((k = sshkey_new(type, variant)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
@@ -4852,12 +4853,13 @@ sshkey_parse_private_pem_fileblob(struct sshbuf *blob, int type,
 	}
 	if (EVP_PKEY_base_id(pk) == EVP_PKEY_RSA &&
 	    (type == KEY_UNSPEC || type == KEY_RSA)) {
-		if ((prv = sshkey_new(KEY_UNSPEC)) == NULL) {
+		if ((prv = sshkey_new(KEY_UNSPEC, -1)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
 		prv->rsa = EVP_PKEY_get1_RSA(pk);
 		prv->type = KEY_RSA;
+		prv->variant = 0;
 #ifdef DEBUG_PK
 		RSA_print_fp(stderr, prv->rsa, 8);
 #endif
@@ -4869,25 +4871,27 @@ sshkey_parse_private_pem_fileblob(struct sshbuf *blob, int type,
 			goto out;
 	} else if (EVP_PKEY_base_id(pk) == EVP_PKEY_DSA &&
 	    (type == KEY_UNSPEC || type == KEY_DSA)) {
-		if ((prv = sshkey_new(KEY_UNSPEC)) == NULL) {
+		if ((prv = sshkey_new(KEY_UNSPEC, -1)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
 		prv->dsa = EVP_PKEY_get1_DSA(pk);
 		prv->type = KEY_DSA;
+		prv->variant = 0;
 #ifdef DEBUG_PK
 		DSA_print_fp(stderr, prv->dsa, 8);
 #endif
 #ifdef OPENSSL_HAS_ECC
 	} else if (EVP_PKEY_base_id(pk) == EVP_PKEY_EC &&
 	    (type == KEY_UNSPEC || type == KEY_ECDSA)) {
-		if ((prv = sshkey_new(KEY_UNSPEC)) == NULL) {
+		if ((prv = sshkey_new(KEY_UNSPEC, -1)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}
 		prv->ecdsa = EVP_PKEY_get1_EC_KEY(pk);
 		prv->type = KEY_ECDSA;
 		prv->ecdsa_nid = sshkey_ecdsa_key_to_nid(prv->ecdsa);
+		prv->variant = 0;
 		if (prv->ecdsa_nid == -1 ||
 		    sshkey_curve_nid_to_name(prv->ecdsa_nid) == NULL ||
 		    sshkey_ec_validate_public(EC_KEY_get0_group(prv->ecdsa),

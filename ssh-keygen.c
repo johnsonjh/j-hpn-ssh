@@ -210,7 +210,7 @@ type_bits_valid(int type, const char *name, u_int32_t *bitsp)
 #endif
 		case KEY_DILITHIUM:
 			if (name != NULL &&
-				(variant = sshkey_dilithium_variant_from_name(name)) > 0)
+				(variant = sshkey_variant_from_name(name)) > 0)
 				*bitsp = sshkey_dilithium_variant_to_bits(variant);
 			if (*bitsp == 0)
 				*bitsp = DEFAULT_BITS_DILITHIUM;
@@ -495,7 +495,7 @@ do_convert_private_ssh2(struct sshbuf *b)
 	struct sshkey *key = NULL;
 	char *type, *cipher;
 	u_char e1, e2, e3, *sig = NULL, data[] = "abcde12345";
-	int r, rlen, ktype;
+	int r, rlen, ktype, kvariant;
 	u_int magic, i1, i2, i3, i4;
 	size_t slen;
 	u_long e;
@@ -530,13 +530,15 @@ do_convert_private_ssh2(struct sshbuf *b)
 
 	if (strstr(type, "dsa")) {
 		ktype = KEY_DSA;
+		kvariant = 0;
 	} else if (strstr(type, "rsa")) {
 		ktype = KEY_RSA;
+		kvariant = 0;
 	} else {
 		free(type);
 		return NULL;
 	}
-	if ((key = sshkey_new(ktype)) == NULL)
+	if ((key = sshkey_new(ktype, kvariant)) == NULL)
 		fatal("sshkey_new failed");
 	free(type);
 
@@ -713,20 +715,20 @@ do_convert_from_pkcs8(struct sshkey **k, int *private)
 	fclose(fp);
 	switch (EVP_PKEY_base_id(pubkey)) {
 	case EVP_PKEY_RSA:
-		if ((*k = sshkey_new(KEY_UNSPEC)) == NULL)
+		if ((*k = sshkey_new(KEY_UNSPEC, 0)) == NULL)
 			fatal("sshkey_new failed");
 		(*k)->type = KEY_RSA;
 		(*k)->rsa = EVP_PKEY_get1_RSA(pubkey);
 		break;
 	case EVP_PKEY_DSA:
-		if ((*k = sshkey_new(KEY_UNSPEC)) == NULL)
+		if ((*k = sshkey_new(KEY_UNSPEC, 0)) == NULL)
 			fatal("sshkey_new failed");
 		(*k)->type = KEY_DSA;
 		(*k)->dsa = EVP_PKEY_get1_DSA(pubkey);
 		break;
 #ifdef OPENSSL_HAS_ECC
 	case EVP_PKEY_EC:
-		if ((*k = sshkey_new(KEY_UNSPEC)) == NULL)
+		if ((*k = sshkey_new(KEY_UNSPEC, 0)) == NULL)
 			fatal("sshkey_new failed");
 		(*k)->type = KEY_ECDSA;
 		(*k)->ecdsa = EVP_PKEY_get1_EC_KEY(pubkey);
@@ -750,7 +752,7 @@ do_convert_from_pem(struct sshkey **k, int *private)
 	if ((fp = fopen(identity_file, "r")) == NULL)
 		fatal("%s: %s: %s", __progname, identity_file, strerror(errno));
 	if ((rsa = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL)) != NULL) {
-		if ((*k = sshkey_new(KEY_UNSPEC)) == NULL)
+		if ((*k = sshkey_new(KEY_UNSPEC, 0)) == NULL)
 			fatal("sshkey_new failed");
 		(*k)->type = KEY_RSA;
 		(*k)->rsa = rsa;
@@ -896,7 +898,7 @@ try_read_key(char **cpp)
 	struct sshkey *ret;
 	int r;
 
-	if ((ret = sshkey_new(KEY_UNSPEC)) == NULL)
+	if ((ret = sshkey_new(KEY_UNSPEC, -1)) == NULL)
 		fatal("sshkey_new failed");
 	if ((r = sshkey_read(ret, cpp)) == 0)
 		return ret;
@@ -2174,7 +2176,7 @@ do_show_cert(struct passwd *pw)
 		cp = line + strspn(line, " \t");
 		if (*cp == '#' || *cp == '\0')
 			continue;
-		if ((key = sshkey_new(KEY_UNSPEC)) == NULL)
+		if ((key = sshkey_new(KEY_UNSPEC, -1)) == NULL)
 			fatal("sshkey_new");
 		if ((r = sshkey_read(key, &cp)) != 0) {
 			error("%s:%lu: invalid key: %s", path,
@@ -2364,7 +2366,7 @@ update_krl_from_file(struct passwd *pw, const char *file, int wild_ca,
 				 * Parsing will fail if it isn't.
 				 */
 			}
-			if ((key = sshkey_new(KEY_UNSPEC)) == NULL)
+			if ((key = sshkey_new(KEY_UNSPEC, -1)) == NULL)
 				fatal("sshkey_new");
 			if ((r = sshkey_read(key, &cp)) != 0)
 				fatal("%s:%lu: invalid key: %s",

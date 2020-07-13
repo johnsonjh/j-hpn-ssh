@@ -729,7 +729,7 @@ parse_principals_key_and_options(const char *path, u_long linenum, char *line,
 		    __func__, path, linenum, required_principal);
 	}
 
-	if ((key = sshkey_new(KEY_UNSPEC)) == NULL) {
+	if ((key = sshkey_new(KEY_UNSPEC, -1)) == NULL) {
 		error("%s: sshkey_new failed", __func__);
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;

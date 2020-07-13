@@ -583,7 +583,7 @@ check_authkey_line(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 	if (authoptsp != NULL)
 		*authoptsp = NULL;
 
-	if ((found = sshkey_new(want_keytype)) == NULL) {
+	if ((found = sshkey_new(want_keytype, key->variant)) == NULL) {
 		debug3("%s: keytype %d failed", __func__, want_keytype);
 		goto out;
 	}

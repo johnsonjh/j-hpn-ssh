@@ -130,7 +130,7 @@ ssh_dilithium_verify(const struct sshkey *key,
 
 	if (sshbuf_get_cstring(b, &sigtype, &tlen) != 0 ||
 		key->type != sshkey_type_from_name(sigtype) ||
-		key->variant != sshkey_dilithium_variant_from_name(sigtype)) {
+		key->variant != sshkey_variant_from_name(sigtype)) {
 		ret = SSH_ERR_INVALID_FORMAT;
 		goto out;
 	}

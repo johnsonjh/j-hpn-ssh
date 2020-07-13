@@ -241,7 +241,7 @@ sshkey_try_load_public(struct sshkey **kp, const char *filename,
 		*commentp = NULL;
 	if ((f = fopen(filename, "r")) == NULL)
 		return SSH_ERR_SYSTEM_ERROR;
-	if ((k = sshkey_new(KEY_UNSPEC)) == NULL) {
+	if ((k = sshkey_new(KEY_UNSPEC, -1)) == NULL) {
 		fclose(f);
 		return SSH_ERR_ALLOC_FAIL;
 	}
@@ -424,7 +424,7 @@ sshkey_in_file(struct sshkey *key, const char *filename, int strict_type,
 			continue;
 		}
 
-		if ((pub = sshkey_new(KEY_UNSPEC)) == NULL) {
+		if ((pub = sshkey_new(KEY_UNSPEC, -1)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
 			goto out;
 		}

@@ -770,7 +770,7 @@ hostkeys_foreach(const char *path, hostkeys_foreach_fn *callback, void *ctx,
 			 * any leading whitespace.  Ignore badly formatted
 			 * lines.
 			 */
-			if ((lineinfo.key = sshkey_new(KEY_UNSPEC)) == NULL) {
+			if ((lineinfo.key = sshkey_new(KEY_UNSPEC, -1)) == NULL) {
 				error("%s: sshkey_new failed", __func__);
 				r = SSH_ERR_ALLOC_FAIL;
 				break;

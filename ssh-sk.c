@@ -198,7 +198,7 @@ sshsk_ecdsa_assemble(struct sk_enroll_response *resp, struct sshkey **keyp)
 	int r;
 
 	*keyp = NULL;
-	if ((key = sshkey_new(KEY_ECDSA_SK)) == NULL) {
+	if ((key = sshkey_new(KEY_ECDSA_SK, 0)) == NULL) {
 		error("%s: sshkey_new failed", __func__);
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
@@ -256,7 +256,7 @@ sshsk_ed25519_assemble(struct sk_enroll_response *resp, struct sshkey **keyp)
 		r = SSH_ERR_INVALID_FORMAT;
 		goto out;
 	}
-	if ((key = sshkey_new(KEY_ED25519_SK)) == NULL) {
+	if ((key = sshkey_new(KEY_ED25519_SK, 0)) == NULL) {
 		error("%s: sshkey_new failed", __func__);
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
