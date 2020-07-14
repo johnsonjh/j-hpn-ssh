@@ -50,29 +50,35 @@ kex_kyber_prepare_shared(struct sshbuf *buf, struct sshbuf **sharedp)
 	size_t size, ss_len = 2 * kyber_ss_bytes(), shaked_len = kyber_ss_bytes();
 	int r = -1;
 
+	/* Prepare buffer to store concated nonce and result of shake */
 	if ((ss = malloc(ss_len)) == NULL ||
 		(shaked = malloc(shaked_len)) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
 
+	/* prepare output buffer with the shared secret */
 	if ((shared = sshbuf_new()) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
 
+	/* Read first Nonce and write it in the buffer */
 	if ((r = sshbuf_get_string_direct(buf, &tmp, &size)))
 		goto out;
 
 	memcpy(ss, tmp, size);
 
+	/* Read second Nonce and write it in the buffer */
 	if ((r = sshbuf_get_string_direct(buf, &tmp, &size)))
 		goto out;
 
 	memcpy(ss + kyber_ss_bytes(), tmp, size);
 
+	/* generate shared secret */
 	kyber_shake(shaked, shaked_len, ss, ss_len);
 
+	/* store shared secret */
 	if ((r = sshbuf_put_string(shared, shaked, shaked_len)) != 0)
 		goto out;
 
@@ -107,11 +113,13 @@ kex_kyber_keypair(struct kex *kex)
 		goto out;
 	}
 	
+	/* generate keys */
 	if (kyber_generate_key(kex->kyber) != 0) {
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}
 
+	/* save public key */
 	if ((r = sshbuf_put_string(buf, kex->kyber->pk,
 		kyber_pk_bytes(kex->kyber))) != 0)
 		goto out;
@@ -142,14 +150,14 @@ kex_kyber_shared_to_client(struct kex *kex, const struct sshbuf *client_pubkey,
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
+
 	/* recover client public key */
 	client.type = KYBER512;
-	size = kyber_pk_bytes(&client);
 	if ((r = sshbuf_get_string(client_pubkey_tmp, &(client.pk),
 		&size )) != 0)
 		return r;
 
-	/* generate server keys */
+	/* generate temporal server keys */
 	if ((r = kex_kyber_keypair(kex)) != 0)
 		goto out;
 
@@ -159,7 +167,7 @@ kex_kyber_shared_to_client(struct kex *kex, const struct sshbuf *client_pubkey,
 		goto out;
 	}
 
-	/* put server public key need to be transfer */
+	/* put temporal server public key need to be transfer */
 	if ((r = sshbuf_put_string(server_pubkey, kex->kyber->pk,
 		kyber_pk_bytes(kex->kyber))) != 0)
 		goto out;
@@ -271,11 +279,10 @@ kex_kyber_shared_to_server(struct kex *kex, const struct sshbuf *server_pubkey,
 	}
 
 	/* get ciphertext from server */
-	size = kyber_enc_bytes(&server);
 	if ((r = sshbuf_get_string(blob_fromserver_tmp, &ct_fromserver, &size)))
 		goto out;
 
-	/* decrypt Nonce from server*/
+	/* decrypt Nonce from server */
 	if (kyber_dec(ss_fromserver, ct_fromserver, kex->kyber) != 0) {
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
@@ -286,7 +293,7 @@ kex_kyber_shared_to_server(struct kex *kex, const struct sshbuf *server_pubkey,
 		kyber_ss_bytes())) != 0)
 		goto out;
 
-	/* store to nonce */
+	/* store to nonce to verify signature and generate hash */
 	if ((r = sshbuf_put_string(nonce, ss_fromserver,
 		kyber_ss_bytes())) != 0)
 		goto out;
@@ -306,12 +313,6 @@ kex_kyber_shared_to_server(struct kex *kex, const struct sshbuf *server_pubkey,
 	if ((r = sshbuf_put_string(kex->tshared, ss,
 		kyber_ss_bytes())) != 0)
 		goto out;
-
-	/* init buffer for shared secret*/
-	if ((shared = sshbuf_new()) == NULL) {
-		r = SSH_ERR_ALLOC_FAIL;
-		goto out;
-	}
 
 	/* compute shared secret */
 	if ((r = kex_kyber_prepare_shared(kex->tshared, &shared)) != 0)
@@ -371,12 +372,6 @@ kex_kyber_compute_shared(struct kex *kex, const struct sshbuf *blob_fromclient, 
 	if ((r = sshbuf_put_string(kex->tshared, ss_fromclient,
 		kyber_ss_bytes())) != 0)
 		goto out;
-
-	/* init buffer for shared secret*/
-	if ((shared = sshbuf_new()) == NULL) {
-		r = SSH_ERR_ALLOC_FAIL;
-		goto out;
-	}
 
 	/* compute shared secret */
 	if ((r = kex_kyber_prepare_shared(kex->tshared, &shared)) != 0)

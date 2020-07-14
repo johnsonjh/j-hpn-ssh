@@ -345,6 +345,7 @@ out:
 int
 kex_gen_3way_server(struct ssh *ssh)
 {
+	/* wait client init with pubic key */
 	debug("expecting SSH2_MSG_KEX_3WAY_INIT");
 	ssh_dispatch_set(ssh, SSH2_MSG_KEX_3WAY_INIT, &input_kex_gen_3way_init);
 	return 0;
@@ -356,6 +357,7 @@ kex_gen_3way_client(struct ssh *ssh)
 	struct kex *kex = ssh->kex;
 	int r;
 
+	/* generate client keys */
 	switch (kex->kex_type) {
 	case KEX_KYBER_SHA256:
 		r = kex_kyber_keypair(kex);
@@ -368,10 +370,13 @@ kex_gen_3way_client(struct ssh *ssh)
 	if (r != 0)
 		return r;
 
+	/* send public key to server */
 	if ((r = sshpkt_start(ssh, SSH2_MSG_KEX_3WAY_INIT)) != 0 ||
 	    (r = sshpkt_put_stringb(ssh, kex->client_pub)) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0)
 		return r;
+
+	/* wait server response */
 	debug("expecting SSH2_MSG_KEX_3WAY_REPLY");
 	ssh_dispatch_set(ssh, SSH2_MSG_KEX_3WAY_REPLY, &input_kex_gen_3way_reply);
 	return 0;
@@ -391,10 +396,12 @@ input_kex_gen_3way_init(int type, u_int32_t seq, struct ssh *ssh)
 	size_t slen, hashlen;
 	int r = -1;
 
+	/* Load hostkey */
 	if ((r = kex_load_hostkey(ssh, &server_host_private,
 	    &server_host_public)) != 0)
 		goto out;
 
+	/* store client public key */
 	if ((r = sshpkt_getb_froms(ssh, &client_pubkey)) != 0 ||
 	    (r = sshpkt_get_end(ssh)) != 0)
 		goto out;
@@ -413,15 +420,17 @@ input_kex_gen_3way_init(int type, u_int32_t seq, struct ssh *ssh)
 	if (r !=0 )
 		goto out;
 
-	/* calc H */
+	/* create buffer to store server public host key */
 	if ((server_host_key_blob = sshbuf_new()) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
 
+	/* store public host key */
 	if ((r = sshkey_putb(server_host_public, server_host_key_blob)) != 0)
 		goto out;
 
+	/* generate Hash */
 	hashlen = sizeof(hash);
 	if ((r = kex_gen_hash(
 	    kex->hash_alg,
@@ -436,11 +445,12 @@ input_kex_gen_3way_init(int type, u_int32_t seq, struct ssh *ssh)
 	    hash, &hashlen)) != 0)
 		goto out;
 
-	/* sign H */
+	/* sign Hash */
 	if ((r = kex->sign(ssh, server_host_private, server_host_public,
 	     &signature, &slen, hash, hashlen, kex->hostkey_alg)) != 0)
 		goto out;
 
+	/* Prepare buffer and store Hash for the second message */
 	if ((kex->thash = sshbuf_new()) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
@@ -449,7 +459,7 @@ input_kex_gen_3way_init(int type, u_int32_t seq, struct ssh *ssh)
 	if ((r = sshbuf_put_string(kex->thash, hash, hashlen)) != 0)
 		goto out;
 
-	/* send server hostkey, ECDH pubkey 'Q_S' and signed H */
+	/* send server hostkey, temporal server public key, encrypted nonce, signature */
 	if ((r = sshpkt_start(ssh, SSH2_MSG_KEX_3WAY_REPLY)) != 0 ||
 	    (r = sshpkt_put_stringb(ssh, server_host_key_blob)) != 0 ||
 	    (r = sshpkt_put_stringb(ssh, server_pubkey)) != 0 ||
@@ -458,6 +468,7 @@ input_kex_gen_3way_init(int type, u_int32_t seq, struct ssh *ssh)
 	    (r = sshpkt_send(ssh)) != 0)
 		goto out;
 
+	/* Waiting response from client */
 	debug("expecting SSH2_MSG_KEX_3WAY_FINISH");
 	ssh_dispatch_set(ssh, SSH2_MSG_KEX_3WAY_FINISH, &input_kex_gen_3way_finish);
 
@@ -489,28 +500,32 @@ input_kex_gen_3way_reply(int type, u_int32_t seq, struct ssh *ssh)
 	size_t slen, hashlen;
 	int r = -1;
 
-	/* hostkey */
+	/* read and store server host key blob */
 	if ((r = sshpkt_getb_froms(ssh, &server_host_key_blob)) != 0)
 		goto out;
+
 	/* sshkey_fromb() consumes its buffer, so make a copy */
 	if ((tmp = sshbuf_fromb(server_host_key_blob)) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
+
+	/* store server host key */
 	if ((r = sshkey_fromb(tmp, &server_host_key)) != 0)
 		goto out;
+
+	/* verify server host key */
 	if ((r = kex_verify_host_key(ssh, server_host_key)) != 0)
 		goto out;
 
-	/* Q_S, server public key */
-	/* signed H */
+	/* read and store temporal server key, encrypted nonce and signature of Hash */
 	if ((r = sshpkt_getb_froms(ssh, &server_pubkey)) != 0 ||
 		(r = sshpkt_getb_froms(ssh, &blob_fromserver)) != 0 ||
 	    (r = sshpkt_get_string(ssh, &signature, &slen)) != 0 ||
 	    (r = sshpkt_get_end(ssh)) != 0)
 		goto out;
 
-	/* compute shared secret */
+	/* compute shared secret, client nonce and blob to server */
 	switch (kex->kex_type) {
 	case KEX_KYBER_SHA256:
 		r = kex_kyber_shared_to_server(kex, server_pubkey, blob_fromserver, &blob_toserver,
@@ -548,6 +563,7 @@ input_kex_gen_3way_reply(int type, u_int32_t seq, struct ssh *ssh)
 	    (r = sshpkt_send(ssh)) != 0)
 		goto out;
 
+	/* derive keys from shared and hash */
 	if ((r = kex_derive_keys(ssh, hash, hashlen, shared)) == 0)
 		r = kex_send_newkeys(ssh);
 out:
@@ -574,7 +590,7 @@ input_kex_gen_3way_finish(int type, u_int32_t seq, struct ssh *ssh)
 	size_t hashlen;
 	int r = -1;
 
-	/* client blob */
+	/* read and store client blob */
 	if ((r = sshpkt_getb_froms(ssh, &client_blob)) != 0 ||
 	    (r = sshpkt_get_end(ssh)) != 0)
 		goto out;
@@ -591,9 +607,11 @@ input_kex_gen_3way_finish(int type, u_int32_t seq, struct ssh *ssh)
 	if (r !=0 )
 		goto out;
 
+	/* recover stored hash */
 	if ((r = sshbuf_get_string(kex->thash, &hash, &hashlen)) != 0)
 		goto out;
 
+	/* derive keys form shared and hash */
 	if ((r = kex_derive_keys(ssh, hash, hashlen, shared)) == 0)
 		r = kex_send_newkeys(ssh);
 out:
