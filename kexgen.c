@@ -360,7 +360,7 @@ kex_gen_3way_client(struct ssh *ssh)
 	/* generate client keys */
 	switch (kex->kex_type) {
 	case KEX_KYBER_SHA256:
-		r = kex_kyber_keypair(kex);
+		r = kex_kyber_keypair(kex, &(kex->client_pub));
 		break;
 	default:
 		r = SSH_ERR_INVALID_ARGUMENT;
@@ -406,10 +406,20 @@ input_kex_gen_3way_init(int type, u_int32_t seq, struct ssh *ssh)
 	    (r = sshpkt_get_end(ssh)) != 0)
 		goto out;
 
+	/* generate temporal server keys */
+	switch (kex->kex_type) {
+	case KEX_KYBER_SHA256:
+		r = kex_kyber_keypair(kex, &server_pubkey);
+		break;
+	default:
+		r = SSH_ERR_INVALID_ARGUMENT;
+		break;
+	}
+
 	/* compute shared secret */
 	switch (kex->kex_type) {
 	case KEX_KYBER_SHA256:
-		r = kex_kyber_shared_to_client(kex, client_pubkey, &server_pubkey, 
+		r = kex_kyber_shared_to_client(kex, client_pubkey, 
 			&blob_toclient, &nonce);
 		break;
 	default:

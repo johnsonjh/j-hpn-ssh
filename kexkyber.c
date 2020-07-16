@@ -94,13 +94,12 @@ out:
 }
 
 int
-kex_kyber_keypair(struct kex *kex)
+kex_kyber_keypair(struct kex *kex, struct sshbuf** output_pubkeyp)
 {
-	struct sshbuf *buf = NULL;
-	u_char *client_public = NULL;
+	struct sshbuf *output = NULL;
 	int r = -1;
 
-	if ((buf = sshbuf_new()) == NULL)
+	if (output_pubkeyp != NULL && (output = sshbuf_new()) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
 
 	if ((kex->kyber = kyber_new()) == NULL) {
@@ -119,26 +118,28 @@ kex_kyber_keypair(struct kex *kex)
 		goto out;
 	}
 
-	/* save public key */
-	if ((r = sshbuf_put_string(buf, kex->kyber->pk,
+	/* save public key if requested */
+	if (output_pubkeyp != NULL && (r = sshbuf_put_string(output, kex->kyber->pk,
 		kyber_pk_bytes(kex->kyber))) != 0)
 		goto out;
 
-	kex->client_pub = buf;
-	buf = NULL;
+	if (output_pubkeyp != NULL)
+		*output_pubkeyp = output;
+
+	output = NULL;
+
 	r = 0;
  out:
-	sshbuf_free(buf);
+	sshbuf_free(output);
 	return r;
 }
 
 int
 kex_kyber_shared_to_client(struct kex *kex, const struct sshbuf *client_pubkey,
-	struct sshbuf **server_pubkeyp, struct sshbuf **blob_toclientp, struct sshbuf **noncep)
+	struct sshbuf **blob_toclientp, struct sshbuf **noncep)
 {
 	KYBER client;
 	u_char *ct = NULL, *ss = NULL;
-	struct sshbuf *server_pubkey = NULL;
 	struct sshbuf *blob_toclient = NULL;
 	struct sshbuf *client_pubkey_tmp = NULL;
 	struct sshbuf *nonce = NULL;
@@ -156,21 +157,6 @@ kex_kyber_shared_to_client(struct kex *kex, const struct sshbuf *client_pubkey,
 	if ((r = sshbuf_get_string(client_pubkey_tmp, &(client.pk),
 		&size )) != 0)
 		return r;
-
-	/* generate temporal server keys */
-	if ((r = kex_kyber_keypair(kex)) != 0)
-		goto out;
-
-	/* init buffer for the server public key */
-	if ((server_pubkey = sshbuf_new()) == NULL) {
-		r = SSH_ERR_ALLOC_FAIL;
-		goto out;
-	}
-
-	/* put temporal server public key need to be transfer */
-	if ((r = sshbuf_put_string(server_pubkey, kex->kyber->pk,
-		kyber_pk_bytes(kex->kyber))) != 0)
-		goto out;
 
 	/* init shared secret, buffer for client blob, nonce to sign */
 	if ((kex->tshared = sshbuf_new()) == NULL ||
@@ -208,10 +194,8 @@ kex_kyber_shared_to_client(struct kex *kex, const struct sshbuf *client_pubkey,
 		kyber_ss_bytes())) != 0)
 		goto out;
 
-	*server_pubkeyp = server_pubkey;
 	*blob_toclientp = blob_toclient;
 	*noncep = nonce;
-	server_pubkey = NULL;
 	blob_toclient = NULL;
 	nonce = NULL;
 
@@ -219,7 +203,6 @@ kex_kyber_shared_to_client(struct kex *kex, const struct sshbuf *client_pubkey,
 out:
 	freezero(ct, kyber_enc_bytes(&client));
 	freezero(ss, kyber_ss_bytes());
-	sshbuf_free(server_pubkey);
 	sshbuf_free(blob_toclient);
 	sshbuf_free(client_pubkey_tmp);
 	sshbuf_free(nonce);
