@@ -391,7 +391,7 @@ input_kex_gen_3way_init(int type, u_int32_t seq, struct ssh *ssh)
 	struct sshbuf *client_pubkey = NULL;
 	struct sshbuf *server_host_key_blob = NULL;
 	struct sshbuf *blob_toclient = NULL;
-	struct sshbuf *nonce = NULL;
+	struct sshbuf *number = NULL;
 	u_char *signature = NULL, hash[SSH_DIGEST_MAX_LENGTH];
 	size_t slen, hashlen;
 	int r = -1;
@@ -420,7 +420,7 @@ input_kex_gen_3way_init(int type, u_int32_t seq, struct ssh *ssh)
 	switch (kex->kex_type) {
 	case KEX_KYBER_SHA256:
 		r = kex_kyber_shared_to_client(kex, client_pubkey, 
-			&blob_toclient, &nonce);
+			&blob_toclient, &number);
 		break;
 	default:
 		r = SSH_ERR_INVALID_ARGUMENT;
@@ -451,7 +451,7 @@ input_kex_gen_3way_init(int type, u_int32_t seq, struct ssh *ssh)
 	    server_host_key_blob,
 	    client_pubkey,
 	    server_pubkey,
-	    nonce,
+	    number,
 	    hash, &hashlen)) != 0)
 		goto out;
 
@@ -469,7 +469,7 @@ input_kex_gen_3way_init(int type, u_int32_t seq, struct ssh *ssh)
 	if ((r = sshbuf_put_string(kex->thash, hash, hashlen)) != 0)
 		goto out;
 
-	/* send server hostkey, temporal server public key, encrypted nonce, signature */
+	/* send server hostkey, temporal server public key, encrypted number, signature */
 	if ((r = sshpkt_start(ssh, SSH2_MSG_KEX_3WAY_REPLY)) != 0 ||
 	    (r = sshpkt_put_stringb(ssh, server_host_key_blob)) != 0 ||
 	    (r = sshpkt_put_stringb(ssh, server_pubkey)) != 0 ||
@@ -489,7 +489,7 @@ out:
 	sshbuf_free(client_pubkey);
 	sshbuf_free(server_pubkey);
 	sshbuf_free(blob_toclient);
-	sshbuf_free(nonce);
+	sshbuf_free(number);
 	free(signature);
 	return r;
 }
@@ -503,7 +503,7 @@ input_kex_gen_3way_reply(int type, u_int32_t seq, struct ssh *ssh)
 	struct sshbuf *blob_toserver = NULL;
 	struct sshbuf *blob_fromserver = NULL;
 	struct sshbuf *shared = NULL;
-	struct sshbuf *nonce = NULL;
+	struct sshbuf *number = NULL;
 	struct sshbuf *tmp = NULL, *server_host_key_blob = NULL;
 	u_char *signature = NULL;
 	u_char hash[SSH_DIGEST_MAX_LENGTH];
@@ -528,18 +528,18 @@ input_kex_gen_3way_reply(int type, u_int32_t seq, struct ssh *ssh)
 	if ((r = kex_verify_host_key(ssh, server_host_key)) != 0)
 		goto out;
 
-	/* read and store temporal server key, encrypted nonce and signature of Hash */
+	/* read and store temporal server key, encrypted number and signature of Hash */
 	if ((r = sshpkt_getb_froms(ssh, &server_pubkey)) != 0 ||
 		(r = sshpkt_getb_froms(ssh, &blob_fromserver)) != 0 ||
 	    (r = sshpkt_get_string(ssh, &signature, &slen)) != 0 ||
 	    (r = sshpkt_get_end(ssh)) != 0)
 		goto out;
 
-	/* compute shared secret, client nonce and blob to server */
+	/* compute shared secret, client number and blob to server */
 	switch (kex->kex_type) {
 	case KEX_KYBER_SHA256:
 		r = kex_kyber_shared_to_server(kex, server_pubkey, blob_fromserver, &blob_toserver,
-		    &shared, &nonce);
+		    &shared, &number);
 		break;
 	default:
 		r = SSH_ERR_INVALID_ARGUMENT;
@@ -559,7 +559,7 @@ input_kex_gen_3way_reply(int type, u_int32_t seq, struct ssh *ssh)
 	    server_host_key_blob,
 	    kex->client_pub,
 	    server_pubkey,
-	    nonce,
+	    number,
 	    hash, &hashlen)) != 0)
 		goto out;
 
@@ -567,7 +567,7 @@ input_kex_gen_3way_reply(int type, u_int32_t seq, struct ssh *ssh)
 	    kex->hostkey_alg, ssh->compat, NULL)) != 0)
 		goto out;
 
-	/* send  Nonce to server */
+	/* send  number to server */
 	if ((r = sshpkt_start(ssh, SSH2_MSG_KEX_3WAY_FINISH)) != 0 ||
 	    (r = sshpkt_put_stringb(ssh, blob_toserver)) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0)
@@ -585,7 +585,7 @@ out:
 	sshbuf_free(blob_fromserver);
 	sshbuf_free(blob_toserver);
 	sshbuf_free(shared);
-	sshbuf_free(nonce);
+	sshbuf_free(number);
 	free(signature);
 	return r;
 }

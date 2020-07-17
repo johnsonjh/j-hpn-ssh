@@ -40,6 +40,11 @@
 #include "ssherr.h"
 #include "ssh2.h"
 
+/*
+ *	Prepare and generate shaked shared secret for derive key
+ *	 need complete raw shared secret
+ * 	 output shaked shared secret
+ */
 int
 kex_kyber_prepare_shared(struct sshbuf *buf, struct sshbuf **sharedp)
 {
@@ -50,7 +55,7 @@ kex_kyber_prepare_shared(struct sshbuf *buf, struct sshbuf **sharedp)
 	size_t size, ss_len = 2 * kyber_ss_bytes(), shaked_len = kyber_ss_bytes();
 	int r = -1;
 
-	/* Prepare buffer to store concated nonce and result of shake */
+	/* Prepare buffer to store concated number and result of shake */
 	if ((ss = malloc(ss_len)) == NULL ||
 		(shaked = malloc(shaked_len)) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
@@ -63,13 +68,13 @@ kex_kyber_prepare_shared(struct sshbuf *buf, struct sshbuf **sharedp)
 		goto out;
 	}
 
-	/* Read first Nonce and write it in the buffer */
+	/* Read first number and write it in the buffer */
 	if ((r = sshbuf_get_string_direct(buf, &tmp, &size)))
 		goto out;
 
 	memcpy(ss, tmp, size);
 
-	/* Read second Nonce and write it in the buffer */
+	/* Read second number and write it in the buffer */
 	if ((r = sshbuf_get_string_direct(buf, &tmp, &size)))
 		goto out;
 
@@ -93,6 +98,11 @@ out:
 	return r;
 }
 
+/*
+ *	Generate Kyber temporal key for key exchange.
+ * 	 store keys in kex->kyber
+ * 	 can output pubkey in output if requested
+ */
 int
 kex_kyber_keypair(struct kex *kex, struct sshbuf** output_pubkeyp)
 {
@@ -134,15 +144,19 @@ kex_kyber_keypair(struct kex *kex, struct sshbuf** output_pubkeyp)
 	return r;
 }
 
+/*
+ *	Generate Server number to client
+ * 	 output encrypted number to client and number for hash generation
+ */
 int
 kex_kyber_shared_to_client(struct kex *kex, const struct sshbuf *client_pubkey,
-	struct sshbuf **blob_toclientp, struct sshbuf **noncep)
+	struct sshbuf **blob_toclientp, struct sshbuf **numberp)
 {
 	KYBER client;
 	u_char *ct = NULL, *ss = NULL;
 	struct sshbuf *blob_toclient = NULL;
 	struct sshbuf *client_pubkey_tmp = NULL;
-	struct sshbuf *nonce = NULL;
+	struct sshbuf *number = NULL;
 	size_t size;
 	int r = -1;
 
@@ -158,22 +172,22 @@ kex_kyber_shared_to_client(struct kex *kex, const struct sshbuf *client_pubkey,
 		&size )) != 0)
 		return r;
 
-	/* init shared secret, buffer for client blob, nonce to sign */
+	/* init shared secret, buffer for client blob, number to sign */
 	if ((kex->tshared = sshbuf_new()) == NULL ||
 		(blob_toclient = sshbuf_new()) == NULL ||
-		(nonce = sshbuf_new()) == NULL) {
+		(number = sshbuf_new()) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
 
 	/* init intermediate variable to kyber enc */
-	if ((ct = malloc(kyber_enc_bytes(&client))) == NULL ||
+	if ((ct = malloc(kyber_ct_bytes(&client))) == NULL ||
 	   (ss = malloc(kyber_ss_bytes())) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
 
-	/* generate Nonce */
+	/* generate number */
 	if (kyber_enc(ct, ss, &client) != 0) {
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
@@ -181,11 +195,11 @@ kex_kyber_shared_to_client(struct kex *kex, const struct sshbuf *client_pubkey,
 
 	/* put ciphertext to client blob */
 	if ((r = sshbuf_put_string(blob_toclient, ct,
-		kyber_enc_bytes(&client))) != 0)
+		kyber_ct_bytes(&client))) != 0)
 		goto out;
 
-	/* store nonce */
-	if ((r = sshbuf_put_string(nonce, ss,
+	/* store number */
+	if ((r = sshbuf_put_string(number, ss,
 		kyber_ss_bytes())) != 0)
 		goto out;
 
@@ -195,25 +209,29 @@ kex_kyber_shared_to_client(struct kex *kex, const struct sshbuf *client_pubkey,
 		goto out;
 
 	*blob_toclientp = blob_toclient;
-	*noncep = nonce;
+	*numberp = number;
 	blob_toclient = NULL;
-	nonce = NULL;
+	number = NULL;
 
 	r = 0;
 out:
-	freezero(ct, kyber_enc_bytes(&client));
+	freezero(ct, kyber_ct_bytes(&client));
 	freezero(ss, kyber_ss_bytes());
 	sshbuf_free(blob_toclient);
 	sshbuf_free(client_pubkey_tmp);
-	sshbuf_free(nonce);
+	sshbuf_free(number);
 	free(client.pk);
 
 	return r;
 }
-
+/*
+ *	Generate Client number for server
+ *	 need server pubkey and encrpyted number from server
+ * 	 output encrypted number for server, complete raw shared secret and number for generate hash
+ */
 int
 kex_kyber_shared_to_server(struct kex *kex, const struct sshbuf *server_pubkey, 
-	const struct sshbuf *blob_fromserver, struct sshbuf **blob_toserverp, struct sshbuf **sharedp, struct sshbuf **noncep)
+	const struct sshbuf *blob_fromserver, struct sshbuf **blob_toserverp, struct sshbuf **sharedp, struct sshbuf **numberp)
 {
 	KYBER server;
 	u_char *ct = NULL, *ss = NULL, *ss_fromserver = NULL, *ct_fromserver = NULL;
@@ -222,7 +240,7 @@ kex_kyber_shared_to_server(struct kex *kex, const struct sshbuf *server_pubkey,
 	struct sshbuf *server_pubkey_tmp = NULL;
 	struct sshbuf *blob_fromserver_tmp = NULL;
 	struct sshbuf *tmp = NULL;
-	struct sshbuf *nonce = NULL;
+	struct sshbuf *number = NULL;
 	size_t size;
 	int r;
 
@@ -239,16 +257,16 @@ kex_kyber_shared_to_server(struct kex *kex, const struct sshbuf *server_pubkey,
 		&size)) != 0)
 		return r;
 
-	/* init buffer for server blob, nonce to verify sign and tmp*/
+	/* init buffer for server blob, number to verify sign and tmp*/
 	if ((blob_toserver = sshbuf_new()) == NULL ||
 		(kex->tshared = sshbuf_new()) == NULL ||
-		(nonce = sshbuf_new()) == NULL) {
+		(number = sshbuf_new()) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
 
 	/* init intermediate variable to kyber dec and enc */
-	if ((ct = malloc(kyber_enc_bytes(kex->kyber))) == NULL ||
+	if ((ct = malloc(kyber_ct_bytes(kex->kyber))) == NULL ||
 	    (ss = malloc(kyber_ss_bytes())) == NULL ||
 	   	(ss_fromserver = malloc(kyber_ss_bytes())) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
@@ -265,7 +283,7 @@ kex_kyber_shared_to_server(struct kex *kex, const struct sshbuf *server_pubkey,
 	if ((r = sshbuf_get_string(blob_fromserver_tmp, &ct_fromserver, &size)))
 		goto out;
 
-	/* decrypt Nonce from server */
+	/* decrypt number from server */
 	if (kyber_dec(ss_fromserver, ct_fromserver, kex->kyber) != 0) {
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
@@ -276,12 +294,12 @@ kex_kyber_shared_to_server(struct kex *kex, const struct sshbuf *server_pubkey,
 		kyber_ss_bytes())) != 0)
 		goto out;
 
-	/* store to nonce to verify signature and generate hash */
-	if ((r = sshbuf_put_string(nonce, ss_fromserver,
+	/* store to number to verify signature and generate hash */
+	if ((r = sshbuf_put_string(number, ss_fromserver,
 		kyber_ss_bytes())) != 0)
 		goto out;
 
-	/* generate Nonce */
+	/* generate number */
 	if (kyber_enc(ct, ss, &server) != 0) {
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
@@ -289,7 +307,7 @@ kex_kyber_shared_to_server(struct kex *kex, const struct sshbuf *server_pubkey,
 
 	/* put ciphertext to client blob */
 	if ((r = sshbuf_put_string(blob_toserver, ct,
-		kyber_enc_bytes(&server))) != 0)
+		kyber_ct_bytes(&server))) != 0)
 		goto out;
 
 	/* add to tmp */
@@ -303,26 +321,31 @@ kex_kyber_shared_to_server(struct kex *kex, const struct sshbuf *server_pubkey,
 	
 	*sharedp = shared;
 	*blob_toserverp = blob_toserver;
-	*noncep = nonce;
-	nonce = NULL;
+	*numberp = number;
+	number = NULL;
 	shared = NULL;
 	blob_toserver = NULL;
 
 	r = 0;
 out:
-	freezero(ct_fromserver, kyber_enc_bytes(&server));
+	freezero(ct_fromserver, kyber_ct_bytes(&server));
 	freezero(ss_fromserver, kyber_ss_bytes());
-	freezero(ct, kyber_enc_bytes(&server));
+	freezero(ct, kyber_ct_bytes(&server));
 	freezero(ss, kyber_ss_bytes());
 	sshbuf_free(blob_toserver);
 	sshbuf_free(shared);
 	sshbuf_free(server_pubkey_tmp);
 	sshbuf_free(blob_fromserver_tmp);
-	sshbuf_free(nonce);
+	sshbuf_free(number);
 	free(server.pk);
 	return r;
 }
 
+/*
+ *	Generate shared secret for the server
+ *	 need encrpyted number from client
+ * 	 output complete raw shared secret
+ */
 int
 kex_kyber_compute_shared(struct kex *kex, const struct sshbuf *blob_fromclient, struct sshbuf **sharedp)
 {
@@ -332,7 +355,7 @@ kex_kyber_compute_shared(struct kex *kex, const struct sshbuf *blob_fromclient, 
 	int r = -1;
 
 	/* init intermediate variable to kyber dec */
-	if ((ss_fromclient = malloc(kyber_enc_bytes(kex->kyber))) == NULL)
+	if ((ss_fromclient = malloc(kyber_ct_bytes(kex->kyber))) == NULL)
 		return SSH_ERR_ALLOC_FAIL;
 
 	/* preserve blob_fromclient */
@@ -342,10 +365,10 @@ kex_kyber_compute_shared(struct kex *kex, const struct sshbuf *blob_fromclient, 
 	}
 
 	/* get ciphertext from client */
-	if ((r = sshbuf_get_string(blob_fromclient , &ct_fromclient, kyber_enc_bytes(&(kex->kyber)))))
+	if ((r = sshbuf_get_string(blob_fromclient , &ct_fromclient, kyber_ct_bytes(&(kex->kyber)))))
 		goto out;
 
-	/* decrypt Nonce from client */
+	/* decrypt number from client */
 	if (kyber_dec(ss_fromclient, ct_fromclient, kex->kyber) != 0) {
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
@@ -367,7 +390,7 @@ kex_kyber_compute_shared(struct kex *kex, const struct sshbuf *blob_fromclient, 
 out:
 	sshbuf_free(shared);
 	sshbuf_free(blob_fromclient_tmp);
-	freezero(ct_fromclient, kyber_enc_bytes(kex->kyber));
+	freezero(ct_fromclient, kyber_ct_bytes(kex->kyber));
 	freezero(ss_fromclient, kyber_ss_bytes());
 
 	return r;
