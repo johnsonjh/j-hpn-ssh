@@ -6,6 +6,9 @@ OpenSSH is a complete implementation of the SSH protocol (version 2) for secure 
 
 This is a port of OpenBSD's [OpenSSH](https://openssh.com) to most Unix-like operating systems, including Linux, OS X and Cygwin. Portable OpenSSH polyfills OpenBSD APIs that are not available elsewhere, adds sshd sandboxing for more operating systems and includes support for OS-native authentication and auditing (e.g. using PAM).
 
+This fork provide an implementation of post-quantum cryptography with Crystals Kyber and Crystals Dilithium.
+
+
 ## Documentation
 
 The official documentation for OpenSSH are the man pages for each tool:
@@ -49,11 +52,13 @@ See the [Build-time Customisation](#build-time-customisation) section below for 
 If building from git, you'll need [autoconf](https://www.gnu.org/software/autoconf/) installed to build the ``configure`` script. The following commands will check out and build portable OpenSSH from git:
 
 ```
-git clone https://github.com/openssh/openssh-portable # or https://anongit.mindrot.org/openssh.git
+git clone https://github.com/jzaehrin/openssh-portable
 cd openssh-portable
+git submodule update
+git pull --recurse-submodules
 autoreconf
 ./configure
-make && make tests
+make # && make tests
 ```
 
 ### Build-time Customisation
