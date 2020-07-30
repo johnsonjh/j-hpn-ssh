@@ -56,6 +56,13 @@ git clone https://github.com/jzaehrin/openssh-portable
 cd openssh-portable
 git submodule update
 git pull --recurse-submodules
+cd crystals/kyber/avx2
+make libpqcrystals_kyber_avx2.a
+cd ../../..
+cd crystals/dilithium/avx2
+make libpqcrystals_dilithium_avx2.a
+cd ../../..
+make 
 autoreconf
 ./configure
 make # && make tests
