@@ -192,6 +192,7 @@ int		 sshkey_shield_private(struct sshkey *);
 int		 sshkey_unshield_private(struct sshkey *);
 
 int	 sshkey_type_from_name(const char *);
+int  sshkey_variant_from_name(const char *);
 int  sshkey_variant_to_hash_alg(int);
 int	 sshkey_is_cert(const struct sshkey *);
 int	 sshkey_is_sk(const struct sshkey *);
@@ -249,9 +250,9 @@ const char *sshkey_sigalg_by_name(const char *);
 int	 sshkey_get_sigtype(const u_char *, size_t, char **);
 
 /* Dilithium */
-int  sshkey_dilithium_variant_from_name(const char *);
 int  sshkey_dilithium_variant_to_bits(int);
 int  sshkey_dilithium_bits_to_variant(int);
+int  sshkey_dilithium_variant_to_hash_alg(int);
 
 /* for debug */
 void	sshkey_dump_ec_point(const EC_GROUP *, const EC_POINT *);

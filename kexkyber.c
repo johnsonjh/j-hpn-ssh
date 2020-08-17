@@ -50,7 +50,7 @@ kex_kyber_prepare_shared(struct sshbuf *buf, struct sshbuf **sharedp)
 {
 	u_char *ss = NULL;
 	u_char *shaked = NULL;
-	u_char *tmp = NULL;
+	const u_char *tmp = NULL;
 	struct sshbuf *shared = NULL;
 	size_t size, ss_len = 2 * kyber_ss_bytes(), shaked_len = kyber_ss_bytes();
 	int r = -1;
@@ -161,7 +161,7 @@ kex_kyber_shared_to_client(struct kex *kex, const struct sshbuf *client_pubkey,
 	int r = -1;
 
 	/* preserve client_pubkey */
-	if ((client_pubkey_tmp = sshbuf_fromb(client_pubkey)) == NULL) {
+	if ((client_pubkey_tmp = sshbuf_fromb((struct sshbuf *)client_pubkey)) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
@@ -239,13 +239,12 @@ kex_kyber_shared_to_server(struct kex *kex, const struct sshbuf *server_pubkey,
 	struct sshbuf *shared = NULL;
 	struct sshbuf *server_pubkey_tmp = NULL;
 	struct sshbuf *blob_fromserver_tmp = NULL;
-	struct sshbuf *tmp = NULL;
 	struct sshbuf *number = NULL;
 	size_t size;
 	int r;
 
 	/* preserve server_pubkey_tmp */
-	if ((server_pubkey_tmp = sshbuf_fromb(server_pubkey)) == NULL) {
+	if ((server_pubkey_tmp = sshbuf_fromb((struct sshbuf *)server_pubkey)) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
@@ -274,7 +273,7 @@ kex_kyber_shared_to_server(struct kex *kex, const struct sshbuf *server_pubkey,
 	}
 
 	/* preserve blob_fromserver_tmp */
-	if ((blob_fromserver_tmp = sshbuf_fromb(blob_fromserver)) == NULL) {
+	if ((blob_fromserver_tmp = sshbuf_fromb((struct sshbuf *)blob_fromserver)) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
@@ -347,7 +346,7 @@ out:
  * 	 output complete raw shared secret
  */
 int
-kex_kyber_compute_shared(struct kex *kex, const struct sshbuf *blob_fromclient, struct sshbuf **sharedp)
+kex_kyber_compute_shared(struct kex *kex, struct sshbuf *blob_fromclient, struct sshbuf **sharedp)
 {
 	u_char *ct_fromclient = NULL, *ss_fromclient = NULL;
 	struct sshbuf *shared = NULL;
@@ -359,13 +358,13 @@ kex_kyber_compute_shared(struct kex *kex, const struct sshbuf *blob_fromclient, 
 		return SSH_ERR_ALLOC_FAIL;
 
 	/* preserve blob_fromclient */
-	if ((blob_fromclient_tmp = sshbuf_fromb(blob_fromclient)) == NULL) {
+	if ((blob_fromclient_tmp = sshbuf_fromb((struct sshbuf *)blob_fromclient)) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
 
 	/* get ciphertext from client */
-	if ((r = sshbuf_get_string(blob_fromclient , &ct_fromclient, kyber_ct_bytes(&(kex->kyber)))))
+	if ((r = sshbuf_get_string(blob_fromclient , &ct_fromclient, NULL)))
 		goto out;
 
 	/* decrypt number from client */

@@ -230,7 +230,7 @@ int	 kex_c25519_dec(struct kex *, const struct sshbuf *, struct sshbuf **);
 int	 kex_kyber_keypair(struct kex *, struct sshbuf **);
 int kex_kyber_shared_to_client(struct kex *, const struct sshbuf *, struct sshbuf **, struct sshbuf **);
 int kex_kyber_shared_to_server(struct kex *, const struct sshbuf *, const struct sshbuf *, struct sshbuf **, struct sshbuf **, struct sshbuf **);
-int kex_kyber_compute_shared(struct kex *, const struct sshbuf *, struct sshbuf **);
+int kex_kyber_compute_shared(struct kex *, struct sshbuf *, struct sshbuf **);
 
 int	 kex_kem_sntrup4591761x25519_keypair(struct kex *);
 int	 kex_kem_sntrup4591761x25519_enc(struct kex *, const struct sshbuf *,

@@ -426,8 +426,6 @@ int  sshkey_variant_from_name(const char * name) {
 	const struct keytype *kt;
 
 	for (kt = keytypes; kt->type != -1; kt++) {
-		if (kt->type != KEY_DILITHIUM)
-			continue;
 		if (kt->name != NULL && strcmp(name, kt->name) == 0)
 			return kt->variant;
 	}
@@ -1410,7 +1408,7 @@ sshkey_read(struct sshkey *ret, char **cpp)
 	struct sshkey *k;
 	char *cp, *blobcopy;
 	size_t space;
-	int r, type, variant, curve_nid = -1;
+	int r, type, curve_nid = -1;
 	struct sshbuf *blob;
 
 	if (ret == NULL)
@@ -1552,6 +1550,7 @@ sshkey_read(struct sshkey *ret, char **cpp)
 		ret->dilithium = k->dilithium;
 		k->dilithium = NULL;
 		k->variant = -1;
+		break;
 	case KEY_ED25519:
 		freezero(ret->ed25519_pk, ED25519_PK_SZ);
 		ret->ed25519_pk = k->ed25519_pk;

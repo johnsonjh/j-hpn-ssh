@@ -46,7 +46,7 @@ ssh_dilithium_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 	size_t len, dlen, slen;
 	struct sshbuf *b = NULL;
 	int ret = SSH_ERR_INTERNAL_ERROR;
-	u_char *sig;
+	u_char *sig = NULL;
 
 	if (lenp != NULL)
 		*lenp = 0;
@@ -118,7 +118,8 @@ ssh_dilithium_verify(const struct sshkey *key,
 	size_t len, dlen, slen, tlen;
 	struct sshbuf *b = NULL;
 	int ret = SSH_ERR_INTERNAL_ERROR;
-	u_char *msg, *sigblob, *sigtype;
+	u_char *msg = NULL, *sigblob = NULL;
+	char *sigtype = NULL;
 
 	if (key == NULL || key->dilithium == NULL ||
 	    sshkey_type_plain(key->type) != KEY_DILITHIUM)
@@ -155,7 +156,7 @@ ssh_dilithium_verify(const struct sshkey *key,
 	}
 
 	/* Verify the signature and extract the message */
-	if (dilithium_sign_open(msg, &len, sigblob, slen, key->dilithium) != 0) {
+	if (dilithium_sign_open(msg, (unsigned long long*) &len, sigblob, slen, key->dilithium) != 0) {
 		ret = SSH_ERR_SIGNATURE_INVALID;
 		goto out;
 	}
