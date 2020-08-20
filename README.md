@@ -62,7 +62,6 @@ cd ../../..
 cd crystals/dilithium/avx2
 make libpqcrystals_dilithium_avx2.a
 cd ../../..
-make 
 autoreconf
 ./configure
 make # && make tests
