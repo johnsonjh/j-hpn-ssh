@@ -78,15 +78,15 @@
 ######################################################################
 
 # set to minimum acceptable version of autoconf
-if [ "x$AUTOCONF_VERSION" = "x" ]; then
+if [ "x${AUTOCONF_VERSION}" = "x" ]; then
 	AUTOCONF_VERSION=2.52
 fi
 # set to minimum acceptable version of automake
-if [ "x$AUTOMAKE_VERSION" = "x" ]; then
+if [ "x${AUTOMAKE_VERSION}" = "x" ]; then
 	AUTOMAKE_VERSION=1.6.0
 fi
 # set to minimum acceptable version of libtool
-if [ "x$LIBTOOL_VERSION" = "x" ]; then
+if [ "x${LIBTOOL_VERSION}" = "x" ]; then
 	LIBTOOL_VERSION=1.4.2
 fi
 
@@ -96,22 +96,22 @@ fi
 ident()
 {
 	# extract copyright from header
-	__copyright="$(grep Copyright $AUTOGEN_SH | head -${HEAD_N}1 | awk '{print $4}')"
-	if [ "x$__copyright" = "x" ]; then
+	__copyright="$(grep Copyright "${AUTOGEN_SH}" | head -"${HEAD_N}"1 | awk '{print $4}')"
+	if [ "x${__copyright}" = "x" ]; then
 		__copyright="$(date +%Y)"
 	fi
 
-	# extract version from CVS Id string
+	# extract version from CVS Id string, shellcheck disable=SC2154,SC2250
 	__id="$Id: autogen.sh 33925 2009-03-01 23:27:06Z brlcad $"
-	__version="$(echo $__id | sed 's/.*\([0-9][0-9][0-9][0-9]\)[-\/]\([0-9][0-9]\)[-\/]\([0-9][0-9]\).*/\1\2\3/')"
-	if [ "x$__version" = "x" ]; then
+	__version="$(echo "${__id}" | sed 's/.*\([0-9][0-9][0-9][0-9]\)[-\/]\([0-9][0-9]\)[-\/]\([0-9][0-9]\).*/\1\2\3/')"
+	if [ "x${__version}" = "x" ]; then
 		__version=""
 	fi
 
 	echo "autogen.sh build preparation script by Christopher Sean Morrison"
 	echo " + config.guess download patch by Sebastian Pipping (2008-12-03)"
-	echo "revised 3-clause BSD-style license, copyright (c) $__copyright"
-	echo "script version $__version, ISO/IEC 9945 POSIX shell script"
+	echo "revised 3-clause BSD-style license, copyright (c) ${__copyright}"
+	echo "script version ${__version}, ISO/IEC 9945 POSIX shell script."
 }
 
 ##################
@@ -119,8 +119,8 @@ ident()
 ##################
 usage()
 {
-	echo "Usage: $AUTOGEN_SH [-h|--help] [-v|--verbose] [-q|--quiet] [-d|--download] [--version]"
-	echo "  --help     Help on $NAME_OF_AUTOGEN usage"
+	echo "Usage: ${AUTOGEN_SH} [-h|--help] [-v|--verbose] [-q|--quiet] [-d|--download] [--version]"
+	echo "  --help     Help on ${NAME_OF_AUTOGEN} usage"
 	echo "  --verbose  Verbose progress output"
 	echo "  --quiet    Quiet suppressed progress output"
 	echo "  --download Download the latest config.guess from gnulib"
@@ -159,9 +159,9 @@ version_error()
 	$ECHO "ERROR: To prepare the ${PROJECT} build system from scratch,"
 	$ECHO "    at least version $1 of $2 must be installed."
 	$ECHO
-	$ECHO "$NAME_OF_AUTOGEN does not need to be run on the same machine that will"
+	$ECHO "${NAME_OF_AUTOGEN} does not need to be run on the same machine that will"
 	$ECHO "run configure or make. Either the GNU Autotools will need to be installed"
-	$ECHO "or upgraded on this system, or $NAME_OF_AUTOGEN must be run on the source"
+	$ECHO "or upgraded on this system, or ${NAME_OF_AUTOGEN} must be run on the source"
 	$ECHO "code on another system and then transferred to here. -- Cheers!"
 	$ECHO
 }
@@ -186,30 +186,30 @@ version_check()
 	_min="$(echo ${_min}. | sed 's/[^0-9]/./g' | sed 's/\.\././g')"
 	_cur="$(echo ${_cur}. | sed 's/[^0-9]/./g' | sed 's/\.\././g')"
 
-	_min_major="$(echo $_min | cut -d. -f1)"
-	_min_minor="$(echo $_min | cut -d. -f2)"
-	_min_patch="$(echo $_min | cut -d. -f3)"
+	_min_major="$(echo ${_min} | cut -d. -f1)"
+	_min_minor="$(echo ${_min} | cut -d. -f2)"
+	_min_patch="$(echo ${_min} | cut -d. -f3)"
 
-	_cur_major="$(echo $_cur | cut -d. -f1)"
-	_cur_minor="$(echo $_cur | cut -d. -f2)"
-	_cur_patch="$(echo $_cur | cut -d. -f3)"
+	_cur_major="$(echo ${_cur} | cut -d. -f1)"
+	_cur_minor="$(echo ${_cur} | cut -d. -f2)"
+	_cur_patch="$(echo ${_cur} | cut -d. -f3)"
 
-	if [ "x$_min_major" = "x" ]; then
+	if [ "x${_min_major}" = "x" ]; then
 		_min_major=0
 	fi
-	if [ "x$_min_minor" = "x" ]; then
+	if [ "x${_min_minor}" = "x" ]; then
 		_min_minor=0
 	fi
-	if [ "x$_min_patch" = "x" ]; then
+	if [ "x${_min_patch}" = "x" ]; then
 		_min_patch=0
 	fi
-	if [ "x$_cur_minor" = "x" ]; then
+	if [ "x${_cur_minor}" = "x" ]; then
 		_cur_major=0
 	fi
-	if [ "x$_cur_minor" = "x" ]; then
+	if [ "x${_cur_minor}" = "x" ]; then
 		_cur_minor=0
 	fi
-	if [ "x$_cur_patch" = "x" ]; then
+	if [ "x${_cur_patch}" = "x" ]; then
 		_cur_patch=0
 	fi
 
@@ -241,14 +241,14 @@ locate_configure_template()
 		echo "./configure.ac"
 	elif test -f "./configure.in"; then
 		echo "./configure.in"
-	elif test -f "$_pwd/configure.ac"; then
-		echo "$_pwd/configure.ac"
-	elif test -f "$_pwd/configure.in"; then
-		echo "$_pwd/configure.in"
-	elif test -f "$PATH_TO_AUTOGEN/configure.ac"; then
-		echo "$PATH_TO_AUTOGEN/configure.ac"
-	elif test -f "$PATH_TO_AUTOGEN/configure.in"; then
-		echo "$PATH_TO_AUTOGEN/configure.in"
+	elif test -f "${_pwd}/configure.ac"; then
+		echo "${_pwd}/configure.ac"
+	elif test -f "${_pwd}/configure.in"; then
+		echo "${_pwd}/configure.in"
+	elif test -f "${PATH_TO_AUTOGEN}/configure.ac"; then
+		echo "${PATH_TO_AUTOGEN}/configure.ac"
+	elif test -f "${PATH_TO_AUTOGEN}/configure.in"; then
+		echo "${PATH_TO_AUTOGEN}/configure.in"
 	fi
 }
 
@@ -258,61 +258,61 @@ locate_configure_template()
 ARGS="$*"
 PATH_TO_AUTOGEN="$(dirname $0)"
 NAME_OF_AUTOGEN="$(basename $0)"
-AUTOGEN_SH="$PATH_TO_AUTOGEN/$NAME_OF_AUTOGEN"
+AUTOGEN_SH="${PATH_TO_AUTOGEN}/${NAME_OF_AUTOGEN}"
 
 LIBTOOL_M4="${PATH_TO_AUTOGEN}/misc/libtool.m4"
 
-if [ "x$HELP" = "x" ]; then
+if [ "x${HELP}" = "x" ]; then
 	HELP=no
 fi
-if [ "x$QUIET" = "x" ]; then
+if [ "x${QUIET}" = "x" ]; then
 	QUIET=no
 fi
-if [ "x$VERBOSE" = "x" ]; then
+if [ "x${VERBOSE}" = "x" ]; then
 	VERBOSE=no
 fi
-if [ "x$VERSION_ONLY" = "x" ]; then
+if [ "x${VERSION_ONLY}" = "x" ]; then
 	VERSION_ONLY=no
 fi
-if [ "x$DOWNLOAD" = "x" ]; then
+if [ "x${DOWNLOAD}" = "x" ]; then
 	DOWNLOAD=no
 fi
-if [ "x$AUTORECONF_OPTIONS" = "x" ]; then
+if [ "x${AUTORECONF_OPTIONS}" = "x" ]; then
 	AUTORECONF_OPTIONS="-i -f"
 fi
-if [ "x$AUTOCONF_OPTIONS" = "x" ]; then
+if [ "x${AUTOCONF_OPTIONS}" = "x" ]; then
 	AUTOCONF_OPTIONS="-f"
 fi
-if [ "x$AUTOMAKE_OPTIONS" = "x" ]; then
+if [ "x${AUTOMAKE_OPTIONS}" = "x" ]; then
 	AUTOMAKE_OPTIONS="-a -c -f"
 fi
 ALT_AUTOMAKE_OPTIONS="-a -c"
-if [ "x$LIBTOOLIZE_OPTIONS" = "x" ]; then
+if [ "x${LIBTOOLIZE_OPTIONS}" = "x" ]; then
 	LIBTOOLIZE_OPTIONS="--automake -c -f"
 fi
 ALT_LIBTOOLIZE_OPTIONS="--automake --copy --force"
-if [ "x$ACLOCAL_OPTIONS" = "x" ]; then
+if [ "x${ACLOCAL_OPTIONS}" = "x" ]; then
 	ACLOCAL_OPTIONS=""
 fi
-if [ "x$AUTOHEADER_OPTIONS" = "x" ]; then
+if [ "x${AUTOHEADER_OPTIONS}" = "x" ]; then
 	AUTOHEADER_OPTIONS=""
 fi
-if [ "x$CONFIG_GUESS_URL" = "x" ]; then
+if [ "x${CONFIG_GUESS_URL}" = "x" ]; then
 	CONFIG_GUESS_URL="http://git.savannah.gnu.org/gitweb/?p=gnulib.git;a=blob_plain;f=build-aux/config.guess;hb=HEAD"
 fi
-for arg in $ARGS; do
-	case "x$arg" in
-		x--help) HELP=yes ;;
-		x-[hH]) HELP=yes ;;
-		x--quiet) QUIET=yes ;;
-		x-[qQ]) QUIET=yes ;;
-		x--verbose) VERBOSE=yes ;;
-		x-[dD]) DOWNLOAD=yes ;;
-		x--download) DOWNLOAD=yes ;;
-		x-[vV]) VERBOSE=yes ;;
-		x--version) VERSION_ONLY=yes ;;
+for arg in ${ARGS}; do
+	case "x${arg}" in
+		x--help) HELP=yes;;
+		x-[hH]) HELP=yes;;
+		x--quiet) QUIET=yes;;
+		x-[qQ]) QUIET=yes;;
+		x--verbose) VERBOSE=yes;;
+		x-[dD]) DOWNLOAD=yes;;
+		x--download) DOWNLOAD=yes;;
+		x-[vV]) VERBOSE=yes;;
+		x--version) VERSION_ONLY=yes;;
 		*)
-			echo "Unknown option: $arg"
+			echo "Unknown option: ${arg}"
 			echo
 			usage
 			exit 1
@@ -325,10 +325,10 @@ done
 #####################
 
 # sanity check before recursions potentially begin
-if [ ! -f "$AUTOGEN_SH" ]; then
-	echo "INTERNAL ERROR: $AUTOGEN_SH does not exist"
-	if [ ! "x$0" = "x$AUTOGEN_SH" ]; then
-		echo "INTERNAL ERROR: dirname/basename inconsistency: $0 != $AUTOGEN_SH"
+if [ ! -f "${AUTOGEN_SH}" ]; then
+	echo "INTERNAL ERROR: ${AUTOGEN_SH} does not exist"
+	if [ ! "x$0" = "x${AUTOGEN_SH}" ]; then
+		echo "INTERNAL ERROR: dirname/basename inconsistency: $0 != ${AUTOGEN_SH}"
 	fi
 	exit 1
 fi
@@ -338,7 +338,7 @@ LC_ALL=C
 
 # commands that this script expects
 for __cmd in echo head tail pwd; do
-	echo "test" | $__cmd > /dev/null 2>&1
+	echo "test" | ${__cmd} > /dev/null 2>&1
 	if [ $? != 0 ]; then
 		echo "INTERNAL ERROR: '${__cmd}' command is required"
 		exit 2
@@ -383,33 +383,33 @@ esac
 
 VERBOSE_ECHO=:
 ECHO=:
-if [ "x$QUIET" = "xyes" ]; then
-	if [ "x$VERBOSE" = "xyes" ]; then
+if [ "x${QUIET}" = "xyes" ]; then
+	if [ "x${VERBOSE}" = "xyes" ]; then
 		echo "Verbose output quelled by quiet option. Further output disabled."
 	fi
 else
 	ECHO=echo
-	if [ "x$VERBOSE" = "xyes" ]; then
+	if [ "x${VERBOSE}" = "xyes" ]; then
 		echo "Verbose output enabled."
 		VERBOSE_ECHO=echo
 	fi
 fi
 
 # allow a recursive run to disable further recursions
-if [ "x$RUN_RECURSIVE" = "x" ]; then
+if [ "x${RUN_RECURSIVE}" = "x" ]; then
 	RUN_RECURSIVE=yes
 fi
 
 ################################################
 # check for help arg and bypass version checks #
 ################################################
-if [ "x$(echo $ARGS | sed 's/.*[hH][eE][lL][pP].*/help/')" = "xhelp" ]; then
+if [ "x$(echo ${ARGS} | sed 's/.*[hH][eE][lL][pP].*/help/')" = "xhelp" ]; then
 	HELP=yes
 fi
-if [ "x$HELP" = "xyes" ]; then
+if [ "x${HELP}" = "xyes" ]; then
 	usage
-	$ECHO "---"
-	$ECHO "Help was requested. No preparation or configuration will be performed."
+	${ECHO} "---"
+	${ECHO} "Help was requested. No preparation or configuration will be performed."
 	exit 0
 fi
 
@@ -419,7 +419,7 @@ fi
 untrap_abnormal()
 {
 	for sig in 1 2 13 15; do
-		trap - $sig
+		trap - ${sig}
 	done
 }
 
@@ -473,18 +473,18 @@ if [ "x$CONFIGURE" = "x" ]; then
 		$VERBOSE_ECHO "Found a configure template: $CONFIGURE"
 	fi
 else
-	$ECHO "Using CONFIGURE environment variable override: $CONFIGURE"
+	$ECHO "Using CONFIGURE environment variable override: ${CONFIGURE}"
 fi
-if [ "x$CONFIGURE" = "x" ]; then
-	if [ "x$VERSION_ONLY" = "xyes" ]; then
+if [ "x${CONFIGURE}" = "x" ]; then
+	if [ "x${VERSION_ONLY}" = "xyes" ]; then
 		CONFIGURE=/dev/null
 	else
-		$ECHO
-		$ECHO "A configure.ac or configure.in file could not be located implying"
-		$ECHO "that the GNU Build System is at least not used in this directory. In"
-		$ECHO "any case, there is nothing to do here without one of those files."
-		$ECHO
-		$ECHO "ERROR: No configure.in or configure.ac file found in $(pwd)"
+		${ECHO}
+		${ECHO} "A configure.ac or configure.in file could not be located implying"
+		${ECHO} "that the GNU Build System is at least not used in this directory. In"
+		${ECHO} "any case, there is nothing to do here without one of those files."
+		${ECHO}
+		${ECHO} "ERROR: No configure.in or configure.ac file found in $(pwd)"
 		exit 1
 	fi
 fi
@@ -492,32 +492,32 @@ fi
 ####################
 # get project name #
 ####################
-if [ "x$PROJECT" = "x" ]; then
-	PROJECT="$(grep AC_INIT $CONFIGURE | grep -v '.*#.*AC_INIT' | tail -${TAIL_N}1 | sed 's/^[ 	]*AC_INIT(\([^,)]*\).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/')"
-	if [ "x$PROJECT" = "xAC_INIT" ]; then
+if [ "x${PROJECT}" = "x" ]; then
+	PROJECT="$(grep AC_INIT ${CONFIGURE} | grep -v '.*#.*AC_INIT' | tail -${TAIL_N}1 | sed 's/^[ 	]*AC_INIT(\([^,)]*\).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/')"
+	if [ "x${PROJECT}" = "xAC_INIT" ]; then
 		# projects might be using the older/deprecated arg-less AC_INIT .. look for AM_INIT_AUTOMAKE instead
 		PROJECT="$(grep AM_INIT_AUTOMAKE $CONFIGURE | grep -v '.*#.*AM_INIT_AUTOMAKE' | tail -${TAIL_N}1 | sed 's/^[ 	]*AM_INIT_AUTOMAKE(\([^,)]*\).*/\1/' | sed 's/.*\[\(.*\)\].*/\1/')"
 	fi
-	if [ "x$PROJECT" = "xAM_INIT_AUTOMAKE" ]; then
+	if [ "x${PROJECT}" = "xAM_INIT_AUTOMAKE" ]; then
 		PROJECT="project"
 	fi
-	if [ "x$PROJECT" = "x" ]; then
+	if [ "x${PROJECT}" = "x" ]; then
 		PROJECT="project"
 	fi
 else
-	$ECHO "Using PROJECT environment variable override: $PROJECT"
+	$ECHO "Using PROJECT environment variable override: ${PROJECT}"
 fi
-$ECHO "Preparing the $PROJECT build system... please wait."
+$ECHO "Preparing the ${PROJECT} build system... please wait."
 $ECHO
 
 ########################
 # check for autoreconf #
 ########################
 HAVE_AUTORECONF=no
-if [ "x$AUTORECONF" = "x" ]; then
+if [ "x${AUTORECONF}" = "x" ]; then
 	for AUTORECONF in autoreconf; do
-		$VERBOSE_ECHO "Checking autoreconf version: $AUTORECONF --version"
-		$AUTORECONF --version > /dev/null 2>&1
+		${VERBOSE_ECHO} "Checking autoreconf version: ${AUTORECONF} --version"
+		${AUTORECONF} --version > /dev/null 2>&1
 		if [ $? = 0 ]; then
 			HAVE_AUTORECONF=yes
 			break
@@ -525,17 +525,17 @@ if [ "x$AUTORECONF" = "x" ]; then
 	done
 else
 	HAVE_AUTORECONF=yes
-	$ECHO "Using AUTORECONF environment variable override: $AUTORECONF"
+	${ECHO} "Using AUTORECONF environment variable override: ${AUTORECONF}"
 fi
 
 ##########################
 # autoconf version check #
 ##########################
 _acfound=no
-if [ "x$AUTOCONF" = "x" ]; then
+if [ "x${AUTOCONF}" = "x" ]; then
 	for AUTOCONF in autoconf; do
-		$VERBOSE_ECHO "Checking autoconf version: $AUTOCONF --version"
-		$AUTOCONF --version > /dev/null 2>&1
+		${VERBOSE_ECHO} "Checking autoconf version: ${AUTOCONF} --version"
+		${AUTOCONF} --version > /dev/null 2>&1
 		if [ $? = 0 ]; then
 			_acfound=yes
 			break
@@ -543,26 +543,26 @@ if [ "x$AUTOCONF" = "x" ]; then
 	done
 else
 	_acfound=yes
-	$ECHO "Using AUTOCONF environment variable override: $AUTOCONF"
+	${ECHO} "Using AUTOCONF environment variable override: ${AUTOCONF}"
 fi
 
 _report_error=no
-if [ ! "x$_acfound" = "xyes" ]; then
-	$ECHO "ERROR: Unable to locate GNU Autoconf."
+if [ ! "x${_acfound}" = "xyes" ]; then
+	${ECHO} "ERROR: Unable to locate GNU Autoconf."
 	_report_error=yes
 else
-	_version="$($AUTOCONF --version | head -${HEAD_N}1 | sed 's/[^0-9]*\([0-9\.][0-9\.]*\)/\1/')"
-	if [ "x$_version" = "x" ]; then
+	_version="$(${AUTOCONF} --version | head -${HEAD_N}1 | sed 's/[^0-9]*\([0-9\.][0-9\.]*\)/\1/')"
+	if [ "x${_version}" = "x" ]; then
 		_version="0.0.0"
 	fi
-	$ECHO "Found GNU Autoconf version $_version"
-	version_check "$AUTOCONF_VERSION" "$_version"
+	$ECHO "Found GNU Autoconf version ${_version}"
+	version_check "${AUTOCONF_VERSION}" "${_version}"
 	if [ $? -ne 0 ]; then
 		_report_error=yes
 	fi
 fi
-if [ "x$_report_error" = "xyes" ]; then
-	version_error "$AUTOCONF_VERSION" "GNU Autoconf"
+if [ "x${_report_error}" = "xyes" ]; then
+	version_error "${AUTOCONF_VERSION}" "GNU Autoconf"
 	exit 1
 fi
 
@@ -570,10 +570,10 @@ fi
 # automake version check #
 ##########################
 _amfound=no
-if [ "x$AUTOMAKE" = "x" ]; then
+if [ "x${AUTOMAKE}" = "x" ]; then
 	for AUTOMAKE in automake; do
-		$VERBOSE_ECHO "Checking automake version: $AUTOMAKE --version"
-		$AUTOMAKE --version > /dev/null 2>&1
+		${VERBOSE_ECHO} "Checking automake version: ${AUTOMAKE} --version"
+		${AUTOMAKE} --version > /dev/null 2>&1
 		if [ $? = 0 ]; then
 			_amfound=yes
 			break
@@ -581,27 +581,27 @@ if [ "x$AUTOMAKE" = "x" ]; then
 	done
 else
 	_amfound=yes
-	$ECHO "Using AUTOMAKE environment variable override: $AUTOMAKE"
+	${ECHO} "Using AUTOMAKE environment variable override: ${AUTOMAKE}"
 fi
 
 _report_error=no
-if [ ! "x$_amfound" = "xyes" ]; then
-	$ECHO
-	$ECHO "ERROR: Unable to locate GNU Automake."
+if [ ! "x${_amfound}" = "xyes" ]; then
+	${ECHO}
+	${ECHO} "ERROR: Unable to locate GNU Automake."
 	_report_error=yes
 else
-	_version="$($AUTOMAKE --version | head -${HEAD_N}1 | sed 's/[^0-9]*\([0-9\.][0-9\.]*\)/\1/')"
-	if [ "x$_version" = "x" ]; then
+	_version="$(${AUTOMAKE} --version | head -${HEAD_N}1 | sed 's/[^0-9]*\([0-9\.][0-9\.]*\)/\1/')"
+	if [ "x${_version}" = "x" ]; then
 		_version="0.0.0"
 	fi
-	$ECHO "Found GNU Automake version $_version"
-	version_check "$AUTOMAKE_VERSION" "$_version"
+	${ECHO} "Found GNU Automake version ${_version}"
+	version_check "${AUTOMAKE_VERSION}" "${_version}"
 	if [ $? -ne 0 ]; then
 		_report_error=yes
 	fi
 fi
-if [ "x$_report_error" = "xyes" ]; then
-	version_error "$AUTOMAKE_VERSION" "GNU Automake"
+if [ "x${_report_error}" = "xyes" ]; then
+	version_error "${AUTOMAKE_VERSION}" "GNU Automake"
 	exit 1
 fi
 
@@ -611,35 +611,35 @@ fi
 HAVE_LIBTOOLIZE=yes
 HAVE_ALT_LIBTOOLIZE=no
 _ltfound=no
-if [ "x$LIBTOOLIZE" = "x" ]; then
+if [ "x${LIBTOOLIZE}" = "x" ]; then
 	LIBTOOLIZE=libtoolize
-	$VERBOSE_ECHO "Checking libtoolize version: $LIBTOOLIZE --version"
-	$LIBTOOLIZE --version > /dev/null 2>&1
+	${VERBOSE_ECHO} "Checking libtoolize version: ${LIBTOOLIZE} --version"
+	${LIBTOOLIZE} --version > /dev/null 2>&1
 	if [ ! $? = 0 ]; then
 		HAVE_LIBTOOLIZE=no
-		$ECHO
-		if [ "x$HAVE_AUTORECONF" = "xno" ]; then
-			$ECHO "Warning: libtoolize does not appear to be available."
+		${ECHO}
+		if [ "x${HAVE_AUTORECONF}" = "xno" ]; then
+			${ECHO} "Warning: libtoolize does not appear to be available."
 		else
-			$ECHO "Warning: libtoolize does not appear to be available. This means that"
-			$ECHO "the automatic build preparation via autoreconf will probably not work."
-			$ECHO "Preparing the build by running each step individually, however, should"
-			$ECHO "work and will be done automatically for you if autoreconf fails."
+			${ECHO} "Warning: libtoolize does not appear to be available. This means that"
+			${ECHO} "the automatic build preparation via autoreconf will probably not work."
+			${ECHO} "Preparing the build by running each step individually, however, should"
+			${ECHO} "work and will be done automatically for you if autoreconf fails."
 		fi
 
 		# look for some alternates
 		for tool in glibtoolize libtoolize15 libtoolize14 libtoolize13; do
-			$VERBOSE_ECHO "Checking libtoolize alternate: $tool --version"
-			_glibtoolize="$($tool --version > /dev/null 2>&1)"
+			${VERBOSE_ECHO} "Checking libtoolize alternate: ${tool} --version"
+			_glibtoolize="$(${tool} --version > /dev/null 2>&1)"
 			if [ $? = 0 ]; then
-				$VERBOSE_ECHO "Found $tool --version"
-				_glti="$(which $tool)"
-				if [ "x$_glti" = "x" ]; then
-					$VERBOSE_ECHO "Cannot find $tool with which"
+				${VERBOSE_ECHO} "Found ${tool} --version"
+				_glti="$(which ${tool})"
+				if [ "x${_glti}" = "x" ]; then
+					${VERBOSE_ECHO} "Cannot find ${tool} with which"
 					continue
 				fi
-				if test ! -f "$_glti"; then
-					$VERBOSE_ECHO "Cannot use $tool, $_glti is not a file"
+				if test ! -f "${_glti}"; then
+					${VERBOSE_ECHO} "Cannot use ${tool}, ${_glti} is not a file"
 					continue
 				fi
 				_gltidir="$(dirname $_glti)"
