@@ -131,6 +131,6 @@ buffer.
 - Benjamin Bennett
 - Mike Tasota
 
-## Upstream **HPN-SSH** Homepage
+## **HPN-SSH** Upstream Homepage
 
 - <https://www.psc.edu/research/networking/hpn-ssh/>
