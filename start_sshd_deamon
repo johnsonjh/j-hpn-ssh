@@ -1,2 +1,2 @@
 OPENSSH_FOLDER=$(pwd)
-$OPENSSH_FOLDER/sshd -f $OPENSSH_FOLDER/sshd_config -h $OPENSSH_FOLDER/ssh_host_rsa_key 
+$OPENSSH_FOLDER/sshd -f $OPENSSH_FOLDER/sshd_config -h $OPENSSH_FOLDER/ssh_host_rsa_key
