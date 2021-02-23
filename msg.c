@@ -44,54 +44,54 @@
 int
 ssh_msg_send(int fd, u_char type, struct sshbuf *m)
 {
-	u_char buf[5];
-	u_int mlen = sshbuf_len(m);
+    u_char buf[5];
+    u_int mlen = sshbuf_len(m);
 
-	debug3("ssh_msg_send: type %u", (unsigned int)type & 0xff);
+    debug3("ssh_msg_send: type %u", (unsigned int)type & 0xff);
 
-	put_u32(buf, mlen + 1);
-	buf[4] = type;		/* 1st byte of payload is mesg-type */
-	if (atomicio(vwrite, fd, buf, sizeof(buf)) != sizeof(buf)) {
-		error("ssh_msg_send: write");
-		return (-1);
-	}
-	if (atomicio(vwrite, fd, sshbuf_mutable_ptr(m), mlen) != mlen) {
-		error("ssh_msg_send: write");
-		return (-1);
-	}
-	return (0);
+    put_u32(buf, mlen + 1);
+    buf[4] = type;		/* 1st byte of payload is mesg-type */
+    if (atomicio(vwrite, fd, buf, sizeof(buf)) != sizeof(buf)) {
+        error("ssh_msg_send: write");
+        return (-1);
+    }
+    if (atomicio(vwrite, fd, sshbuf_mutable_ptr(m), mlen) != mlen) {
+        error("ssh_msg_send: write");
+        return (-1);
+    }
+    return (0);
 }
 
 int
 ssh_msg_recv(int fd, struct sshbuf *m)
 {
-	u_char buf[4], *p;
-	u_int msg_len;
-	int r;
+    u_char buf[4], *p;
+    u_int msg_len;
+    int r;
 
-	debug3("ssh_msg_recv entering");
+    debug3("ssh_msg_recv entering");
 
-	if (atomicio(read, fd, buf, sizeof(buf)) != sizeof(buf)) {
-		if (errno != EPIPE)
-			error("ssh_msg_recv: read: header");
-		return (-1);
-	}
-	msg_len = get_u32(buf);
-	/* OQS note: We have increased the limit below
-	 * from (256 * 1024) to (65536 * 1024), so as to
-	 * support algorithms such as Rainbow and McEliece */
-	if (msg_len > 65536 * 1024) {
-		error("ssh_msg_recv: read: bad msg_len %u", msg_len);
-		return (-1);
-	}
-	sshbuf_reset(m);
-	if ((r = sshbuf_reserve(m, msg_len, &p)) != 0) {
-		error("%s: buffer error: %s", __func__, ssh_err(r));
-		return -1;
-	}
-	if (atomicio(read, fd, p, msg_len) != msg_len) {
-		error("ssh_msg_recv: read: %s", strerror(errno));
-		return (-1);
-	}
-	return (0);
+    if (atomicio(read, fd, buf, sizeof(buf)) != sizeof(buf)) {
+        if (errno != EPIPE)
+            error("ssh_msg_recv: read: header");
+        return (-1);
+    }
+    msg_len = get_u32(buf);
+    /* OQS note: We have increased the limit below
+     * from (256 * 1024) to (65536 * 1024), so as to
+     * support algorithms such as Rainbow and McEliece */
+    if (msg_len > 65536 * 1024) {
+        error("ssh_msg_recv: read: bad msg_len %u", msg_len);
+        return (-1);
+    }
+    sshbuf_reset(m);
+    if ((r = sshbuf_reserve(m, msg_len, &p)) != 0) {
+        error("%s: buffer error: %s", __func__, ssh_err(r));
+        return -1;
+    }
+    if (atomicio(read, fd, p, msg_len) != msg_len) {
+        error("ssh_msg_recv: read: %s", strerror(errno));
+        return (-1);
+    }
+    return (0);
 }

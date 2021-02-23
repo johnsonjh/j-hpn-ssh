@@ -38,293 +38,411 @@
  * corresponding liboqs key exchange scheme
  */
 static const OQS_ALG oqs_alg_mapping[] = {
-/* Hybrid key exchange methods */
+    /* Hybrid key exchange methods */
 #if defined(OPENSSL_HAS_ECC) && defined(WITH_HYBRID_KEX)
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-oqsdefault-sha384"), OQS_KEM_alg_default,
-	SSH2_MSG_HY_ECDH_OQSDEFAULT_INIT, SSH2_MSG_HY_ECDH_OQSDEFAULT_REPLY},
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-oqsdefault-sha384"), OQS_KEM_alg_default,
+        SSH2_MSG_HY_ECDH_OQSDEFAULT_INIT, SSH2_MSG_HY_ECDH_OQSDEFAULT_REPLY
+    },
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_HYBRID_KEXS_START
 #ifdef HAVE_BIKE
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-bike1-l1-cpa-sha384"), OQS_KEM_alg_bike1_l1_cpa,
-	SSH2_MSG_HY_ECDH_BIKE_INIT, SSH2_MSG_HY_ECDH_BIKE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-bike1-l3-cpa-sha384"), OQS_KEM_alg_bike1_l3_cpa,
-	SSH2_MSG_HY_ECDH_BIKE_INIT, SSH2_MSG_HY_ECDH_BIKE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-bike1-l1-fo-sha384"), OQS_KEM_alg_bike1_l1_fo,
-	SSH2_MSG_HY_ECDH_BIKE_INIT, SSH2_MSG_HY_ECDH_BIKE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-bike1-l3-fo-sha384"), OQS_KEM_alg_bike1_l3_fo,
-	SSH2_MSG_HY_ECDH_BIKE_INIT, SSH2_MSG_HY_ECDH_BIKE_REPLY},
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-bike1-l1-cpa-sha384"), OQS_KEM_alg_bike1_l1_cpa,
+        SSH2_MSG_HY_ECDH_BIKE_INIT, SSH2_MSG_HY_ECDH_BIKE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-bike1-l3-cpa-sha384"), OQS_KEM_alg_bike1_l3_cpa,
+        SSH2_MSG_HY_ECDH_BIKE_INIT, SSH2_MSG_HY_ECDH_BIKE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-bike1-l1-fo-sha384"), OQS_KEM_alg_bike1_l1_fo,
+        SSH2_MSG_HY_ECDH_BIKE_INIT, SSH2_MSG_HY_ECDH_BIKE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-bike1-l3-fo-sha384"), OQS_KEM_alg_bike1_l3_fo,
+        SSH2_MSG_HY_ECDH_BIKE_INIT, SSH2_MSG_HY_ECDH_BIKE_REPLY
+    },
 #endif /* HAVE_BIKE */
 #ifdef HAVE_CLASSIC_MCELIECE
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-348864-sha384"), OQS_KEM_alg_classic_mceliece_348864,
-	SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-348864f-sha384"), OQS_KEM_alg_classic_mceliece_348864f,
-	SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-460896-sha384"), OQS_KEM_alg_classic_mceliece_460896,
-	SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-460896f-sha384"), OQS_KEM_alg_classic_mceliece_460896f,
-	SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-6688128-sha384"), OQS_KEM_alg_classic_mceliece_6688128,
-	SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-6688128f-sha384"), OQS_KEM_alg_classic_mceliece_6688128f,
-	SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-6960119-sha384"), OQS_KEM_alg_classic_mceliece_6960119,
-	SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-6960119f-sha384"), OQS_KEM_alg_classic_mceliece_6960119f,
-	SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-8192128-sha384"), OQS_KEM_alg_classic_mceliece_8192128,
-	SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-8192128f-sha384"), OQS_KEM_alg_classic_mceliece_8192128f,
-	SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY},
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-348864-sha384"), OQS_KEM_alg_classic_mceliece_348864,
+        SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-348864f-sha384"), OQS_KEM_alg_classic_mceliece_348864f,
+        SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-460896-sha384"), OQS_KEM_alg_classic_mceliece_460896,
+        SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-460896f-sha384"), OQS_KEM_alg_classic_mceliece_460896f,
+        SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-6688128-sha384"), OQS_KEM_alg_classic_mceliece_6688128,
+        SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-6688128f-sha384"), OQS_KEM_alg_classic_mceliece_6688128f,
+        SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-6960119-sha384"), OQS_KEM_alg_classic_mceliece_6960119,
+        SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-6960119f-sha384"), OQS_KEM_alg_classic_mceliece_6960119f,
+        SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-8192128-sha384"), OQS_KEM_alg_classic_mceliece_8192128,
+        SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-classic-mceliece-8192128f-sha384"), OQS_KEM_alg_classic_mceliece_8192128f,
+        SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_INIT, SSH2_MSG_HY_ECDH_CLASSIC_MCELIECE_REPLY
+    },
 #endif /* HAVE_CLASSIC_MCELIECE */
 #ifdef HAVE_FRODO
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-frodo-640-aes-sha384"), OQS_KEM_alg_frodokem_640_aes,
-	SSH2_MSG_HY_ECDH_FRODO_INIT, SSH2_MSG_HY_ECDH_FRODO_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-frodo-640-shake-sha384"), OQS_KEM_alg_frodokem_640_shake,
-	SSH2_MSG_HY_ECDH_FRODO_INIT, SSH2_MSG_HY_ECDH_FRODO_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-frodo-976-aes-sha384"), OQS_KEM_alg_frodokem_976_aes,
-	SSH2_MSG_HY_ECDH_FRODO_INIT, SSH2_MSG_HY_ECDH_FRODO_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-frodo-976-shake-sha384"), OQS_KEM_alg_frodokem_976_shake,
-	SSH2_MSG_HY_ECDH_FRODO_INIT, SSH2_MSG_HY_ECDH_FRODO_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-frodo-1344-aes-sha384"), OQS_KEM_alg_frodokem_1344_aes,
-	SSH2_MSG_HY_ECDH_FRODO_INIT, SSH2_MSG_HY_ECDH_FRODO_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-frodo-1344-shake-sha384"), OQS_KEM_alg_frodokem_1344_shake,
-	SSH2_MSG_HY_ECDH_FRODO_INIT, SSH2_MSG_HY_ECDH_FRODO_REPLY},
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-frodo-640-aes-sha384"), OQS_KEM_alg_frodokem_640_aes,
+        SSH2_MSG_HY_ECDH_FRODO_INIT, SSH2_MSG_HY_ECDH_FRODO_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-frodo-640-shake-sha384"), OQS_KEM_alg_frodokem_640_shake,
+        SSH2_MSG_HY_ECDH_FRODO_INIT, SSH2_MSG_HY_ECDH_FRODO_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-frodo-976-aes-sha384"), OQS_KEM_alg_frodokem_976_aes,
+        SSH2_MSG_HY_ECDH_FRODO_INIT, SSH2_MSG_HY_ECDH_FRODO_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-frodo-976-shake-sha384"), OQS_KEM_alg_frodokem_976_shake,
+        SSH2_MSG_HY_ECDH_FRODO_INIT, SSH2_MSG_HY_ECDH_FRODO_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-frodo-1344-aes-sha384"), OQS_KEM_alg_frodokem_1344_aes,
+        SSH2_MSG_HY_ECDH_FRODO_INIT, SSH2_MSG_HY_ECDH_FRODO_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-frodo-1344-shake-sha384"), OQS_KEM_alg_frodokem_1344_shake,
+        SSH2_MSG_HY_ECDH_FRODO_INIT, SSH2_MSG_HY_ECDH_FRODO_REPLY
+    },
 #endif /* HAVE_FRODO */
 #ifdef HAVE_KYBER
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-kyber-512-sha384"), OQS_KEM_alg_kyber_512,
-	SSH2_MSG_HY_ECDH_KYBER_INIT, SSH2_MSG_HY_ECDH_KYBER_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-kyber-768-sha384"), OQS_KEM_alg_kyber_768,
-	SSH2_MSG_HY_ECDH_KYBER_INIT, SSH2_MSG_HY_ECDH_KYBER_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-kyber-1024-sha384"), OQS_KEM_alg_kyber_1024,
-	SSH2_MSG_HY_ECDH_KYBER_INIT, SSH2_MSG_HY_ECDH_KYBER_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-kyber-512-90s-sha384"), OQS_KEM_alg_kyber_512_90s,
-	SSH2_MSG_HY_ECDH_KYBER_INIT, SSH2_MSG_HY_ECDH_KYBER_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-kyber-768-90s-sha384"), OQS_KEM_alg_kyber_768_90s,
-	SSH2_MSG_HY_ECDH_KYBER_INIT, SSH2_MSG_HY_ECDH_KYBER_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-kyber-1024-90s-sha384"), OQS_KEM_alg_kyber_1024_90s,
-	SSH2_MSG_HY_ECDH_KYBER_INIT, SSH2_MSG_HY_ECDH_KYBER_REPLY},
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-kyber-512-sha384"), OQS_KEM_alg_kyber_512,
+        SSH2_MSG_HY_ECDH_KYBER_INIT, SSH2_MSG_HY_ECDH_KYBER_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-kyber-768-sha384"), OQS_KEM_alg_kyber_768,
+        SSH2_MSG_HY_ECDH_KYBER_INIT, SSH2_MSG_HY_ECDH_KYBER_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-kyber-1024-sha384"), OQS_KEM_alg_kyber_1024,
+        SSH2_MSG_HY_ECDH_KYBER_INIT, SSH2_MSG_HY_ECDH_KYBER_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-kyber-512-90s-sha384"), OQS_KEM_alg_kyber_512_90s,
+        SSH2_MSG_HY_ECDH_KYBER_INIT, SSH2_MSG_HY_ECDH_KYBER_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-kyber-768-90s-sha384"), OQS_KEM_alg_kyber_768_90s,
+        SSH2_MSG_HY_ECDH_KYBER_INIT, SSH2_MSG_HY_ECDH_KYBER_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-kyber-1024-90s-sha384"), OQS_KEM_alg_kyber_1024_90s,
+        SSH2_MSG_HY_ECDH_KYBER_INIT, SSH2_MSG_HY_ECDH_KYBER_REPLY
+    },
 #endif /* HAVE_KYBER */
 #ifdef HAVE_NTRU
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntru-hps-2048-509-sha384"), OQS_KEM_alg_ntru_hps2048509,
-	SSH2_MSG_HY_ECDH_NTRU_INIT, SSH2_MSG_HY_ECDH_NTRU_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntru-hps-2048-677-sha384"), OQS_KEM_alg_ntru_hps2048677,
-	SSH2_MSG_HY_ECDH_NTRU_INIT, SSH2_MSG_HY_ECDH_NTRU_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntru-hrss-701-sha384"), OQS_KEM_alg_ntru_hrss701,
-	SSH2_MSG_HY_ECDH_NTRU_INIT, SSH2_MSG_HY_ECDH_NTRU_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntru-hps-4096-821-sha384"), OQS_KEM_alg_ntru_hps4096821,
-	SSH2_MSG_HY_ECDH_NTRU_INIT, SSH2_MSG_HY_ECDH_NTRU_REPLY},
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntru-hps-2048-509-sha384"), OQS_KEM_alg_ntru_hps2048509,
+        SSH2_MSG_HY_ECDH_NTRU_INIT, SSH2_MSG_HY_ECDH_NTRU_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntru-hps-2048-677-sha384"), OQS_KEM_alg_ntru_hps2048677,
+        SSH2_MSG_HY_ECDH_NTRU_INIT, SSH2_MSG_HY_ECDH_NTRU_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntru-hrss-701-sha384"), OQS_KEM_alg_ntru_hrss701,
+        SSH2_MSG_HY_ECDH_NTRU_INIT, SSH2_MSG_HY_ECDH_NTRU_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntru-hps-4096-821-sha384"), OQS_KEM_alg_ntru_hps4096821,
+        SSH2_MSG_HY_ECDH_NTRU_INIT, SSH2_MSG_HY_ECDH_NTRU_REPLY
+    },
 #endif /* HAVE_NTRU */
 #ifdef HAVE_SABER
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-saber-lightsaber-sha384"), OQS_KEM_alg_saber_lightsaber,
-	SSH2_MSG_HY_ECDH_SABER_INIT, SSH2_MSG_HY_ECDH_SABER_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-saber-saber-sha384"), OQS_KEM_alg_saber_saber,
-	SSH2_MSG_HY_ECDH_SABER_INIT, SSH2_MSG_HY_ECDH_SABER_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-saber-firesaber-sha384"), OQS_KEM_alg_saber_firesaber,
-	SSH2_MSG_HY_ECDH_SABER_INIT, SSH2_MSG_HY_ECDH_SABER_REPLY},
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-saber-lightsaber-sha384"), OQS_KEM_alg_saber_lightsaber,
+        SSH2_MSG_HY_ECDH_SABER_INIT, SSH2_MSG_HY_ECDH_SABER_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-saber-saber-sha384"), OQS_KEM_alg_saber_saber,
+        SSH2_MSG_HY_ECDH_SABER_INIT, SSH2_MSG_HY_ECDH_SABER_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-saber-firesaber-sha384"), OQS_KEM_alg_saber_firesaber,
+        SSH2_MSG_HY_ECDH_SABER_INIT, SSH2_MSG_HY_ECDH_SABER_REPLY
+    },
 #endif /* HAVE_SABER */
 #ifdef HAVE_SIDH
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p434-sha384"), OQS_KEM_alg_sidh_p434,
-	SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p503-sha384"), OQS_KEM_alg_sidh_p503,
-	SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p610-sha384"), OQS_KEM_alg_sidh_p610,
-	SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p751-sha384"), OQS_KEM_alg_sidh_p751,
-	SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p434-compressed-sha384"), OQS_KEM_alg_sidh_p434_compressed,
-	SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p503-compressed-sha384"), OQS_KEM_alg_sidh_p503_compressed,
-	SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p610-compressed-sha384"), OQS_KEM_alg_sidh_p610_compressed,
-	SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p751-compressed-sha384"), OQS_KEM_alg_sidh_p751_compressed,
-	SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY},
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p434-sha384"), OQS_KEM_alg_sidh_p434,
+        SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p503-sha384"), OQS_KEM_alg_sidh_p503,
+        SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p610-sha384"), OQS_KEM_alg_sidh_p610,
+        SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p751-sha384"), OQS_KEM_alg_sidh_p751,
+        SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p434-compressed-sha384"), OQS_KEM_alg_sidh_p434_compressed,
+        SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p503-compressed-sha384"), OQS_KEM_alg_sidh_p503_compressed,
+        SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p610-compressed-sha384"), OQS_KEM_alg_sidh_p610_compressed,
+        SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sidh-p751-compressed-sha384"), OQS_KEM_alg_sidh_p751_compressed,
+        SSH2_MSG_HY_ECDH_SIDH_INIT, SSH2_MSG_HY_ECDH_SIDH_REPLY
+    },
 #endif /* HAVE_SIDH */
 #ifdef HAVE_SIKE
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p434-sha384"), OQS_KEM_alg_sike_p434,
-	SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p503-sha384"), OQS_KEM_alg_sike_p503,
-	SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p610-sha384"), OQS_KEM_alg_sike_p610,
-	SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p751-sha384"), OQS_KEM_alg_sike_p751,
-	SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p434-compressed-sha384"), OQS_KEM_alg_sike_p434_compressed,
-	SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p503-compressed-sha384"), OQS_KEM_alg_sike_p503_compressed,
-	SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p610-compressed-sha384"), OQS_KEM_alg_sike_p610_compressed,
-	SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p751-compressed-sha384"), OQS_KEM_alg_sike_p751_compressed,
-	SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY},
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p434-sha384"), OQS_KEM_alg_sike_p434,
+        SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p503-sha384"), OQS_KEM_alg_sike_p503,
+        SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p610-sha384"), OQS_KEM_alg_sike_p610,
+        SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p751-sha384"), OQS_KEM_alg_sike_p751,
+        SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p434-compressed-sha384"), OQS_KEM_alg_sike_p434_compressed,
+        SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p503-compressed-sha384"), OQS_KEM_alg_sike_p503_compressed,
+        SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p610-compressed-sha384"), OQS_KEM_alg_sike_p610_compressed,
+        SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sike-p751-compressed-sha384"), OQS_KEM_alg_sike_p751_compressed,
+        SSH2_MSG_HY_ECDH_SIKE_INIT, SSH2_MSG_HY_ECDH_SIKE_REPLY
+    },
 #endif /* HAVE_SIKE */
 #ifdef HAVE_HQC
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-hqc-128-sha384"), OQS_KEM_alg_hqc_128,
-	SSH2_MSG_HY_ECDH_HQC_INIT, SSH2_MSG_HY_ECDH_HQC_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-hqc-192-sha384"), OQS_KEM_alg_hqc_192,
-	SSH2_MSG_HY_ECDH_HQC_INIT, SSH2_MSG_HY_ECDH_HQC_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-hqc-256-sha384"), OQS_KEM_alg_hqc_256,
-	SSH2_MSG_HY_ECDH_HQC_INIT, SSH2_MSG_HY_ECDH_HQC_REPLY},
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-hqc-128-sha384"), OQS_KEM_alg_hqc_128,
+        SSH2_MSG_HY_ECDH_HQC_INIT, SSH2_MSG_HY_ECDH_HQC_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-hqc-192-sha384"), OQS_KEM_alg_hqc_192,
+        SSH2_MSG_HY_ECDH_HQC_INIT, SSH2_MSG_HY_ECDH_HQC_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-hqc-256-sha384"), OQS_KEM_alg_hqc_256,
+        SSH2_MSG_HY_ECDH_HQC_INIT, SSH2_MSG_HY_ECDH_HQC_REPLY
+    },
 #endif /* HAVE_HQC */
 #ifdef HAVE_NTRU_PRIME
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntrulpr-653-sha384"), OQS_KEM_alg_ntruprime_ntrulpr653,
-	SSH2_MSG_HY_ECDH_NTRU_PRIME_INIT, SSH2_MSG_HY_ECDH_NTRU_PRIME_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntrulpr-761-sha384"), OQS_KEM_alg_ntruprime_ntrulpr761,
-	SSH2_MSG_HY_ECDH_NTRU_PRIME_INIT, SSH2_MSG_HY_ECDH_NTRU_PRIME_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntrulpr-857-sha384"), OQS_KEM_alg_ntruprime_ntrulpr857,
-	SSH2_MSG_HY_ECDH_NTRU_PRIME_INIT, SSH2_MSG_HY_ECDH_NTRU_PRIME_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sntrup-653-sha384"), OQS_KEM_alg_ntruprime_sntrup653,
-	SSH2_MSG_HY_ECDH_NTRU_PRIME_INIT, SSH2_MSG_HY_ECDH_NTRU_PRIME_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sntrup-761-sha384"), OQS_KEM_alg_ntruprime_sntrup761,
-	SSH2_MSG_HY_ECDH_NTRU_PRIME_INIT, SSH2_MSG_HY_ECDH_NTRU_PRIME_REPLY},
-	{HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sntrup-857-sha384"), OQS_KEM_alg_ntruprime_sntrup857,
-	SSH2_MSG_HY_ECDH_NTRU_PRIME_INIT, SSH2_MSG_HY_ECDH_NTRU_PRIME_REPLY},
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntrulpr-653-sha384"), OQS_KEM_alg_ntruprime_ntrulpr653,
+        SSH2_MSG_HY_ECDH_NTRU_PRIME_INIT, SSH2_MSG_HY_ECDH_NTRU_PRIME_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntrulpr-761-sha384"), OQS_KEM_alg_ntruprime_ntrulpr761,
+        SSH2_MSG_HY_ECDH_NTRU_PRIME_INIT, SSH2_MSG_HY_ECDH_NTRU_PRIME_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-ntrulpr-857-sha384"), OQS_KEM_alg_ntruprime_ntrulpr857,
+        SSH2_MSG_HY_ECDH_NTRU_PRIME_INIT, SSH2_MSG_HY_ECDH_NTRU_PRIME_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sntrup-653-sha384"), OQS_KEM_alg_ntruprime_sntrup653,
+        SSH2_MSG_HY_ECDH_NTRU_PRIME_INIT, SSH2_MSG_HY_ECDH_NTRU_PRIME_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sntrup-761-sha384"), OQS_KEM_alg_ntruprime_sntrup761,
+        SSH2_MSG_HY_ECDH_NTRU_PRIME_INIT, SSH2_MSG_HY_ECDH_NTRU_PRIME_REPLY
+    },
+    {   HYBRID_ECDH_OQS_KEX_SUFFIX("ecdh-nistp384-sntrup-857-sha384"), OQS_KEM_alg_ntruprime_sntrup857,
+        SSH2_MSG_HY_ECDH_NTRU_PRIME_INIT, SSH2_MSG_HY_ECDH_NTRU_PRIME_REPLY
+    },
 #endif /* HAVE_NTRU_PRIME */
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_HYBRID_KEXS_END
 #endif /* defined(OPENSSL_HAS_ECC) && defined(WITH_HYBRID_KEX) */
-/* PQ-only key exchange methods */
+    /* PQ-only key exchange methods */
 #ifdef WITH_PQ_KEX
-	{PQ_OQS_KEX_SUFFIX("oqsdefault-sha384"), OQS_KEM_alg_default,
-	SSH2_MSG_PQ_OQSDEFAULT_INIT, SSH2_MSG_PQ_OQSDEFAULT_REPLY},
+    {   PQ_OQS_KEX_SUFFIX("oqsdefault-sha384"), OQS_KEM_alg_default,
+        SSH2_MSG_PQ_OQSDEFAULT_INIT, SSH2_MSG_PQ_OQSDEFAULT_REPLY
+    },
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_PQ_KEXS_START
 #ifdef HAVE_BIKE
-	{PQ_OQS_KEX_SUFFIX("bike1-l1-cpa-sha384"), OQS_KEM_alg_bike1_l1_cpa,
-	SSH2_MSG_PQ_BIKE_INIT, SSH2_MSG_PQ_BIKE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("bike1-l3-cpa-sha384"), OQS_KEM_alg_bike1_l3_cpa,
-	SSH2_MSG_PQ_BIKE_INIT, SSH2_MSG_PQ_BIKE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("bike1-l1-fo-sha384"), OQS_KEM_alg_bike1_l1_fo,
-	SSH2_MSG_PQ_BIKE_INIT, SSH2_MSG_PQ_BIKE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("bike1-l3-fo-sha384"), OQS_KEM_alg_bike1_l3_fo,
-	SSH2_MSG_PQ_BIKE_INIT, SSH2_MSG_PQ_BIKE_REPLY},
+    {   PQ_OQS_KEX_SUFFIX("bike1-l1-cpa-sha384"), OQS_KEM_alg_bike1_l1_cpa,
+        SSH2_MSG_PQ_BIKE_INIT, SSH2_MSG_PQ_BIKE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("bike1-l3-cpa-sha384"), OQS_KEM_alg_bike1_l3_cpa,
+        SSH2_MSG_PQ_BIKE_INIT, SSH2_MSG_PQ_BIKE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("bike1-l1-fo-sha384"), OQS_KEM_alg_bike1_l1_fo,
+        SSH2_MSG_PQ_BIKE_INIT, SSH2_MSG_PQ_BIKE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("bike1-l3-fo-sha384"), OQS_KEM_alg_bike1_l3_fo,
+        SSH2_MSG_PQ_BIKE_INIT, SSH2_MSG_PQ_BIKE_REPLY
+    },
 #endif /* HAVE_BIKE */
 #ifdef HAVE_CLASSIC_MCELIECE
-	{PQ_OQS_KEX_SUFFIX("classic-mceliece-348864-sha384"), OQS_KEM_alg_classic_mceliece_348864,
-	SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("classic-mceliece-348864f-sha384"), OQS_KEM_alg_classic_mceliece_348864f,
-	SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("classic-mceliece-460896-sha384"), OQS_KEM_alg_classic_mceliece_460896,
-	SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("classic-mceliece-460896f-sha384"), OQS_KEM_alg_classic_mceliece_460896f,
-	SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("classic-mceliece-6688128-sha384"), OQS_KEM_alg_classic_mceliece_6688128,
-	SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("classic-mceliece-6688128f-sha384"), OQS_KEM_alg_classic_mceliece_6688128f,
-	SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("classic-mceliece-6960119-sha384"), OQS_KEM_alg_classic_mceliece_6960119,
-	SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("classic-mceliece-6960119f-sha384"), OQS_KEM_alg_classic_mceliece_6960119f,
-	SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("classic-mceliece-8192128-sha384"), OQS_KEM_alg_classic_mceliece_8192128,
-	SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("classic-mceliece-8192128f-sha384"), OQS_KEM_alg_classic_mceliece_8192128f,
-	SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY},
+    {   PQ_OQS_KEX_SUFFIX("classic-mceliece-348864-sha384"), OQS_KEM_alg_classic_mceliece_348864,
+        SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("classic-mceliece-348864f-sha384"), OQS_KEM_alg_classic_mceliece_348864f,
+        SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("classic-mceliece-460896-sha384"), OQS_KEM_alg_classic_mceliece_460896,
+        SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("classic-mceliece-460896f-sha384"), OQS_KEM_alg_classic_mceliece_460896f,
+        SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("classic-mceliece-6688128-sha384"), OQS_KEM_alg_classic_mceliece_6688128,
+        SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("classic-mceliece-6688128f-sha384"), OQS_KEM_alg_classic_mceliece_6688128f,
+        SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("classic-mceliece-6960119-sha384"), OQS_KEM_alg_classic_mceliece_6960119,
+        SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("classic-mceliece-6960119f-sha384"), OQS_KEM_alg_classic_mceliece_6960119f,
+        SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("classic-mceliece-8192128-sha384"), OQS_KEM_alg_classic_mceliece_8192128,
+        SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("classic-mceliece-8192128f-sha384"), OQS_KEM_alg_classic_mceliece_8192128f,
+        SSH2_MSG_PQ_CLASSIC_MCELIECE_INIT, SSH2_MSG_PQ_CLASSIC_MCELIECE_REPLY
+    },
 #endif /* HAVE_CLASSIC_MCELIECE */
 #ifdef HAVE_FRODO
-	{PQ_OQS_KEX_SUFFIX("frodo-640-aes-sha384"), OQS_KEM_alg_frodokem_640_aes,
-	SSH2_MSG_PQ_FRODO_INIT, SSH2_MSG_PQ_FRODO_REPLY},
-	{PQ_OQS_KEX_SUFFIX("frodo-640-shake-sha384"), OQS_KEM_alg_frodokem_640_shake,
-	SSH2_MSG_PQ_FRODO_INIT, SSH2_MSG_PQ_FRODO_REPLY},
-	{PQ_OQS_KEX_SUFFIX("frodo-976-aes-sha384"), OQS_KEM_alg_frodokem_976_aes,
-	SSH2_MSG_PQ_FRODO_INIT, SSH2_MSG_PQ_FRODO_REPLY},
-	{PQ_OQS_KEX_SUFFIX("frodo-976-shake-sha384"), OQS_KEM_alg_frodokem_976_shake,
-	SSH2_MSG_PQ_FRODO_INIT, SSH2_MSG_PQ_FRODO_REPLY},
-	{PQ_OQS_KEX_SUFFIX("frodo-1344-aes-sha384"), OQS_KEM_alg_frodokem_1344_aes,
-	SSH2_MSG_PQ_FRODO_INIT, SSH2_MSG_PQ_FRODO_REPLY},
-	{PQ_OQS_KEX_SUFFIX("frodo-1344-shake-sha384"), OQS_KEM_alg_frodokem_1344_shake,
-	SSH2_MSG_PQ_FRODO_INIT, SSH2_MSG_PQ_FRODO_REPLY},
+    {   PQ_OQS_KEX_SUFFIX("frodo-640-aes-sha384"), OQS_KEM_alg_frodokem_640_aes,
+        SSH2_MSG_PQ_FRODO_INIT, SSH2_MSG_PQ_FRODO_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("frodo-640-shake-sha384"), OQS_KEM_alg_frodokem_640_shake,
+        SSH2_MSG_PQ_FRODO_INIT, SSH2_MSG_PQ_FRODO_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("frodo-976-aes-sha384"), OQS_KEM_alg_frodokem_976_aes,
+        SSH2_MSG_PQ_FRODO_INIT, SSH2_MSG_PQ_FRODO_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("frodo-976-shake-sha384"), OQS_KEM_alg_frodokem_976_shake,
+        SSH2_MSG_PQ_FRODO_INIT, SSH2_MSG_PQ_FRODO_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("frodo-1344-aes-sha384"), OQS_KEM_alg_frodokem_1344_aes,
+        SSH2_MSG_PQ_FRODO_INIT, SSH2_MSG_PQ_FRODO_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("frodo-1344-shake-sha384"), OQS_KEM_alg_frodokem_1344_shake,
+        SSH2_MSG_PQ_FRODO_INIT, SSH2_MSG_PQ_FRODO_REPLY
+    },
 #endif /* HAVE_FRODO */
 #ifdef HAVE_KYBER
-	{PQ_OQS_KEX_SUFFIX("kyber-512-sha384"), OQS_KEM_alg_kyber_512,
-	SSH2_MSG_PQ_KYBER_INIT, SSH2_MSG_PQ_KYBER_REPLY},
-	{PQ_OQS_KEX_SUFFIX("kyber-768-sha384"), OQS_KEM_alg_kyber_768,
-	SSH2_MSG_PQ_KYBER_INIT, SSH2_MSG_PQ_KYBER_REPLY},
-	{PQ_OQS_KEX_SUFFIX("kyber-1024-sha384"), OQS_KEM_alg_kyber_1024,
-	SSH2_MSG_PQ_KYBER_INIT, SSH2_MSG_PQ_KYBER_REPLY},
-	{PQ_OQS_KEX_SUFFIX("kyber-512-90s-sha384"), OQS_KEM_alg_kyber_512_90s,
-	SSH2_MSG_PQ_KYBER_INIT, SSH2_MSG_PQ_KYBER_REPLY},
-	{PQ_OQS_KEX_SUFFIX("kyber-768-90s-sha384"), OQS_KEM_alg_kyber_768_90s,
-	SSH2_MSG_PQ_KYBER_INIT, SSH2_MSG_PQ_KYBER_REPLY},
-	{PQ_OQS_KEX_SUFFIX("kyber-1024-90s-sha384"), OQS_KEM_alg_kyber_1024_90s,
-	SSH2_MSG_PQ_KYBER_INIT, SSH2_MSG_PQ_KYBER_REPLY},
+    {   PQ_OQS_KEX_SUFFIX("kyber-512-sha384"), OQS_KEM_alg_kyber_512,
+        SSH2_MSG_PQ_KYBER_INIT, SSH2_MSG_PQ_KYBER_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("kyber-768-sha384"), OQS_KEM_alg_kyber_768,
+        SSH2_MSG_PQ_KYBER_INIT, SSH2_MSG_PQ_KYBER_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("kyber-1024-sha384"), OQS_KEM_alg_kyber_1024,
+        SSH2_MSG_PQ_KYBER_INIT, SSH2_MSG_PQ_KYBER_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("kyber-512-90s-sha384"), OQS_KEM_alg_kyber_512_90s,
+        SSH2_MSG_PQ_KYBER_INIT, SSH2_MSG_PQ_KYBER_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("kyber-768-90s-sha384"), OQS_KEM_alg_kyber_768_90s,
+        SSH2_MSG_PQ_KYBER_INIT, SSH2_MSG_PQ_KYBER_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("kyber-1024-90s-sha384"), OQS_KEM_alg_kyber_1024_90s,
+        SSH2_MSG_PQ_KYBER_INIT, SSH2_MSG_PQ_KYBER_REPLY
+    },
 #endif /* HAVE_KYBER */
 #ifdef HAVE_NTRU
-	{PQ_OQS_KEX_SUFFIX("ntru-hps-2048-509-sha384"), OQS_KEM_alg_ntru_hps2048509,
-	SSH2_MSG_PQ_NTRU_INIT, SSH2_MSG_PQ_NTRU_REPLY},
-	{PQ_OQS_KEX_SUFFIX("ntru-hps-2048-677-sha384"), OQS_KEM_alg_ntru_hps2048677,
-	SSH2_MSG_PQ_NTRU_INIT, SSH2_MSG_PQ_NTRU_REPLY},
-	{PQ_OQS_KEX_SUFFIX("ntru-hrss-701-sha384"), OQS_KEM_alg_ntru_hrss701,
-	SSH2_MSG_PQ_NTRU_INIT, SSH2_MSG_PQ_NTRU_REPLY},
-	{PQ_OQS_KEX_SUFFIX("ntru-hps-4096-821-sha384"), OQS_KEM_alg_ntru_hps4096821,
-	SSH2_MSG_PQ_NTRU_INIT, SSH2_MSG_PQ_NTRU_REPLY},
+    {   PQ_OQS_KEX_SUFFIX("ntru-hps-2048-509-sha384"), OQS_KEM_alg_ntru_hps2048509,
+        SSH2_MSG_PQ_NTRU_INIT, SSH2_MSG_PQ_NTRU_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("ntru-hps-2048-677-sha384"), OQS_KEM_alg_ntru_hps2048677,
+        SSH2_MSG_PQ_NTRU_INIT, SSH2_MSG_PQ_NTRU_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("ntru-hrss-701-sha384"), OQS_KEM_alg_ntru_hrss701,
+        SSH2_MSG_PQ_NTRU_INIT, SSH2_MSG_PQ_NTRU_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("ntru-hps-4096-821-sha384"), OQS_KEM_alg_ntru_hps4096821,
+        SSH2_MSG_PQ_NTRU_INIT, SSH2_MSG_PQ_NTRU_REPLY
+    },
 #endif /* HAVE_NTRU */
 #ifdef HAVE_SABER
-	{PQ_OQS_KEX_SUFFIX("saber-lightsaber-sha384"), OQS_KEM_alg_saber_lightsaber,
-	SSH2_MSG_PQ_SABER_INIT, SSH2_MSG_PQ_SABER_REPLY},
-	{PQ_OQS_KEX_SUFFIX("saber-saber-sha384"), OQS_KEM_alg_saber_saber,
-	SSH2_MSG_PQ_SABER_INIT, SSH2_MSG_PQ_SABER_REPLY},
-	{PQ_OQS_KEX_SUFFIX("saber-firesaber-sha384"), OQS_KEM_alg_saber_firesaber,
-	SSH2_MSG_PQ_SABER_INIT, SSH2_MSG_PQ_SABER_REPLY},
+    {   PQ_OQS_KEX_SUFFIX("saber-lightsaber-sha384"), OQS_KEM_alg_saber_lightsaber,
+        SSH2_MSG_PQ_SABER_INIT, SSH2_MSG_PQ_SABER_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("saber-saber-sha384"), OQS_KEM_alg_saber_saber,
+        SSH2_MSG_PQ_SABER_INIT, SSH2_MSG_PQ_SABER_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("saber-firesaber-sha384"), OQS_KEM_alg_saber_firesaber,
+        SSH2_MSG_PQ_SABER_INIT, SSH2_MSG_PQ_SABER_REPLY
+    },
 #endif /* HAVE_SABER */
 #ifdef HAVE_SIDH
-	{PQ_OQS_KEX_SUFFIX("sidh-p434-sha384"), OQS_KEM_alg_sidh_p434,
-	SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sidh-p503-sha384"), OQS_KEM_alg_sidh_p503,
-	SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sidh-p610-sha384"), OQS_KEM_alg_sidh_p610,
-	SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sidh-p751-sha384"), OQS_KEM_alg_sidh_p751,
-	SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sidh-p434-compressed-sha384"), OQS_KEM_alg_sidh_p434_compressed,
-	SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sidh-p503-compressed-sha384"), OQS_KEM_alg_sidh_p503_compressed,
-	SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sidh-p610-compressed-sha384"), OQS_KEM_alg_sidh_p610_compressed,
-	SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sidh-p751-compressed-sha384"), OQS_KEM_alg_sidh_p751_compressed,
-	SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY},
+    {   PQ_OQS_KEX_SUFFIX("sidh-p434-sha384"), OQS_KEM_alg_sidh_p434,
+        SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sidh-p503-sha384"), OQS_KEM_alg_sidh_p503,
+        SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sidh-p610-sha384"), OQS_KEM_alg_sidh_p610,
+        SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sidh-p751-sha384"), OQS_KEM_alg_sidh_p751,
+        SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sidh-p434-compressed-sha384"), OQS_KEM_alg_sidh_p434_compressed,
+        SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sidh-p503-compressed-sha384"), OQS_KEM_alg_sidh_p503_compressed,
+        SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sidh-p610-compressed-sha384"), OQS_KEM_alg_sidh_p610_compressed,
+        SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sidh-p751-compressed-sha384"), OQS_KEM_alg_sidh_p751_compressed,
+        SSH2_MSG_PQ_SIDH_INIT, SSH2_MSG_PQ_SIDH_REPLY
+    },
 #endif /* HAVE_SIDH */
 #ifdef HAVE_SIKE
-	{PQ_OQS_KEX_SUFFIX("sike-p434-sha384"), OQS_KEM_alg_sike_p434,
-	SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sike-p503-sha384"), OQS_KEM_alg_sike_p503,
-	SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sike-p610-sha384"), OQS_KEM_alg_sike_p610,
-	SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sike-p751-sha384"), OQS_KEM_alg_sike_p751,
-	SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sike-p434-compressed-sha384"), OQS_KEM_alg_sike_p434_compressed,
-	SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sike-p503-compressed-sha384"), OQS_KEM_alg_sike_p503_compressed,
-	SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sike-p610-compressed-sha384"), OQS_KEM_alg_sike_p610_compressed,
-	SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sike-p751-compressed-sha384"), OQS_KEM_alg_sike_p751_compressed,
-	SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY},
+    {   PQ_OQS_KEX_SUFFIX("sike-p434-sha384"), OQS_KEM_alg_sike_p434,
+        SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sike-p503-sha384"), OQS_KEM_alg_sike_p503,
+        SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sike-p610-sha384"), OQS_KEM_alg_sike_p610,
+        SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sike-p751-sha384"), OQS_KEM_alg_sike_p751,
+        SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sike-p434-compressed-sha384"), OQS_KEM_alg_sike_p434_compressed,
+        SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sike-p503-compressed-sha384"), OQS_KEM_alg_sike_p503_compressed,
+        SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sike-p610-compressed-sha384"), OQS_KEM_alg_sike_p610_compressed,
+        SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sike-p751-compressed-sha384"), OQS_KEM_alg_sike_p751_compressed,
+        SSH2_MSG_PQ_SIKE_INIT, SSH2_MSG_PQ_SIKE_REPLY
+    },
 #endif /* HAVE_SIKE */
 #ifdef HAVE_HQC
-	{PQ_OQS_KEX_SUFFIX("hqc-128-sha384"), OQS_KEM_alg_hqc_128,
-	SSH2_MSG_PQ_HQC_INIT, SSH2_MSG_PQ_HQC_REPLY},
-	{PQ_OQS_KEX_SUFFIX("hqc-192-sha384"), OQS_KEM_alg_hqc_192,
-	SSH2_MSG_PQ_HQC_INIT, SSH2_MSG_PQ_HQC_REPLY},
-	{PQ_OQS_KEX_SUFFIX("hqc-256-sha384"), OQS_KEM_alg_hqc_256,
-	SSH2_MSG_PQ_HQC_INIT, SSH2_MSG_PQ_HQC_REPLY},
+    {   PQ_OQS_KEX_SUFFIX("hqc-128-sha384"), OQS_KEM_alg_hqc_128,
+        SSH2_MSG_PQ_HQC_INIT, SSH2_MSG_PQ_HQC_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("hqc-192-sha384"), OQS_KEM_alg_hqc_192,
+        SSH2_MSG_PQ_HQC_INIT, SSH2_MSG_PQ_HQC_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("hqc-256-sha384"), OQS_KEM_alg_hqc_256,
+        SSH2_MSG_PQ_HQC_INIT, SSH2_MSG_PQ_HQC_REPLY
+    },
 #endif /* HAVE_HQC */
 #ifdef HAVE_NTRU_PRIME
-	{PQ_OQS_KEX_SUFFIX("ntrulpr-653-sha384"), OQS_KEM_alg_ntruprime_ntrulpr653,
-	SSH2_MSG_PQ_NTRU_PRIME_INIT, SSH2_MSG_PQ_NTRU_PRIME_REPLY},
-	{PQ_OQS_KEX_SUFFIX("ntrulpr-761-sha384"), OQS_KEM_alg_ntruprime_ntrulpr761,
-	SSH2_MSG_PQ_NTRU_PRIME_INIT, SSH2_MSG_PQ_NTRU_PRIME_REPLY},
-	{PQ_OQS_KEX_SUFFIX("ntrulpr-857-sha384"), OQS_KEM_alg_ntruprime_ntrulpr857,
-	SSH2_MSG_PQ_NTRU_PRIME_INIT, SSH2_MSG_PQ_NTRU_PRIME_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sntrup-653-sha384"), OQS_KEM_alg_ntruprime_sntrup653,
-	SSH2_MSG_PQ_NTRU_PRIME_INIT, SSH2_MSG_PQ_NTRU_PRIME_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sntrup-761-sha384"), OQS_KEM_alg_ntruprime_sntrup761,
-	SSH2_MSG_PQ_NTRU_PRIME_INIT, SSH2_MSG_PQ_NTRU_PRIME_REPLY},
-	{PQ_OQS_KEX_SUFFIX("sntrup-857-sha384"), OQS_KEM_alg_ntruprime_sntrup857,
-	SSH2_MSG_PQ_NTRU_PRIME_INIT, SSH2_MSG_PQ_NTRU_PRIME_REPLY},
+    {   PQ_OQS_KEX_SUFFIX("ntrulpr-653-sha384"), OQS_KEM_alg_ntruprime_ntrulpr653,
+        SSH2_MSG_PQ_NTRU_PRIME_INIT, SSH2_MSG_PQ_NTRU_PRIME_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("ntrulpr-761-sha384"), OQS_KEM_alg_ntruprime_ntrulpr761,
+        SSH2_MSG_PQ_NTRU_PRIME_INIT, SSH2_MSG_PQ_NTRU_PRIME_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("ntrulpr-857-sha384"), OQS_KEM_alg_ntruprime_ntrulpr857,
+        SSH2_MSG_PQ_NTRU_PRIME_INIT, SSH2_MSG_PQ_NTRU_PRIME_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sntrup-653-sha384"), OQS_KEM_alg_ntruprime_sntrup653,
+        SSH2_MSG_PQ_NTRU_PRIME_INIT, SSH2_MSG_PQ_NTRU_PRIME_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sntrup-761-sha384"), OQS_KEM_alg_ntruprime_sntrup761,
+        SSH2_MSG_PQ_NTRU_PRIME_INIT, SSH2_MSG_PQ_NTRU_PRIME_REPLY
+    },
+    {   PQ_OQS_KEX_SUFFIX("sntrup-857-sha384"), OQS_KEM_alg_ntruprime_sntrup857,
+        SSH2_MSG_PQ_NTRU_PRIME_INIT, SSH2_MSG_PQ_NTRU_PRIME_REPLY
+    },
 #endif /* HAVE_NTRU_PRIME */
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_PQ_KEXS_END
 #endif /* WITH_PQ_KEX */
-	{NULL,NULL,0,0} /* End of list */
+    {NULL,NULL,0,0} /* End of list */
 };
 
 /*
@@ -334,15 +452,15 @@ static const OQS_ALG oqs_alg_mapping[] = {
 const OQS_ALG *
 oqs_mapping(const char *ssh_kex_name) {
 
-	const OQS_ALG *alg = NULL;
+    const OQS_ALG *alg = NULL;
 
-	for (alg = oqs_alg_mapping; alg->kex_alg != NULL; alg++) {
-		if (strcmp(alg->kex_alg, ssh_kex_name) == 0) {
-			return alg;
-		}
-	}
+    for (alg = oqs_alg_mapping; alg->kex_alg != NULL; alg++) {
+        if (strcmp(alg->kex_alg, ssh_kex_name) == 0) {
+            return alg;
+        }
+    }
 
-	return NULL;
+    return NULL;
 }
 
 /*
@@ -351,40 +469,40 @@ oqs_mapping(const char *ssh_kex_name) {
 int
 oqs_init(OQS_KEX_CTX **oqs_kex_ctx, char *ssh_kex_name) {
 
-	OQS_KEX_CTX *tmp_oqs_kex_ctx = NULL;
-	const OQS_ALG *oqs_alg = NULL;
-	int r = 0;
+    OQS_KEX_CTX *tmp_oqs_kex_ctx = NULL;
+    const OQS_ALG *oqs_alg = NULL;
+    int r = 0;
 
-	if ((tmp_oqs_kex_ctx = calloc(sizeof(*(tmp_oqs_kex_ctx)), 1)) == NULL) {
-		r = SSH_ERR_ALLOC_FAIL;
-		goto out;
-	}
+    if ((tmp_oqs_kex_ctx = calloc(sizeof(*(tmp_oqs_kex_ctx)), 1)) == NULL) {
+        r = SSH_ERR_ALLOC_FAIL;
+        goto out;
+    }
 
-	if ((oqs_alg = oqs_mapping(ssh_kex_name)) == NULL) {
-		r = SSH_ERR_INTERNAL_ERROR;
-		goto out;
-	}
+    if ((oqs_alg = oqs_mapping(ssh_kex_name)) == NULL) {
+        r = SSH_ERR_INTERNAL_ERROR;
+        goto out;
+    }
 
-	tmp_oqs_kex_ctx->oqs_kem = NULL;
-	tmp_oqs_kex_ctx->oqs_method = strdup(oqs_alg->alg_name);
-	tmp_oqs_kex_ctx->oqs_local_priv = NULL;
-	tmp_oqs_kex_ctx->oqs_local_priv_len = 0;
-	tmp_oqs_kex_ctx->oqs_local_msg = NULL;
-	tmp_oqs_kex_ctx->oqs_local_msg_len = 0;
-	tmp_oqs_kex_ctx->oqs_remote_msg = NULL;
-	tmp_oqs_kex_ctx->oqs_remote_msg_len = 0;
+    tmp_oqs_kex_ctx->oqs_kem = NULL;
+    tmp_oqs_kex_ctx->oqs_method = strdup(oqs_alg->alg_name);
+    tmp_oqs_kex_ctx->oqs_local_priv = NULL;
+    tmp_oqs_kex_ctx->oqs_local_priv_len = 0;
+    tmp_oqs_kex_ctx->oqs_local_msg = NULL;
+    tmp_oqs_kex_ctx->oqs_local_msg_len = 0;
+    tmp_oqs_kex_ctx->oqs_remote_msg = NULL;
+    tmp_oqs_kex_ctx->oqs_remote_msg_len = 0;
 
-	/* Use PRNG provided by OpenSSH instad of liboqs's PRNG */
-	OQS_randombytes_custom_algorithm((void (*)(uint8_t *, size_t)) &arc4random_buf);
+    /* Use PRNG provided by OpenSSH instad of liboqs's PRNG */
+    OQS_randombytes_custom_algorithm((void (*)(uint8_t *, size_t)) &arc4random_buf);
 
-	*oqs_kex_ctx = tmp_oqs_kex_ctx;
-	tmp_oqs_kex_ctx = NULL;
+    *oqs_kex_ctx = tmp_oqs_kex_ctx;
+    tmp_oqs_kex_ctx = NULL;
 
 out:
-	if (tmp_oqs_kex_ctx != NULL)
-		free(tmp_oqs_kex_ctx);
+    if (tmp_oqs_kex_ctx != NULL)
+        free(tmp_oqs_kex_ctx);
 
-	return r;
+    return r;
 }
 
 /*
@@ -393,27 +511,27 @@ out:
 void
 oqs_free(OQS_KEX_CTX *oqs_kex_ctx) {
 
-	if (oqs_kex_ctx->oqs_local_msg != NULL) {
-		free(oqs_kex_ctx->oqs_local_msg);
-		oqs_kex_ctx->oqs_local_msg = NULL;
-	}
-	if (oqs_kex_ctx->oqs_remote_msg != NULL) {
-		free(oqs_kex_ctx->oqs_remote_msg);
-		oqs_kex_ctx->oqs_remote_msg = NULL;
-	}
-	if (oqs_kex_ctx->oqs_local_priv != NULL) {
-		explicit_bzero(oqs_kex_ctx->oqs_local_priv, oqs_kex_ctx->oqs_local_priv_len);
-		free(oqs_kex_ctx->oqs_local_priv);
-		oqs_kex_ctx->oqs_local_priv = NULL;
-	}
-	if (oqs_kex_ctx->oqs_method != NULL) {
-		free(oqs_kex_ctx->oqs_method);
-		oqs_kex_ctx->oqs_method = NULL;
-	}
-	if (oqs_kex_ctx->oqs_kem != NULL) {
-		OQS_KEM_free(oqs_kex_ctx->oqs_kem);
-		oqs_kex_ctx->oqs_kem = NULL;
-	}
+    if (oqs_kex_ctx->oqs_local_msg != NULL) {
+        free(oqs_kex_ctx->oqs_local_msg);
+        oqs_kex_ctx->oqs_local_msg = NULL;
+    }
+    if (oqs_kex_ctx->oqs_remote_msg != NULL) {
+        free(oqs_kex_ctx->oqs_remote_msg);
+        oqs_kex_ctx->oqs_remote_msg = NULL;
+    }
+    if (oqs_kex_ctx->oqs_local_priv != NULL) {
+        explicit_bzero(oqs_kex_ctx->oqs_local_priv, oqs_kex_ctx->oqs_local_priv_len);
+        free(oqs_kex_ctx->oqs_local_priv);
+        oqs_kex_ctx->oqs_local_priv = NULL;
+    }
+    if (oqs_kex_ctx->oqs_method != NULL) {
+        free(oqs_kex_ctx->oqs_method);
+        oqs_kex_ctx->oqs_method = NULL;
+    }
+    if (oqs_kex_ctx->oqs_kem != NULL) {
+        OQS_KEM_free(oqs_kex_ctx->oqs_kem);
+        oqs_kex_ctx->oqs_kem = NULL;
+    }
 }
 
 /*
@@ -421,7 +539,7 @@ oqs_free(OQS_KEX_CTX *oqs_kex_ctx) {
  */
 int
 oqs_ssh2_init_msg(const OQS_ALG *oqs_alg) {
-	return oqs_alg->ssh2_init_msg;
+    return oqs_alg->ssh2_init_msg;
 }
 
 /*
@@ -429,7 +547,7 @@ oqs_ssh2_init_msg(const OQS_ALG *oqs_alg) {
  */
 int
 oqs_ssh2_reply_msg(const OQS_ALG *oqs_alg) {
-	return oqs_alg->ssh2_reply_msg;
+    return oqs_alg->ssh2_reply_msg;
 }
 
 /*
@@ -438,47 +556,47 @@ oqs_ssh2_reply_msg(const OQS_ALG *oqs_alg) {
 int
 oqs_client_gen(OQS_KEX_CTX *oqs_kex_ctx) {
 
-	OQS_KEM *oqs_kem = NULL;
-	int r = 0;
+    OQS_KEM *oqs_kem = NULL;
+    int r = 0;
 
-	if ((oqs_kem = OQS_KEM_new(oqs_kex_ctx->oqs_method)) == NULL) {
-		r = SSH_ERR_INTERNAL_ERROR;
-		goto out;
-	}
+    if ((oqs_kem = OQS_KEM_new(oqs_kex_ctx->oqs_method)) == NULL) {
+        r = SSH_ERR_INTERNAL_ERROR;
+        goto out;
+    }
 
-	oqs_kex_ctx->oqs_local_priv = NULL;
-	oqs_kex_ctx->oqs_local_msg = NULL;
+    oqs_kex_ctx->oqs_local_priv = NULL;
+    oqs_kex_ctx->oqs_local_msg = NULL;
 
-	oqs_kex_ctx->oqs_local_priv_len = oqs_kem->length_secret_key;
-	if ((oqs_kex_ctx->oqs_local_priv = malloc(oqs_kem->length_secret_key)) == NULL) {
-		r = SSH_ERR_ALLOC_FAIL;
-		goto out;
-	}
+    oqs_kex_ctx->oqs_local_priv_len = oqs_kem->length_secret_key;
+    if ((oqs_kex_ctx->oqs_local_priv = malloc(oqs_kem->length_secret_key)) == NULL) {
+        r = SSH_ERR_ALLOC_FAIL;
+        goto out;
+    }
 
-	oqs_kex_ctx->oqs_local_msg_len = oqs_kem->length_public_key;
-	if ((oqs_kex_ctx->oqs_local_msg = malloc(oqs_kem->length_public_key)) == NULL) {
-		r = SSH_ERR_ALLOC_FAIL;
-		goto out;
-	}
+    oqs_kex_ctx->oqs_local_msg_len = oqs_kem->length_public_key;
+    if ((oqs_kex_ctx->oqs_local_msg = malloc(oqs_kem->length_public_key)) == NULL) {
+        r = SSH_ERR_ALLOC_FAIL;
+        goto out;
+    }
 
-	/* Generate client side part of kex */
-	if (OQS_KEM_keypair(oqs_kem, oqs_kex_ctx->oqs_local_msg,
-		oqs_kex_ctx->oqs_local_priv) != OQS_SUCCESS) {
-		r = SSH_ERR_INTERNAL_ERROR;
-		goto out;
-	}
+    /* Generate client side part of kex */
+    if (OQS_KEM_keypair(oqs_kem, oqs_kex_ctx->oqs_local_msg,
+                        oqs_kex_ctx->oqs_local_priv) != OQS_SUCCESS) {
+        r = SSH_ERR_INTERNAL_ERROR;
+        goto out;
+    }
 
-	oqs_kex_ctx->oqs_kem = oqs_kem;
-	oqs_kem = NULL;
+    oqs_kex_ctx->oqs_kem = oqs_kem;
+    oqs_kem = NULL;
 
 out:
-	if (oqs_kem != NULL) {
-		OQS_KEM_free(oqs_kem);
-		free(oqs_kex_ctx->oqs_local_priv);
-		free(oqs_kex_ctx->oqs_local_msg);
-	}
+    if (oqs_kem != NULL) {
+        OQS_KEM_free(oqs_kem);
+        free(oqs_kex_ctx->oqs_local_priv);
+        free(oqs_kex_ctx->oqs_local_msg);
+    }
 
-	return r;
+    return r;
 }
 
 /*
@@ -486,10 +604,10 @@ out:
  */
 int
 oqs_deserialise(struct ssh *ssh, OQS_KEX_CTX *oqs_kex_ctx,
-	enum oqs_client_or_server client_or_server) {
+                enum oqs_client_or_server client_or_server) {
 
-	return sshpkt_get_string(ssh, &(oqs_kex_ctx->oqs_remote_msg),
-		&(oqs_kex_ctx->oqs_remote_msg_len));
+    return sshpkt_get_string(ssh, &(oqs_kex_ctx->oqs_remote_msg),
+                             &(oqs_kex_ctx->oqs_remote_msg_len));
 }
 
 /*
@@ -497,10 +615,10 @@ oqs_deserialise(struct ssh *ssh, OQS_KEX_CTX *oqs_kex_ctx,
  */
 int
 oqs_serialise(struct ssh *ssh, OQS_KEX_CTX *oqs_kex_ctx,
-	enum oqs_client_or_server client_or_server) {
+              enum oqs_client_or_server client_or_server) {
 
-	return sshpkt_put_string(ssh, oqs_kex_ctx->oqs_local_msg,
-		oqs_kex_ctx->oqs_local_msg_len);
+    return sshpkt_put_string(ssh, oqs_kex_ctx->oqs_local_msg,
+                             oqs_kex_ctx->oqs_local_msg_len);
 }
 
 /*
@@ -508,40 +626,40 @@ oqs_serialise(struct ssh *ssh, OQS_KEX_CTX *oqs_kex_ctx,
  */
 int
 oqs_client_shared_secret(OQS_KEX_CTX *oqs_kex_ctx,
-	u_char **oqs_shared_secret, size_t *oqs_shared_secret_len) {
+                         u_char **oqs_shared_secret, size_t *oqs_shared_secret_len) {
 
-	uint8_t *tmp_oqs_shared_secret = NULL;
-	int r = 0;
+    uint8_t *tmp_oqs_shared_secret = NULL;
+    int r = 0;
 
-	if (oqs_kex_ctx->oqs_remote_msg_len != oqs_kex_ctx->oqs_kem->length_ciphertext) {
-		r = SSH_ERR_INVALID_FORMAT;
-		goto out;
-	}
+    if (oqs_kex_ctx->oqs_remote_msg_len != oqs_kex_ctx->oqs_kem->length_ciphertext) {
+        r = SSH_ERR_INVALID_FORMAT;
+        goto out;
+    }
 
-	if ((tmp_oqs_shared_secret = malloc(oqs_kex_ctx->oqs_kem->length_shared_secret)) == NULL) {
-		r = SSH_ERR_ALLOC_FAIL;
-		goto out;
-	}
+    if ((tmp_oqs_shared_secret = malloc(oqs_kex_ctx->oqs_kem->length_shared_secret)) == NULL) {
+        r = SSH_ERR_ALLOC_FAIL;
+        goto out;
+    }
 
-	/* Generate shared secret from client private key and server public key */
-	if (OQS_KEM_decaps(oqs_kex_ctx->oqs_kem, tmp_oqs_shared_secret,
-		oqs_kex_ctx->oqs_remote_msg, oqs_kex_ctx->oqs_local_priv) != OQS_SUCCESS) {
-		r = SSH_ERR_INTERNAL_ERROR;
-		goto out;
-	}
+    /* Generate shared secret from client private key and server public key */
+    if (OQS_KEM_decaps(oqs_kex_ctx->oqs_kem, tmp_oqs_shared_secret,
+                       oqs_kex_ctx->oqs_remote_msg, oqs_kex_ctx->oqs_local_priv) != OQS_SUCCESS) {
+        r = SSH_ERR_INTERNAL_ERROR;
+        goto out;
+    }
 
-	*oqs_shared_secret = (u_char *) tmp_oqs_shared_secret;
-	*oqs_shared_secret_len = oqs_kex_ctx->oqs_kem->length_shared_secret;
+    *oqs_shared_secret = (u_char *) tmp_oqs_shared_secret;
+    *oqs_shared_secret_len = oqs_kex_ctx->oqs_kem->length_shared_secret;
 
-	tmp_oqs_shared_secret = NULL;
+    tmp_oqs_shared_secret = NULL;
 
 out:
-	if (tmp_oqs_shared_secret != NULL) {
-		explicit_bzero(tmp_oqs_shared_secret, oqs_kex_ctx->oqs_kem->length_shared_secret);
-		free(tmp_oqs_shared_secret);
-	}
+    if (tmp_oqs_shared_secret != NULL) {
+        explicit_bzero(tmp_oqs_shared_secret, oqs_kex_ctx->oqs_kem->length_shared_secret);
+        free(tmp_oqs_shared_secret);
+    }
 
-	return r;
+    return r;
 }
 
 /*
@@ -550,55 +668,55 @@ out:
  */
 int
 oqs_server_gen_msg_and_ss(OQS_KEX_CTX *oqs_kex_ctx,
-	u_char **oqs_shared_secret, size_t *oqs_shared_secret_len) {
+                          u_char **oqs_shared_secret, size_t *oqs_shared_secret_len) {
 
-	OQS_KEM *oqs_kem = NULL;
-	uint8_t *tmp_oqs_shared_secret = NULL, *tmp_oqs_local_msg = NULL;
-	int r = 0;
+    OQS_KEM *oqs_kem = NULL;
+    uint8_t *tmp_oqs_shared_secret = NULL, *tmp_oqs_local_msg = NULL;
+    int r = 0;
 
-	if ((oqs_kem = OQS_KEM_new(oqs_kex_ctx->oqs_method)) == NULL) {
-		r = SSH_ERR_INTERNAL_ERROR;
-		goto out;
-	}
+    if ((oqs_kem = OQS_KEM_new(oqs_kex_ctx->oqs_method)) == NULL) {
+        r = SSH_ERR_INTERNAL_ERROR;
+        goto out;
+    }
 
-	if (oqs_kex_ctx->oqs_remote_msg_len != oqs_kem->length_public_key) {
-		r = SSH_ERR_INVALID_FORMAT;
-		goto out;
-	}
+    if (oqs_kex_ctx->oqs_remote_msg_len != oqs_kem->length_public_key) {
+        r = SSH_ERR_INVALID_FORMAT;
+        goto out;
+    }
 
-	if ((tmp_oqs_local_msg = malloc(oqs_kem->length_ciphertext)) == NULL) {
-		r = SSH_ERR_ALLOC_FAIL;
-		goto out;
-	}
-	if ((tmp_oqs_shared_secret = malloc(oqs_kem->length_shared_secret)) == NULL) {
-		r = SSH_ERR_ALLOC_FAIL;
-		goto out;
-	}
+    if ((tmp_oqs_local_msg = malloc(oqs_kem->length_ciphertext)) == NULL) {
+        r = SSH_ERR_ALLOC_FAIL;
+        goto out;
+    }
+    if ((tmp_oqs_shared_secret = malloc(oqs_kem->length_shared_secret)) == NULL) {
+        r = SSH_ERR_ALLOC_FAIL;
+        goto out;
+    }
 
-	if (OQS_KEM_encaps(oqs_kem, tmp_oqs_local_msg, tmp_oqs_shared_secret,
-		oqs_kex_ctx->oqs_remote_msg) != OQS_SUCCESS) {
-				r = SSH_ERR_INTERNAL_ERROR;
-		goto out;
-	}
+    if (OQS_KEM_encaps(oqs_kem, tmp_oqs_local_msg, tmp_oqs_shared_secret,
+                       oqs_kex_ctx->oqs_remote_msg) != OQS_SUCCESS) {
+        r = SSH_ERR_INTERNAL_ERROR;
+        goto out;
+    }
 
-	*oqs_shared_secret = (u_char *) tmp_oqs_shared_secret;
-	*oqs_shared_secret_len = oqs_kem->length_shared_secret;
-	oqs_kex_ctx->oqs_local_msg = tmp_oqs_local_msg;
-	oqs_kex_ctx->oqs_local_msg_len = oqs_kem->length_ciphertext;
+    *oqs_shared_secret = (u_char *) tmp_oqs_shared_secret;
+    *oqs_shared_secret_len = oqs_kem->length_shared_secret;
+    oqs_kex_ctx->oqs_local_msg = tmp_oqs_local_msg;
+    oqs_kex_ctx->oqs_local_msg_len = oqs_kem->length_ciphertext;
 
-	tmp_oqs_shared_secret = NULL;
+    tmp_oqs_shared_secret = NULL;
 
 out:
-	if (oqs_kem != NULL) {
-		OQS_KEM_free(oqs_kem);
-	}
-	if (tmp_oqs_shared_secret != NULL) {
-		explicit_bzero(tmp_oqs_shared_secret, oqs_kem->length_shared_secret);
-		free(tmp_oqs_shared_secret);
-		free(tmp_oqs_local_msg);
-	}
+    if (oqs_kem != NULL) {
+        OQS_KEM_free(oqs_kem);
+    }
+    if (tmp_oqs_shared_secret != NULL) {
+        explicit_bzero(tmp_oqs_shared_secret, oqs_kem->length_shared_secret);
+        free(tmp_oqs_shared_secret);
+        free(tmp_oqs_local_msg);
+    }
 
-	return r;
+    return r;
 }
 
 #endif /* WITH_OQS */

@@ -35,11 +35,11 @@
 /* Hybrid key exchange context */
 typedef struct pq_kex_ctx {
 
-	const char *pq_kex_name;	/* Named SSH hybrid key exchange method */
+    const char *pq_kex_name;	/* Named SSH hybrid key exchange method */
 
 #ifdef WITH_OQS
-	/* libOQS specifics */
-	OQS_KEX_CTX *oqs_kex_ctx;	/* Liboqs context */
+    /* libOQS specifics */
+    OQS_KEX_CTX *oqs_kex_ctx;	/* Liboqs context */
 #endif /* WITH_OQS */
 
 } PQ_KEX_CTX;
@@ -53,16 +53,16 @@ typedef struct pq_kex_ctx {
 /* PQ-only liboqs */
 /* Exchange hash */
 int pq_oqs_hash (
-	int hash_alg,
-	const char *client_version_string,
-	const char *server_version_string,
-	const struct sshbuf *ckexinit,
-	const struct sshbuf *skexinit,
-	const u_char *serverhostkeyblob, size_t serverhostkeyblob_len,
-	const uint8_t *oqs_client_public, size_t oqs_client_public_len,
-	const uint8_t *oqs_server_public, size_t oqs_server_public_len,
-	const u_char *oqs_shared_secret, size_t oqs_shared_secret_len,
-	u_char *hash, size_t *hash_len);
+    int hash_alg,
+    const char *client_version_string,
+    const char *server_version_string,
+    const struct sshbuf *ckexinit,
+    const struct sshbuf *skexinit,
+    const u_char *serverhostkeyblob, size_t serverhostkeyblob_len,
+    const uint8_t *oqs_client_public, size_t oqs_client_public_len,
+    const uint8_t *oqs_server_public, size_t oqs_server_public_len,
+    const u_char *oqs_shared_secret, size_t oqs_shared_secret_len,
+    u_char *hash, size_t *hash_len);
 /* Shared functions */
 int pq_oqs_init(PQ_KEX_CTX **pq_kex_ctx, char *pq_kex_name);
 void pq_oqs_free(PQ_KEX_CTX *pq_kex_ctx);

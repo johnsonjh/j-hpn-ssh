@@ -39,8 +39,8 @@
 #define PQ_OQS_KEX_SUFFIX(X) X PQ_OQS_NAMESPACE_SUFFIX
 
 typedef enum oqs_client_or_server {
-	OQS_IS_CLIENT,
-	OQS_IS_SERVER
+    OQS_IS_CLIENT,
+    OQS_IS_SERVER
 } oqs_client_or_server_t;
 
 /*
@@ -49,14 +49,14 @@ typedef enum oqs_client_or_server {
  */
 typedef struct oqs_kex_ctx {
 
-	OQS_KEM *oqs_kem;	/* liboqs KEM algorithm context */
-	char *oqs_method;	/* liboqs algorithm name */
-	uint8_t *oqs_local_priv;	/* Local private key */
-	size_t oqs_local_priv_len;	/* Local private key length */
-	uint8_t *oqs_local_msg;		/* Local message */
-	size_t oqs_local_msg_len;	/* Local message length */
-	uint8_t *oqs_remote_msg;	/* Remote message. */
-	size_t oqs_remote_msg_len;	/* Remote message length */
+    OQS_KEM *oqs_kem;	/* liboqs KEM algorithm context */
+    char *oqs_method;	/* liboqs algorithm name */
+    uint8_t *oqs_local_priv;	/* Local private key */
+    size_t oqs_local_priv_len;	/* Local private key length */
+    uint8_t *oqs_local_msg;		/* Local message */
+    size_t oqs_local_msg_len;	/* Local message length */
+    uint8_t *oqs_remote_msg;	/* Remote message. */
+    size_t oqs_remote_msg_len;	/* Remote message length */
 
 } OQS_KEX_CTX;
 
@@ -66,10 +66,10 @@ typedef struct oqs_kex_ctx {
  */
 typedef struct oqs_alg {
 
-	char *kex_alg; 					/* SSH kex exchange name */
-	char *alg_name; 				/* liboqs algorithm name */
-	int ssh2_init_msg; 				/* Msg number/name mapping */
-	int ssh2_reply_msg; 			/* Msg number/name mapping */
+    char *kex_alg; 					/* SSH kex exchange name */
+    char *alg_name; 				/* liboqs algorithm name */
+    int ssh2_init_msg; 				/* Msg number/name mapping */
+    int ssh2_reply_msg; 			/* Msg number/name mapping */
 
 } OQS_ALG;
 
@@ -77,10 +77,10 @@ typedef struct oqs_alg {
 int oqs_client_gen(OQS_KEX_CTX *oqs_kex_ctx);
 int oqs_client_extract(struct ssh *ssh, OQS_KEX_CTX *oqs_kex_ctx);
 int oqs_client_shared_secret(OQS_KEX_CTX *oqs_kex_ctx,
-	u_char **oqs_shared_secret, size_t *oqs_shared_secret_len);
+                             u_char **oqs_shared_secret, size_t *oqs_shared_secret_len);
 /* Public server  fucntions */
 int oqs_server_gen_msg_and_ss(OQS_KEX_CTX *oqs_kex_ctx,
-	u_char **oqs_shared_secret, size_t *oqs_shared_secret_len);
+                              u_char **oqs_shared_secret, size_t *oqs_shared_secret_len);
 /* Public shared functions */
 int oqs_init(OQS_KEX_CTX **oqs_kex_ctx, char *ssh_kex_name);
 void oqs_free(OQS_KEX_CTX *oqs_kex_ctx);
@@ -88,9 +88,9 @@ const OQS_ALG * oqs_mapping(const char *ssh_kex_name);
 int oqs_ssh2_init_msg(const OQS_ALG *oqs_alg);
 int oqs_ssh2_reply_msg(const OQS_ALG *oqs_alg);
 int oqs_deserialise(struct ssh *ssh, OQS_KEX_CTX *oqs_kex_ctx,
-	oqs_client_or_server_t client_or_server);
+                    oqs_client_or_server_t client_or_server);
 int oqs_serialise(struct ssh *ssh, OQS_KEX_CTX *oqs_kex_ctx,
-	oqs_client_or_server_t client_or_server);
+                  oqs_client_or_server_t client_or_server);
 
 #endif /* WITH_OQS */
 #endif /* KEX_OQS_H */

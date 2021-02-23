@@ -35,20 +35,20 @@
 /* Hybrid key exchange context */
 typedef struct hybrid_kex_ctx {
 
-	const char *hybrid_kex_name;	/* Named SSH hybrid key exchange method */
+    const char *hybrid_kex_name;	/* Named SSH hybrid key exchange method */
 
 #ifdef OPENSSL_HAS_ECC
-	/* ECDH specifics */
-	int ec_nid;	/* Elliptic curve reference */
-	EC_KEY *ecdh_local_key;	/* Local ecdh key */
-	const EC_GROUP *ecdh_group;	/* Elliptic curve group used */
-	const EC_POINT *ecdh_local_public; /* Public ecdh part from local */
-	const EC_POINT *ecdh_remote_public; /* Public ecdh part from remote */
+    /* ECDH specifics */
+    int ec_nid;	/* Elliptic curve reference */
+    EC_KEY *ecdh_local_key;	/* Local ecdh key */
+    const EC_GROUP *ecdh_group;	/* Elliptic curve group used */
+    const EC_POINT *ecdh_local_public; /* Public ecdh part from local */
+    const EC_POINT *ecdh_remote_public; /* Public ecdh part from remote */
 #endif /* OPENSSL_HAS_ECC */
 
 #ifdef WITH_OQS
-	/* libOQS specifics */
-	OQS_KEX_CTX *oqs_kex_ctx;	/* Liboqs context */
+    /* libOQS specifics */
+    OQS_KEX_CTX *oqs_kex_ctx;	/* Liboqs context */
 #endif /* WITH_OQS */
 
 } HYBRID_KEX_CTX;
@@ -66,7 +66,7 @@ int hybrid_ecdh_gen(HYBRID_KEX_CTX *hybrid_kex_ctx);
 int hybrid_ecdh_deserialise(struct ssh *ssh, HYBRID_KEX_CTX *hybrid_kex_ctx);
 int hybrid_ecdh_serialise(struct ssh *ssh, HYBRID_KEX_CTX *hybrid_kex_ctx);
 int hybrid_ecdh_shared_secret(HYBRID_KEX_CTX *hybrid_kex_ctx,
-	u_char **ecdh_shared_secret, size_t *ecdh_shared_secret_len);
+                              u_char **ecdh_shared_secret, size_t *ecdh_shared_secret_len);
 
 #endif /* OPENSSL_HAS_ECC */
 
@@ -79,27 +79,27 @@ int hybrid_ecdh_shared_secret(HYBRID_KEX_CTX *hybrid_kex_ctx,
 /* ECDH+liboqs */
 /* Exchange hash */
 int hybrid_ecdh_oqs_hash (
-	int hash_alg,
-	const char *client_version_string,
-	const char *server_version_string,
-	const struct sshbuf *ckexinit,
-	const struct sshbuf *skexinit,
-	const u_char *serverhostkeyblob, size_t serverhostkeyblob_len,
-	const EC_GROUP *ecdh_group,
-	const EC_POINT *ecdh_client_public,
-	const EC_POINT *ecdh_server_public,
-	const uint8_t *oqs_client_public, size_t oqs_client_public_len,
-	const uint8_t *oqs_server_public, size_t oqs_server_public_len,
-	const u_char *shared_secret, size_t shared_secret_len,
-	u_char *hash, size_t *hash_len);
+    int hash_alg,
+    const char *client_version_string,
+    const char *server_version_string,
+    const struct sshbuf *ckexinit,
+    const struct sshbuf *skexinit,
+    const u_char *serverhostkeyblob, size_t serverhostkeyblob_len,
+    const EC_GROUP *ecdh_group,
+    const EC_POINT *ecdh_client_public,
+    const EC_POINT *ecdh_server_public,
+    const uint8_t *oqs_client_public, size_t oqs_client_public_len,
+    const uint8_t *oqs_server_public, size_t oqs_server_public_len,
+    const u_char *shared_secret, size_t shared_secret_len,
+    u_char *hash, size_t *hash_len);
 /* Shared functions */
 int hybrid_ecdh_oqs_init(HYBRID_KEX_CTX **hybrid_kex_ctx,
-	char *hybrid_kex_name, int ec_nid);
+                         char *hybrid_kex_name, int ec_nid);
 void hybrid_ecdh_oqs_free(HYBRID_KEX_CTX *hybrid_kex_ctx);
 int hybrid_ecdh_oqs_combine_shared_secrets(u_char *ecdh_shared_secret,
-	size_t ecdh_shared_secret_len, u_char *oqs_shared_secret,
-	size_t oqs_shared_secret_len, u_char **combined_shared_secret,
-	size_t *combined_shared_secret_len);
+        size_t ecdh_shared_secret_len, u_char *oqs_shared_secret,
+        size_t oqs_shared_secret_len, u_char **combined_shared_secret,
+        size_t *combined_shared_secret_len);
 /* Client specific function */
 int hybrid_ecdh_oqs_client(struct ssh *ssh);
 /* Server specific function */
