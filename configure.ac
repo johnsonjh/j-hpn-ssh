@@ -2951,7 +2951,7 @@ if test "x$openssl" = "xyes" ; then
 	fi
 
 	# Check for OpenSSL without EVP_aes_{192,256}_cbc
-	AC_MSG_CHECKING([whether OpenSSL has crippled AES support])
+	AC_MSG_CHECKING([whether OpenSSL has broken AES support])
 	AC_LINK_IFELSE(
 		[AC_LANG_PROGRAM([[
 	#include <stdlib.h>

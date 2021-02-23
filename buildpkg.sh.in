@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 #
 # Fake Root Solaris/SVR4/SVR5 Build System - Prototype
 #

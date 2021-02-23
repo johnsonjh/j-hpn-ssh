@@ -128,4 +128,4 @@ buffer.
 
 ## Upstream **HPN-SSH** Homepage
 
-- https://www.psc.edu/research/networking/hpn-ssh/
+- <https://www.psc.edu/research/networking/hpn-ssh/>
