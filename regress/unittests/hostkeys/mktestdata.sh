@@ -24,9 +24,9 @@ gen_all() {
 hentries() {
 	_preamble=$1
 	_kspec=$2
-	for k in $(ls -1 $_kspec | sort); do
+	for k in $(find . -name "${_kspec}" | sort); do
 		printf "$_preamble "
-		cat $k
+		cat "${k}"
 	done
 	echo
 }
