@@ -1,5 +1,7 @@
 # **J-HPN-SSH** - **High Performance SSH**
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/978f333599b34df584212b8d078a053e)](https://app.codacy.com/gh/johnsonjh/j-hpn-ssh?utm_source=github.com&utm_medium=referral&utm_content=johnsonjh/j-hpn-ssh&utm_campaign=Badge_Grade_Settings)
+
 ## What is **HPN-SSH**?
 
 **HPN-SSH** is a series of modifications to _OpenSSH_, the predominant
