@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import copy
 import glob
 import os
@@ -7,7 +6,6 @@ import shutil
 import subprocess
 import sys
 
-import jinja2
 import jinja2.ext
 import yaml
 
