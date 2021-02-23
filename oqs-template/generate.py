@@ -2,12 +2,13 @@
 
 import copy
 import glob
-import jinja2
-import jinja2.ext
 import os
 import shutil
 import subprocess
 import sys
+
+import jinja2
+import jinja2.ext
 import yaml
 
 # For list.append in Jinja templates

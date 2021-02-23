@@ -1,7 +1,8 @@
-import helpers
 import os
 import sys
 import time
+
+import helpers
 
 sig_algs = ["ssh-ed25519"]
 if "WITH_PQAUTH" in os.environ and os.environ["WITH_PQAUTH"] == "true":
