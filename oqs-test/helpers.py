@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+
 def run_subprocess(command, working_dir='.', env=None, expected_returncode=0):
     """
     Helper function to run a shell command and report success/failure
@@ -26,6 +27,7 @@ def run_subprocess(command, working_dir='.', env=None, expected_returncode=0):
     assert result.returncode == expected_returncode, \
         "Got unexpected return code {}".format(result.returncode)
     return result.stdout.decode('utf-8')
+
 
 def run_subprocess_fork(command, working_dir='.', env=None, expected_returncode=0):
     """
