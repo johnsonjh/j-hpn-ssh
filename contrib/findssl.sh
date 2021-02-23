@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 #
 # findssl.sh
 #	Search for all instances of OpenSSL headers and libraries
@@ -110,16 +110,16 @@ fi
 # Search for OpenSSL headers and print versions
 #
 echo Searching for OpenSSL header files.
-if [ -x "`which locate`" ]
+if [ -x "$(which locate)" ]
 then
-	headers=`locate opensslv.h`
+	headers=$(locate opensslv.h)
 else
-	headers=`find / -name opensslv.h -print 2>/dev/null`
+	headers=$(find / -name opensslv.h -print 2>/dev/null)
 fi
 
 for header in $headers
 do
-	ver=`awk '/OPENSSL_VERSION_NUMBER/{printf \$3}' $header`
+	ver=$(awk '/OPENSSL_VERSION_NUMBER/{printf \$3}' $header)
 	echo "$ver $header"
 done
 echo
@@ -129,17 +129,17 @@ echo
 # Relies on shared libraries looking like "libcrypto.s*"
 #
 echo Searching for OpenSSL shared library files.
-if [ -x "`which locate`" ]
+if [ -x "$(which locate)" ]
 then
-	libraries=`locate libcrypto.s`
+	libraries=$(locate libcrypto.s)
 else
-	libraries=`find / -name 'libcrypto.s*' -print 2>/dev/null`
+	libraries=$(find / -name 'libcrypto.s*' -print 2>/dev/null)
 fi
 
 for lib in $libraries
 do
 	(echo "Trying libcrypto $lib" >>findssl.log
-	dir=`dirname $lib`
+	dir=$(dirname $lib)
 	LIBPATH="$dir:$LIBPATH"
 	LD_LIBRARY_PATH="$dir:$LIBPATH"
 	LIBRARY_PATH="$dir:$LIBPATH"
@@ -147,7 +147,7 @@ do
 	${CC} -o conftest conftest.c $lib 2>>findssl.log
 	if [ -x ./conftest ]
 	then
-		ver=`./conftest 2>/dev/null`
+		ver=$(./conftest 2>/dev/null)
 		rm -f ./conftest
 		echo "$ver $lib"
 	fi)
@@ -158,21 +158,21 @@ echo
 # Search for static OpenSSL libraries and print versions
 #
 echo Searching for OpenSSL static library files.
-if [ -x "`which locate`" ]
+if [ -x "$(which locate)" ]
 then
-	libraries=`locate libcrypto.a`
+	libraries=$(locate libcrypto.a)
 else
-	libraries=`find / -name libcrypto.a -print 2>/dev/null`
+	libraries=$(find / -name libcrypto.a -print 2>/dev/null)
 fi
 
 for lib in $libraries
 do
-	libdir=`dirname $lib`
+	libdir=$(dirname $lib)
 	echo "Trying libcrypto $lib" >>findssl.log
 	${CC} ${STATIC} -o conftest conftest.c -L${libdir} -lcrypto 2>>findssl.log
 	if [ -x ./conftest ]
 	then
-		ver=`./conftest 2>/dev/null`
+		ver=$(./conftest 2>/dev/null)
 		rm -f ./conftest
 		echo "$ver $lib"
 	fi
