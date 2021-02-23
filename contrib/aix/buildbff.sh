@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 #
 # buildbff.sh: Create AIX SMIT-installable OpenSSH packages
 #
@@ -20,16 +20,16 @@
 
 umask 022
 
-startdir=`pwd`
+startdir=$(pwd)
 
 perl -v >/dev/null || (echo perl required; exit 1)
 
 # Path to inventory.sh: same place as buildbff.sh
 if  echo $0 | egrep '^/'
 then
-	inventory=`dirname $0`/inventory.sh		# absolute path
+	inventory=$(dirname $0)/inventory.sh		# absolute path
 else
-	inventory=`pwd`/`dirname $0`/inventory.sh	# relative path
+	inventory=$(pwd)/$(dirname $0)/inventory.sh	# relative path
 fi
 
 #
@@ -37,7 +37,7 @@ fi
 #
 if pwd | egrep 'contrib/aix$'
 then
-	echo "Changing directory to `pwd`/../.."
+	echo "Changing directory to $(pwd)/../.."
 	echo "Please run buildbff.sh from your build directory in future."
 	cd ../..
 	contribaix=1
@@ -55,7 +55,7 @@ fi
 # $objdir/$PKGDIR/ 		directory package files are constructed in
 # $objdir/$PKGDIR/root/		package root ($FAKE_ROOT)
 #
-objdir=`pwd`
+objdir=$(pwd)
 PKGNAME=openssh
 PKGDIR=package
 
@@ -75,7 +75,7 @@ fi
 #
 for confvar in prefix exec_prefix bindir sbindir libexecdir datadir mandir mansubdir sysconfdir piddir srcdir
 do
-	eval $confvar=`grep "^$confvar=" $objdir/Makefile | cut -d = -f 2`
+	eval $confvar=$(grep "^$confvar=" $objdir/Makefile | cut -d = -f 2)
 done
 
 #
@@ -84,7 +84,7 @@ done
 #
 for confvar in SSH_PRIVSEP_USER PRIVSEP_PATH
 do
-	eval $confvar=`awk '/#define[ \t]'$confvar'/{print $3}' $objdir/config.h`
+	eval $confvar=$(awk '/#define[ \t]'$confvar'/{print $3}' $objdir/config.h)
 done
 
 # Set privsep defaults if not defined
@@ -123,16 +123,16 @@ cp $srcdir/README* $objdir/$PKGDIR/
 # Extract common info requires for the 'info' part of the package.
 #	AIX requires 4-part version numbers
 #
-VERSION=`./ssh -V 2>&1 | cut -f 1 -d , | cut -f 2 -d _`
-MAJOR=`echo $VERSION | cut -f 1 -d p | cut -f 1 -d .`
-MINOR=`echo $VERSION | cut -f 1 -d p | cut -f 2 -d .`
-PATCH=`echo $VERSION | cut -f 1 -d p | cut -f 3 -d .`
-PORTABLE=`echo $VERSION | awk 'BEGIN{FS="p"}{print $2}'`
+VERSION=$(./ssh -V 2>&1 | cut -f 1 -d , | cut -f 2 -d _)
+MAJOR=$(echo $VERSION | cut -f 1 -d p | cut -f 1 -d .)
+MINOR=$(echo $VERSION | cut -f 1 -d p | cut -f 2 -d .)
+PATCH=$(echo $VERSION | cut -f 1 -d p | cut -f 3 -d .)
+PORTABLE=$(echo $VERSION | awk 'BEGIN{FS="p"}{print $2}')
 [ "$PATCH" = "" ] && PATCH=0
 [ "$PORTABLE" = "" ] && PORTABLE=0
-BFFVERSION=`printf "%d.%d.%d.%d" $MAJOR $MINOR $PATCH $PORTABLE`
+BFFVERSION=$(printf "%d.%d.%d.%d" ${MAJOR} ${MINOR} ${PATCH} ${PORTABLE})
 
-echo "Building BFF for $PKGNAME $VERSION (package version $BFFVERSION)"
+echo "Building BFF for ${PKGNAME} ${VERSION} (package version ${BFFVERSION})"
 
 #
 # Set ssh and sshd parameters as per config.local
@@ -175,8 +175,8 @@ EOD
 # generate list of directories containing files
 # then calculate disk usage for each directory and store in openssh.size
 #
-files=`find . -type f -print`
-dirs=`for file in $files; do dirname $file; done | sort -u`
+files=$(find . -type f -print)
+dirs=$(for file in $files; do dirname $file; done | sort -u)
 for dir in $dirs
 do
 	du $dir
@@ -327,7 +327,7 @@ do
 	# get size in 512 byte blocks
 	if [ -d $FAKE_ROOT/$i ]
 	then
-		size=`du $FAKE_ROOT/$i | awk '{print $1}'`
+		size=$(du $FAKE_ROOT/$i | awk '{print $1}')
 		echo "$i $size" >>../lpp_name
 	fi
 done
