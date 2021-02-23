@@ -171,12 +171,10 @@ kex_algs = [
 
 def test_gen_keys():
     global sig_algs
-    helpers.run_subprocess(
-        ["rm", "-rf", "ssh_client"], working_dir=os.path.join("oqs-test", "tmp")
-    )
-    helpers.run_subprocess(
-        ["rm", "-rf", "ssh_server"], working_dir=os.path.join("oqs-test", "tmp")
-    )
+    helpers.run_subprocess(["rm", "-rf", "ssh_client"],
+                           working_dir=os.path.join("oqs-test", "tmp"))
+    helpers.run_subprocess(["rm", "-rf", "ssh_server"],
+                           working_dir=os.path.join("oqs-test", "tmp"))
     os.mkdir(os.path.join("oqs-test", "tmp", "ssh_client"), mode=0o700)
     os.mkdir(os.path.join("oqs-test", "tmp", "ssh_server"), mode=0o700)
     for party in ["client", "server"]:
@@ -217,10 +215,9 @@ def test_connection():
             port = port + 1
         else:
             for kex_alg in kex_algs:
-                if (
-                    "WITH_OPENSSL" in os.environ
-                    and os.environ["WITH_OPENSSL"] != "true"
-                ) and ("ecdh" in kex_alg):
+                if ("WITH_OPENSSL" in os.environ and
+                        os.environ["WITH_OPENSSL"] != "true") and ("ecdh"
+                                                                   in kex_alg):
                     continue
                 yield (run_connection, sig_alg, kex_alg, port)
                 port = port + 1

@@ -10,9 +10,8 @@ import jinja2.ext
 import yaml
 
 # For list.append in Jinja templates
-Jinja2 = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(searchpath="."), extensions=["jinja2.ext.do"]
-)
+Jinja2 = jinja2.Environment(loader=jinja2.FileSystemLoader(searchpath="."),
+                            extensions=["jinja2.ext.do"])
 
 
 def file_get_contents(filename, encoding=None):
@@ -34,38 +33,33 @@ def populate(filename, config, delimiter):
 
         if filename == "README.md":
             identifier_start = "{} OQS_TEMPLATE_FRAGMENT_{}_START -->".format(
-                delimiter, identifier.upper()
-            )
+                delimiter, identifier.upper())
         else:
             identifier_start = "{} OQS_TEMPLATE_FRAGMENT_{}_START".format(
-                delimiter, identifier.upper()
-            )
+                delimiter, identifier.upper())
 
         identifier_end = "{} OQS_TEMPLATE_FRAGMENT_{}_END".format(
-            delimiter, identifier.upper()
-        )
+            delimiter, identifier.upper())
 
-        preamble = contents[: contents.find(identifier_start)]
-        postamble = contents[contents.find(identifier_end) :]
+        preamble = contents[:contents.find(identifier_start)]
+        postamble = contents[contents.find(identifier_end):]
 
-        contents = (
-            preamble
-            + identifier_start
-            + Jinja2.get_template(fragment).render({"config": config})
-            + postamble
-        )
+        contents = (preamble + identifier_start +
+                    Jinja2.get_template(fragment).render({"config": config}) +
+                    postamble)
     file_put_contents(filename, contents)
 
 
 def load_config(include_disabled_sigs=False):
-    config = file_get_contents(
-        os.path.join("oqs-template", "generate.yml"), encoding="utf-8"
-    )
+    config = file_get_contents(os.path.join("oqs-template", "generate.yml"),
+                               encoding="utf-8")
     config = yaml.safe_load(config)
     if include_disabled_sigs:
         return config
     for sig in config["sigs"]:
-        sig["variants"] = [variant for variant in sig["variants"] if variant["enable"]]
+        sig["variants"] = [
+            variant for variant in sig["variants"] if variant["enable"]
+        ]
     config["sigs"] = [sig for sig in config["sigs"] if sig["variants"]]
     return config
 
