@@ -1920,7 +1920,7 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 			fatal("%s line %d: Missing subsystem name.",
 			    filename, linenum);
 		if (!*activep) {
-			arg = strdelim(&cp);
+			/*arg =*/ (void) strdelim(&cp);
 			break;
 		}
 		for (i = 0; i < options->num_subsystems; i++)
@@ -2009,8 +2009,9 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 		if (*activep && *charptr == NULL) {
 			*charptr = tilde_expand_filename(arg, getuid());
 			/* increase optional counter */
-			if (intptr != NULL)
-				*intptr = *intptr + 1;
+			/* DEAD CODE intptr is still NULL ;)
+  			 if (intptr != NULL)
+				*intptr = *intptr + 1; */
 		}
 		break;
 
@@ -2932,7 +2933,7 @@ dump_config(ServerOptions *o)
 	dump_cfg_string(sXAuthLocation, o->xauth_location);
 	dump_cfg_string(sCiphers, o->ciphers);
 	dump_cfg_string(sMacs, o->macs);
-	dump_cfg_string(sBanner, o->banner);
+	dump_cfg_string(sBanner, o->banner != NULL ? o->banner : "none");
 	dump_cfg_string(sForceCommand, o->adm_forced_command);
 	dump_cfg_string(sChrootDirectory, o->chroot_directory);
 	dump_cfg_string(sTrustedUserCAKeys, o->trusted_user_ca_keys);

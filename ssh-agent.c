@@ -725,10 +725,72 @@ no_identities(SocketEntry *e)
 }
 
 #ifdef ENABLE_PKCS11
+static char *
+sanitize_pkcs11_provider(const char *provider)
+{
+	struct pkcs11_uri *uri = NULL;
+	char *sane_uri, *module_path = NULL; /* default path */
+	char canonical_provider[PATH_MAX];
+
+	if (provider == NULL)
+		return NULL;
+
+	if (strlen(provider) >= strlen(PKCS11_URI_SCHEME) &&
+	    strncmp(provider, PKCS11_URI_SCHEME,
+	    strlen(PKCS11_URI_SCHEME)) == 0) {
+		/* PKCS#11 URI */
+		uri = pkcs11_uri_init();
+		if (uri == NULL) {
+			error("Failed to init PKCS#11 URI");
+			return NULL;
+		}
+
+		if (pkcs11_uri_parse(provider, uri) != 0) {
+			error("Failed to parse PKCS#11 URI");
+			return NULL;
+		}
+		/* validate also provider from URI */
+		if (uri->module_path)
+			module_path = strdup(uri->module_path);
+	} else
+		module_path = strdup(provider); /* simple path */
+
+	if (module_path != NULL) { /* do not validate default NULL path in URI */
+		if (realpath(module_path, canonical_provider) == NULL) {
+			verbose("failed PKCS#11 provider \"%.100s\": realpath: %s",
+			    module_path, strerror(errno));
+			free(module_path);
+			pkcs11_uri_cleanup(uri);
+			return NULL;
+		}
+		free(module_path);
+		if (match_pattern_list(canonical_provider, allowed_providers, 0) != 1) {
+			verbose("refusing PKCS#11 provider \"%.100s\": "
+			    "not allowed", canonical_provider);
+			pkcs11_uri_cleanup(uri);
+			return NULL;
+		}
+
+		/* copy verified and sanitized provider path back to the uri */
+		if (uri) {
+			free(uri->module_path);
+			uri->module_path = xstrdup(canonical_provider);
+		}
+	}
+
+	if (uri) {
+		sane_uri = pkcs11_uri_get(uri);
+		pkcs11_uri_cleanup(uri);
+		return sane_uri;
+	} else {
+		return xstrdup(canonical_provider); /* simple path */
+	}
+}
+
 static void
 process_add_smartcard_key(SocketEntry *e)
 {
-	char *provider = NULL, *pin = NULL, canonical_provider[PATH_MAX];
+	char *provider = NULL, *pin = NULL, *sane_uri = NULL;
 	char **comments = NULL;
 	int r, i, count = 0, success = 0, confirm = 0;
 	u_int seconds;
@@ -765,33 +827,28 @@ process_add_smartcard_key(SocketEntry *e)
 			goto send;
 		}
 	}
-	if (realpath(provider, canonical_provider) == NULL) {
-		verbose("failed PKCS#11 add of \"%.100s\": realpath: %s",
-		    provider, strerror(errno));
+
+	sane_uri = sanitize_pkcs11_provider(provider);
+	if (sane_uri == NULL)
 		goto send;
-	}
-	if (match_pattern_list(canonical_provider, allowed_providers, 0) != 1) {
-		verbose("refusing PKCS#11 add of \"%.100s\": "
-		    "provider not allowed", canonical_provider);
-		goto send;
-	}
-	debug("%s: add %.100s", __func__, canonical_provider);
+
 	if (lifetime && !death)
 		death = monotime() + lifetime;
 
-	count = pkcs11_add_provider(canonical_provider, pin, &keys, &comments);
+	debug("%s: add %.100s", __func__, sane_uri);
+	count = pkcs11_add_provider(sane_uri, pin, &keys, &comments);
 	for (i = 0; i < count; i++) {
 		k = keys[i];
 		if (lookup_identity(k) == NULL) {
 			id = xcalloc(1, sizeof(Identity));
 			id->key = k;
 			keys[i] = NULL; /* transferred */
-			id->provider = xstrdup(canonical_provider);
+			id->provider = xstrdup(sane_uri);
 			if (*comments[i] != '\0') {
 				id->comment = comments[i];
 				comments[i] = NULL; /* transferred */
 			} else {
-				id->comment = xstrdup(canonical_provider);
+				id->comment = xstrdup(sane_uri);
 			}
 			id->death = death;
 			id->confirm = confirm;
@@ -805,6 +862,7 @@ process_add_smartcard_key(SocketEntry *e)
 send:
 	free(pin);
 	free(provider);
+	free(sane_uri);
 	free(keys);
 	free(comments);
 	send_status(e, success);
@@ -813,7 +871,7 @@ send:
 static void
 process_remove_smartcard_key(SocketEntry *e)
 {
-	char *provider = NULL, *pin = NULL, canonical_provider[PATH_MAX];
+	char *provider = NULL, *pin = NULL, *sane_uri = NULL;
 	int r, success = 0;
 	Identity *id, *nxt;
 
@@ -824,30 +882,29 @@ process_remove_smartcard_key(SocketEntry *e)
 	}
 	free(pin);
 
-	if (realpath(provider, canonical_provider) == NULL) {
-		verbose("failed PKCS#11 add of \"%.100s\": realpath: %s",
-		    provider, strerror(errno));
+	sane_uri = sanitize_pkcs11_provider(provider);
+	if (sane_uri == NULL)
 		goto send;
-	}
 
-	debug("%s: remove %.100s", __func__, canonical_provider);
+	debug("%s: remove %.100s", __func__, sane_uri);
 	for (id = TAILQ_FIRST(&idtab->idlist); id; id = nxt) {
 		nxt = TAILQ_NEXT(id, next);
 		/* Skip file--based keys */
 		if (id->provider == NULL)
 			continue;
-		if (!strcmp(canonical_provider, id->provider)) {
+		if (!strcmp(sane_uri, id->provider)) {
 			TAILQ_REMOVE(&idtab->idlist, id, next);
 			free_identity(id);
 			idtab->nentries--;
 		}
 	}
-	if (pkcs11_del_provider(canonical_provider) == 0)
+	if (pkcs11_del_provider(sane_uri) == 0)
 		success = 1;
 	else
 		error("%s: pkcs11_del_provider failed", __func__);
 send:
 	free(provider);
+	free(sane_uri);
 	send_status(e, success);
 }
 #endif /* ENABLE_PKCS11 */
@@ -1293,8 +1350,8 @@ main(int ac, char **av)
 	sanitise_stdfd();
 
 	/* drop */
-	setegid(getgid());
-	setgid(getgid());
+	(void) setegid(getgid());
+	(void) setgid(getgid());
 
 	platform_disable_tracing(0);	/* strict=no */
 

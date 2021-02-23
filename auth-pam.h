@@ -33,7 +33,7 @@ u_int do_pam_account(void);
 void do_pam_session(struct ssh *);
 void do_pam_setcred(int );
 void do_pam_chauthtok(void);
-int do_pam_putenv(char *, char *);
+int do_pam_putenv(char *, const char *);
 char ** fetch_pam_environment(void);
 char ** fetch_pam_child_environment(void);
 void free_pam_environment(char **);

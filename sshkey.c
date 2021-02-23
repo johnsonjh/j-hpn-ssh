@@ -370,6 +370,38 @@ sshkey_type_is_valid_ca(int type)
 }
 
 int
+sshkey_is_private(const struct sshkey *k)
+{
+      switch (k->type) {
+#ifdef WITH_OPENSSL
+      case KEY_RSA_CERT:
+      case KEY_RSA: {
+              const BIGNUM *d;
+              RSA_get0_key(k->rsa, NULL, NULL, &d);
+              return d != NULL;
+          }
+      case KEY_DSA_CERT:
+      case KEY_DSA: {
+              const BIGNUM *priv_key;
+              DSA_get0_key(k->dsa, NULL, &priv_key);
+              return priv_key != NULL;
+          }
+#ifdef OPENSSL_HAS_ECC
+      case KEY_ECDSA_CERT:
+      case KEY_ECDSA:
+              return EC_KEY_get0_private_key(k->ecdsa) != NULL;
+#endif /* OPENSSL_HAS_ECC */
+#endif /* WITH_OPENSSL */
+      case KEY_ED25519_CERT:
+      case KEY_ED25519:
+              return (k->ed25519_pk != NULL);
+      default:
+              /* fatal("key_is_private: bad key type %d", k->type); */
+              return 0;
+      }
+}
+
+int
 sshkey_is_cert(const struct sshkey *k)
 {
 	if (k == NULL)
@@ -416,6 +448,83 @@ sshkey_type_plain(int type)
 }
 
 #ifdef WITH_OPENSSL
+int
+sshkey_calculate_signature(EVP_PKEY *pkey, int hash_alg, u_char **sigp,
+    int *lenp, const u_char *data, size_t datalen)
+{
+	EVP_MD_CTX *ctx = NULL;
+	u_char *sig = NULL;
+	int ret, slen, len;
+
+	if (sigp == NULL || lenp == NULL) {
+		return SSH_ERR_INVALID_ARGUMENT;
+	}
+
+	slen = EVP_PKEY_size(pkey);
+	if (slen <= 0 || slen > SSHBUF_MAX_BIGNUM)
+		return SSH_ERR_INVALID_ARGUMENT;
+
+	len = slen;
+	if ((sig = malloc(slen)) == NULL) {
+		return SSH_ERR_ALLOC_FAIL;
+	}
+
+	if ((ctx = EVP_MD_CTX_new()) == NULL) {
+		ret = SSH_ERR_ALLOC_FAIL;
+		goto error;
+	}
+	if (EVP_SignInit_ex(ctx, ssh_digest_to_md(hash_alg), NULL) <= 0 ||
+	    EVP_SignUpdate(ctx, data, datalen) <= 0 ||
+	    EVP_SignFinal(ctx, sig, &len, pkey) <= 0) {
+		ret = SSH_ERR_LIBCRYPTO_ERROR;
+		goto error;
+	}
+
+	*sigp = sig;
+	*lenp = len;
+	/* Now owned by the caller */
+	sig = NULL;
+	ret = 0;
+
+error:
+	EVP_MD_CTX_free(ctx);
+	free(sig);
+	return ret;
+}
+
+int
+sshkey_verify_signature(EVP_PKEY *pkey, int hash_alg, const u_char *data,
+    size_t datalen, u_char *sigbuf, int siglen)
+{
+	EVP_MD_CTX *ctx = NULL;
+	int ret;
+
+	if ((ctx = EVP_MD_CTX_new()) == NULL) {
+		return SSH_ERR_ALLOC_FAIL;
+	}
+	if (EVP_VerifyInit_ex(ctx, ssh_digest_to_md(hash_alg), NULL) <= 0 ||
+	    EVP_VerifyUpdate(ctx, data, datalen) <= 0) {
+		ret = SSH_ERR_LIBCRYPTO_ERROR;
+		goto done;
+	}
+	ret = EVP_VerifyFinal(ctx, sigbuf, siglen, pkey);
+	switch (ret) {
+	case 1:
+		ret = 0;
+		break;
+	case 0:
+		ret = SSH_ERR_SIGNATURE_INVALID;
+		break;
+	default:
+		ret = SSH_ERR_LIBCRYPTO_ERROR;
+		break;
+	}
+
+done:
+	EVP_MD_CTX_free(ctx);
+	return ret;
+}
+
 /* XXX: these are really begging for a table-driven approach */
 int
 sshkey_curve_name_to_nid(const char *name)

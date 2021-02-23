@@ -96,7 +96,8 @@ PORTS=	port-aix.o \
 	port-linux.o \
 	port-solaris.o \
 	port-net.o \
-	port-uw.o
+	port-uw.o \
+	port-linux-sshd.o
 
 .c.o:
 	$(CC) $(CFLAGS_NOPIE) $(PICFLAG) $(CPPFLAGS) -c $<

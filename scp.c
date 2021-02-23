@@ -167,7 +167,7 @@ killchild(int signo)
 {
 	if (do_cmd_pid > 1) {
 		kill(do_cmd_pid, signo ? signo : SIGTERM);
-		waitpid(do_cmd_pid, NULL, 0);
+		(void) waitpid(do_cmd_pid, NULL, 0);
 	}
 
 	if (signo)
@@ -963,7 +963,10 @@ toremote(int argc, char **argv)
 			addargs(&alist, "%s", ssh_program);
 			addargs(&alist, "-x");
 			addargs(&alist, "-oClearAllForwardings=yes");
-			addargs(&alist, "-n");
+			if (isatty(fileno(stdin)))
+				addargs(&alist, "-t");
+			else
+				addargs(&alist, "-n");
 			for (j = 0; j < remote_remote_args.num; j++) {
 				addargs(&alist, "%s",
 				    remote_remote_args.list[j]);
@@ -981,7 +984,9 @@ toremote(int argc, char **argv)
 			addargs(&alist, "%s", host);
 			addargs(&alist, "%s", cmd);
 			addargs(&alist, "%s", src);
-			addargs(&alist, "%s%s%s:%s",
+			addargs(&alist,
+			    /* IPv6 address needs to be enclosed with sqare brackets */
+			    strchr(host, ':') != NULL ? "%s%s[%s]:%s" : "%s%s%s:%s",
 			    tuser ? tuser : "", tuser ? "@" : "",
 			    thost, targ);
 			if (do_local_cmd(&alist) != 0)
@@ -1439,6 +1444,10 @@ sink(int argc, char **argv, const char *src)
 				(void) chmod(vect[0], mode);
 			free(vect[0]);
 			continue;
+		}
+		if (buf[0] == 'C' && ! exists && np[strlen(np)-1] == '/') {
+			errno = ENOTDIR;
+			goto bad;
 		}
 		omode = mode;
 		mode |= S_IWUSR;

@@ -1929,12 +1929,14 @@ AC_LINK_IFELSE(
 	[AC_DEFINE([HAVE_ISBLANK], [1], [Define if you have isblank(3C).])
 ])
 
+SCARD_MSG="yes"
 disable_pkcs11=
 AC_ARG_ENABLE([pkcs11],
 	[  --disable-pkcs11        disable PKCS#11 support code [no]],
 	[
 		if test "x$enableval" = "xno" ; then
 			disable_pkcs11=1
+			SCARD_MSG="no"
 		fi
 	]
 )
@@ -1962,6 +1964,40 @@ test "x$disable_sk" != "x" && enable_sk_internal=""
 AC_SEARCH_LIBS([dlopen], [dl])
 AC_CHECK_FUNCS([dlopen])
 AC_CHECK_DECL([RTLD_NOW], [], [], [#include <dlfcn.h>])
+
+# Check whether we have a p11-kit, we got default provider on command line
+DEFAULT_PKCS11_PROVIDER_MSG="no"
+AC_ARG_WITH([default-pkcs11-provider],
+	[  --with-default-pkcs11-provider[[=PATH]]   Use default pkcs11 provider (p11-kit detected by default)],
+	[ if test "x$withval" != "xno" && test "x$disable_pkcs11" = "x"; then
+		if test "x$withval" = "xyes" ; then
+			AC_PATH_TOOL([PKGCONFIG], [pkg-config], [no])
+			if test "x$PKGCONFIG" != "xno"; then
+				AC_MSG_CHECKING([if $PKGCONFIG knows about p11-kit])
+				if "$PKGCONFIG" "p11-kit-1"; then
+					AC_MSG_RESULT([yes])
+					use_pkgconfig_for_p11kit=yes
+				else
+					AC_MSG_RESULT([no])
+				fi
+			fi
+		else
+			PKCS11_PATH="${withval}"
+		fi
+		if test "x$use_pkgconfig_for_p11kit" = "xyes"; then
+			PKCS11_PATH=`$PKGCONFIG --variable=proxy_module p11-kit-1`
+		fi
+		AC_CHECK_FILE("$PKCS11_PATH",
+			[ AC_DEFINE_UNQUOTED([PKCS11_DEFAULT_PROVIDER], ["$PKCS11_PATH"], [Path to default PKCS#11 provider (p11-kit proxy)])
+			  DEFAULT_PKCS11_PROVIDER_MSG="$PKCS11_PATH"
+			],
+			[ AC_MSG_ERROR([Requested PKCS11 provided not found]) ]
+		)
+	else
+		AC_MSG_WARN([Needs PKCS11 support to enable default pkcs11 provider])
+	fi ]
+)
+
 
 # IRIX has a const char return value for gai_strerror()
 AC_CHECK_FUNCS([gai_strerror], [
@@ -2848,6 +2884,7 @@ if test "x$openssl" = "xyes" ; then
 		HMAC_CTX_init \
 		RSA_generate_key_ex \
 		RSA_get_default_method \
+		EVP_KDF_CTX_new_id \
 	])
 
 	# OpenSSL_add_all_algorithms may be a macro.
@@ -3388,6 +3425,7 @@ AC_ARG_WITH([pam],
 			PAM_MSG="yes"
 
 			SSHDLIBS="$SSHDLIBS -lpam"
+			KEYCATLIBS="$KEYCATLIBS -lpam"
 			AC_DEFINE([USE_PAM], [1],
 				[Define if you want to enable PAM support])
 
@@ -3398,6 +3436,7 @@ AC_ARG_WITH([pam],
 					;;
 				*)
 					SSHDLIBS="$SSHDLIBS -ldl"
+					KEYCATLIBS="$KEYCATLIBS -ldl"
 					;;
 				esac
 			fi
@@ -4576,6 +4615,7 @@ AC_ARG_WITH([selinux],
 	fi ]
 )
 AC_SUBST([SSHDLIBS])
+AC_SUBST([KEYCATLIBS])
 
 # Check whether user wants Kerberos 5 support
 KRB5_MSG="no"
@@ -4704,6 +4744,30 @@ AC_ARG_WITH([kerberos5],
 )
 AC_SUBST([GSSLIBS])
 AC_SUBST([K5LIBS])
+
+# Check whether user wants systemd support
+SYSTEMD_MSG="no"
+AC_ARG_WITH(systemd,
+	[  --with-systemd          Enable systemd support],
+	[ if test "x$withval" != "xno" ; then
+		AC_PATH_TOOL([PKGCONFIG], [pkg-config], [no])
+		if test "$PKGCONFIG" != "no"; then
+			AC_MSG_CHECKING([for libsystemd])
+			if $PKGCONFIG --exists libsystemd; then
+				SYSTEMD_CFLAGS=`$PKGCONFIG --cflags libsystemd`
+				SYSTEMD_LIBS=`$PKGCONFIG --libs libsystemd`
+				CPPFLAGS="$CPPFLAGS $SYSTEMD_CFLAGS"
+				SSHDLIBS="$SSHDLIBS $SYSTEMD_LIBS"
+				AC_MSG_RESULT([yes])
+				AC_DEFINE(HAVE_SYSTEMD, 1, [Define if you want systemd support.])
+				SYSTEMD_MSG="yes"
+			else
+				AC_MSG_RESULT([no])
+			fi
+		fi
+	fi ]
+)
+
 
 # Looking for programs, paths and files
 
@@ -5518,12 +5582,14 @@ echo "                   libldns support: $LDNS_MSG"
 echo "  Solaris process contract support: $SPC_MSG"
 echo "           Solaris project support: $SP_MSG"
 echo "         Solaris privilege support: $SPP_MSG"
+echo "                   systemd support: $SYSTEMD_MSG"
 echo "       IP address in \$DISPLAY hack: $DISPLAY_HACK_MSG"
 echo "           Translate v4 in v6 hack: $IPV4_IN6_HACK_MSG"
 echo "                  BSD Auth support: $BSD_AUTH_MSG"
 echo "              Random number source: $RAND_MSG"
 echo "             Privsep sandbox style: $SANDBOX_STYLE"
 echo "                   PKCS#11 support: $enable_pkcs11"
+echo "          Default PKCS#11 provider: $DEFAULT_PKCS11_PROVIDER_MSG"
 echo "                  U2F/FIDO support: $enable_sk"
 
 echo ""
@@ -5536,6 +5602,9 @@ echo "      Linker flags: ${LDFLAGS}"
 echo "         Libraries: ${LIBS}"
 if test ! -z "${SSHDLIBS}"; then
 echo "         +for sshd: ${SSHDLIBS}"
+fi
+if test ! -z "${KEYCATLIBS}"; then
+echo "   +for ssh-keycat: ${KEYCATLIBS}"
 fi
 
 echo ""

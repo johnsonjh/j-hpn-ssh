@@ -81,6 +81,7 @@
 #endif
 
 #include "xmalloc.h"
+#include "audit.h"
 #include "compat.h"
 #include "ssh2.h"
 #include "cipher.h"
@@ -518,6 +519,13 @@ ssh_packet_get_connection_out(struct ssh *ssh)
 	return ssh->state->connection_out;
 }
 
+static int
+packet_state_has_keys (const struct session_state *state)
+{
+	return state != NULL &&
+		(state->newkeys[MODE_IN] != NULL || state->newkeys[MODE_OUT] != NULL);
+}
+
 /*
  * Returns the IP-address of the remote host as a string.  The returned
  * string must not be freed.
@@ -595,22 +603,19 @@ ssh_packet_close_internal(struct ssh *ssh, int do_close)
 {
 	struct session_state *state = ssh->state;
 	u_int mode;
+	u_int had_keys = packet_state_has_keys(state);
 
 	if (!state->initialized)
 		return;
 	state->initialized = 0;
-	if (do_close) {
-		if (state->connection_in == state->connection_out) {
-			close(state->connection_out);
-		} else {
-			close(state->connection_in);
-			close(state->connection_out);
-		}
-	}
 	sshbuf_free(state->input);
+	state->input = NULL;
 	sshbuf_free(state->output);
+	state->output = NULL;
 	sshbuf_free(state->outgoing_packet);
+	state->outgoing_packet = NULL;
 	sshbuf_free(state->incoming_packet);
+	state->incoming_packet = NULL;
 	for (mode = 0; mode < MODE_MAX; mode++) {
 		kex_free_newkeys(state->newkeys[mode]);	/* current keys */
 		state->newkeys[mode] = NULL;
@@ -646,8 +651,18 @@ ssh_packet_close_internal(struct ssh *ssh, int do_close)
 #endif	/* WITH_ZLIB */
 	cipher_free(state->send_context);
 	cipher_free(state->receive_context);
+	if (had_keys && state->server_side) {
+		/* Assuming this is called only from privsep child */
+		audit_session_key_free(ssh, MODE_MAX);
+	}
 	state->send_context = state->receive_context = NULL;
 	if (do_close) {
+		if (state->connection_in == state->connection_out) {
+			close(state->connection_out);
+		} else {
+			close(state->connection_in);
+			close(state->connection_out);
+		}
 		free(ssh->local_ipaddr);
 		ssh->local_ipaddr = NULL;
 		free(ssh->remote_ipaddr);
@@ -904,6 +919,7 @@ ssh_set_newkeys(struct ssh *ssh, int mode)
 		   (unsigned long long)state->p_send.bytes,
 		   (unsigned long long)state->p_send.blocks);
 		kex_free_newkeys(state->newkeys[mode]);
+		audit_session_key_free(ssh, mode);
 		state->newkeys[mode] = NULL;
 	}
 	/* note that both bytes and the seqnr are not reset */
@@ -2264,6 +2280,72 @@ void *
 ssh_packet_get_output(struct ssh *ssh)
 {
 	return (void *)ssh->state->output;
+}
+
+static void
+newkeys_destroy_and_free(struct newkeys *newkeys)
+{
+	if (newkeys == NULL)
+		return;
+
+	free(newkeys->enc.name);
+
+	if (newkeys->mac.enabled) {
+		mac_clear(&newkeys->mac);
+		free(newkeys->mac.name);
+	}
+
+	free(newkeys->comp.name);
+
+	newkeys_destroy(newkeys);
+	free(newkeys);
+}
+
+static void
+packet_destroy_state(struct session_state *state)
+{
+	if (state == NULL)
+		return;
+
+	cipher_free(state->receive_context);
+	cipher_free(state->send_context);
+ 	state->send_context = state->receive_context = NULL;
+
+	sshbuf_free(state->input);
+	state->input = NULL;
+	sshbuf_free(state->output);
+	state->output = NULL;
+	sshbuf_free(state->outgoing_packet);
+	state->outgoing_packet = NULL;
+	sshbuf_free(state->incoming_packet);
+	state->incoming_packet = NULL;
+	if (state->compression_buffer) {
+		sshbuf_free(state->compression_buffer);
+		state->compression_buffer = NULL;
+	}
+	newkeys_destroy_and_free(state->newkeys[MODE_IN]);
+	state->newkeys[MODE_IN] = NULL;
+	newkeys_destroy_and_free(state->newkeys[MODE_OUT]);
+	state->newkeys[MODE_OUT] = NULL;
+	mac_destroy(state->packet_discard_mac);
+//	TAILQ_HEAD(, packet) outgoing;
+//	memset(state, 0, sizeof(state));
+}
+
+void
+packet_destroy_all(struct ssh *ssh, int audit_it, int privsep)
+{
+	if (audit_it)
+		audit_it = packet_state_has_keys(ssh->state);
+	packet_destroy_state(ssh->state);
+	if (audit_it) {
+#ifdef SSH_AUDIT_EVENTS
+		if (privsep)
+			audit_session_key_free(ssh, MODE_MAX);
+		else
+			audit_session_key_free_body(ssh, MODE_MAX, getpid(), getuid());
+#endif
+	}
 }
 
 /* Reset after_authentication and reset compression in post-auth privsep */

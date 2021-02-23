@@ -323,6 +323,8 @@ pkcs11_add_provider(char *name, char *pin, struct sshkey ***keysp,
 	u_int nkeys, i;
 	struct sshbuf *msg;
 
+	debug("%s: called, name = %s", __func__, name);
+
 	if (fd < 0 && pkcs11_start_helper() < 0)
 		return (-1);
 
@@ -342,6 +344,7 @@ pkcs11_add_provider(char *name, char *pin, struct sshkey ***keysp,
 		*keysp = xcalloc(nkeys, sizeof(struct sshkey *));
 		if (labelsp)
 			*labelsp = xcalloc(nkeys, sizeof(char *));
+		debug("%s: nkeys = %u", __func__, nkeys);
 		for (i = 0; i < nkeys; i++) {
 			/* XXX clean up properly instead of fatal() */
 			if ((r = sshbuf_get_string(msg, &blob, &blen)) != 0 ||

@@ -268,6 +268,9 @@ input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
 	Authctxt *authctxt = ssh->authctxt;
 	Authmethod *m = NULL;
 	char *user = NULL, *service = NULL, *method = NULL, *style = NULL;
+#ifdef WITH_SELINUX
+	char *role = NULL;
+#endif
 	int r, authenticated = 0;
 	double tstart = monotime_double();
 
@@ -286,6 +289,11 @@ input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
 	}
 	debug("attempt %d failures %d", authctxt->attempt, authctxt->failures);
 
+#ifdef WITH_SELINUX
+	if ((role = strchr(user, '/')) != NULL)
+		*role++ = 0;
+#endif
+
 	if ((style = strchr(user, ':')) != NULL)
 		*style++ = 0;
 
@@ -300,9 +308,6 @@ input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
 		} else {
 			/* Invalid user, fake password information */
 			authctxt->pw = fakepw();
-#ifdef SSH_AUDIT_EVENTS
-			PRIVSEP(audit_event(ssh, SSH_INVALID_USER));
-#endif
 		}
 #ifdef USE_PAM
 		if (options.use_pam)
@@ -314,8 +319,15 @@ input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
 		    use_privsep ? " [net]" : "");
 		authctxt->service = xstrdup(service);
 		authctxt->style = style ? xstrdup(style) : NULL;
-		if (use_privsep)
+#ifdef WITH_SELINUX
+		authctxt->role = role ? xstrdup(role) : NULL;
+#endif
+		if (use_privsep) {
 			mm_inform_authserv(service, style);
+#ifdef WITH_SELINUX
+			mm_inform_authrole(role);
+#endif
+		}
 		userauth_banner(ssh);
 		if (auth2_setup_methods_lists(authctxt) != 0)
 			ssh_packet_disconnect(ssh,

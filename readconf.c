@@ -2272,9 +2272,9 @@ fill_default_options(Options * options)
 	if (options->hpn_disabled == -1)
 		options->hpn_disabled = 0;
 	if (options->hpn_buffer_size > -1) {
-		/* if a user tries to set the size to 0 set it to 1KB */
+		/* if a user tries to set the size to 0 set it to 6MB */
 		if (options->hpn_buffer_size == 0)
-			options->hpn_buffer_size = 1;
+			options->hpn_buffer_size = 6 * 1024 * 1024;
 		/* limit the buffer to SSHBUF_SIZE_MAX (currently 256MB) */
 		if (options->hpn_buffer_size > (SSHBUF_SIZE_MAX / 1024)) {
 			options->hpn_buffer_size = SSHBUF_SIZE_MAX;

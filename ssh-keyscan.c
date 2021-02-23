@@ -779,6 +779,8 @@ main(int argc, char **argv)
 		fdlim_set(maxfd);
 	fdcon = xcalloc(maxfd, sizeof(con));
 
+	signal(SIGPIPE, SIG_IGN);
+
 	read_wait_nfdset = howmany(maxfd, NFDBITS);
 	read_wait = xcalloc(read_wait_nfdset, sizeof(fd_mask));
 

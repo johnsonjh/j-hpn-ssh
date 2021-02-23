@@ -113,7 +113,7 @@ else
 	done
 
 	trace "remove pkcs11 keys"
-	echo ${TEST_SSH_PIN} | notty ${SSHADD} -e ${TEST_SSH_PKCS11} > /dev/null 2>&1
+	${SSHADD} -e ${TEST_SSH_PKCS11} > /dev/null 2>&1
 	r=$?
 	if [ $r -ne 0 ]; then
 		fail "ssh-add -e failed: exit code $r"

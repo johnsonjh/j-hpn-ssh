@@ -58,7 +58,7 @@ bindresvport_sa(int sd, struct sockaddr *sa)
 	struct sockaddr_in6 *in6;
 	u_int16_t *portp;
 	u_int16_t port;
-	socklen_t salen;
+	socklen_t salen = sizeof(struct sockaddr_storage);
 	int i;
 
 	if (sa == NULL) {

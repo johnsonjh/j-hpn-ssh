@@ -49,6 +49,9 @@ int mm_sshkey_sign(struct ssh *, struct sshkey *, u_char **, size_t *,
     const u_char *, size_t, const char *, const char *,
     const char *, u_int compat);
 void mm_inform_authserv(char *, char *);
+#ifdef WITH_SELINUX
+void mm_inform_authrole(char *);
+#endif
 struct passwd *mm_getpwnamallow(struct ssh *, const char *);
 char *mm_auth2_read_banner(void);
 int mm_auth_password(struct ssh *, char *);
@@ -58,7 +61,9 @@ int mm_user_key_allowed(struct ssh *, struct passwd *, struct sshkey *, int,
     struct sshauthopt **);
 int mm_hostbased_key_allowed(struct ssh *, struct passwd *, const char *,
     const char *, struct sshkey *);
-int mm_sshkey_verify(const struct sshkey *, const u_char *, size_t,
+int mm_hostbased_key_verify(struct ssh *, const struct sshkey *, const u_char *, size_t,
+    const u_char *, size_t, const char *, u_int, struct sshkey_sig_details **);
+int mm_user_key_verify(struct ssh*, const struct sshkey *, const u_char *, size_t,
     const u_char *, size_t, const char *, u_int, struct sshkey_sig_details **);
 
 #ifdef GSSAPI
@@ -81,7 +86,12 @@ void mm_sshpam_free_ctx(void *);
 #ifdef SSH_AUDIT_EVENTS
 #include "audit.h"
 void mm_audit_event(struct ssh *, ssh_audit_event_t);
-void mm_audit_run_command(const char *);
+int mm_audit_run_command(struct ssh *ssh, const char *);
+void mm_audit_end_command(struct ssh *ssh, int, const char *);
+void mm_audit_unsupported_body(struct ssh *, int);
+void mm_audit_kex_body(struct ssh *, int, char *, char *, char *, char *, pid_t, uid_t);
+void mm_audit_session_key_free_body(struct ssh *, int, pid_t, uid_t);
+void mm_audit_destroy_sensitive_data(struct ssh *, const char *, pid_t, uid_t);
 #endif
 
 struct Session;

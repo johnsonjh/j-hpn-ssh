@@ -367,7 +367,7 @@ auth_log(struct ssh *ssh, int authenticated, int partial,
 # endif
 #endif
 #ifdef SSH_AUDIT_EVENTS
-	if (authenticated == 0 && !authctxt->postponed)
+	if (authenticated == 0 && !authctxt->postponed && !partial)
 		audit_event(ssh, audit_classify_auth(method));
 #endif
 }
@@ -592,9 +592,6 @@ getpwnamallow(struct ssh *ssh, const char *user)
 		record_failed_login(ssh, user,
 		    auth_get_canonical_hostname(ssh, options.use_dns), "ssh");
 #endif
-#ifdef SSH_AUDIT_EVENTS
-		audit_event(ssh, SSH_INVALID_USER);
-#endif /* SSH_AUDIT_EVENTS */
 		return (NULL);
 	}
 	if (!allowed_user(ssh, pw))
@@ -963,6 +960,14 @@ subprocess(const char *tag, struct passwd *pw, const char *command,
 			error("%s: dup2: %s", tag, strerror(errno));
 			_exit(1);
 		}
+
+#ifdef WITH_SELINUX
+		if (sshd_selinux_setup_env_variables() < 0) {
+			error ("failed to copy environment:  %s",
+			    strerror(errno));
+			_exit(127);
+		}
+#endif
 
 		execve(av[0], av, child_env);
 		error("%s exec \"%s\": %s", tag, command, strerror(errno));

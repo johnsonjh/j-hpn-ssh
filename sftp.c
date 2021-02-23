@@ -225,7 +225,7 @@ killchild(int signo)
 	pid = sshpid;
 	if (pid > 1) {
 		kill(pid, SIGTERM);
-		waitpid(pid, NULL, 0);
+		(void) waitpid(pid, NULL, 0);
 	}
 
 	_exit(1);

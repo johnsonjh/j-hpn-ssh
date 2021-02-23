@@ -58,6 +58,7 @@
 #include <unistd.h>
 
 #include <X11/Xlib.h>
+#include <glib.h>
 #include <gtk/gtk.h>
 #include <gdk/gdkx.h>
 #include <gdk/gdkkeysyms.h>
@@ -70,9 +71,12 @@ report_failed_grab (GtkWidget *parent_window, const char *what)
 	err = gtk_message_dialog_new(GTK_WINDOW(parent_window), 0,
 				     GTK_MESSAGE_ERROR,
 				     GTK_BUTTONS_CLOSE,
-				     "Could not grab %s. "
-				     "A malicious client may be eavesdropping "
-				     "on your session.", what);
+				     "SSH password dialog could not grab the %s input.\n"
+				     "This might be caused by application such as screensaver, "
+				     "however it could also mean that someone may be eavesdropping "
+				     "on your session.\n"
+				     "Either close the application which grabs the %s or "
+				     "log out and log in again to prevent this from happening.", what, what);
 	gtk_window_set_position(GTK_WINDOW(err), GTK_WIN_POS_CENTER);
 
 	gtk_dialog_run(GTK_DIALOG(err));
@@ -148,6 +152,17 @@ parse_env_hex_color(const char *env, GdkColor *c)
 	return 1;
 }
 
+static void
+move_progress(GtkWidget *entry, gpointer progress)
+{
+	gdouble step;
+	g_return_if_fail(GTK_IS_PROGRESS_BAR(progress));
+	
+	step = g_random_double_range(0.03, 0.1);
+	gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(progress), step);
+	gtk_progress_bar_pulse(GTK_PROGRESS_BAR(progress));
+}
+
 static int
 passphrase_dialog(char *message, int prompt_type)
 {
@@ -155,7 +170,7 @@ passphrase_dialog(char *message, int prompt_type)
 	char *passphrase, *local;
 	int result, grab_tries, grab_server, grab_pointer;
 	int buttons, default_response;
-	GtkWidget *parent_window, *dialog, *entry;
+	GtkWidget *parent_window, *dialog, *entry, *progress, *hbox;
 	GdkGrabStatus status;
 	GdkColor fg, bg;
 	int fg_set = 0, bg_set = 0;
@@ -201,14 +216,19 @@ passphrase_dialog(char *message, int prompt_type)
 		gtk_widget_modify_bg(dialog, GTK_STATE_NORMAL, &bg);
 
 	if (prompt_type == PROMPT_ENTRY || prompt_type == PROMPT_NONE) {
+		hbox = gtk_hbox_new(FALSE, 0);
+		gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, FALSE,
+		    FALSE, 0);
+		gtk_widget_show(hbox);
+
 		entry = gtk_entry_new();
 		if (fg_set)
 			gtk_widget_modify_fg(entry, GTK_STATE_NORMAL, &fg);
 		if (bg_set)
 			gtk_widget_modify_bg(entry, GTK_STATE_NORMAL, &bg);
 		gtk_box_pack_start(
-		    GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
-		    entry, FALSE, FALSE, 0);
+		    GTK_BOX(hbox), entry, TRUE, FALSE, 0);
+		gtk_entry_set_width_chars(GTK_ENTRY(entry), 2);
 		gtk_entry_set_visibility(GTK_ENTRY(entry), FALSE);
 		gtk_widget_grab_focus(entry);
 		if (prompt_type == PROMPT_ENTRY) {
@@ -227,6 +247,22 @@ passphrase_dialog(char *message, int prompt_type)
 			g_signal_connect(G_OBJECT(entry), "key_press_event",
 			                 G_CALLBACK(check_none), dialog);
 		}
+
+		hbox = gtk_hbox_new(FALSE, 0);
+		gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox),
+		    hbox, FALSE, FALSE, 8);
+		gtk_widget_show(hbox);
+
+		progress = gtk_progress_bar_new();
+
+		gtk_progress_bar_set_text(GTK_PROGRESS_BAR(progress),
+		    "Passphrase length hidden intentionally");
+		gtk_box_pack_start(GTK_BOX(hbox), progress, TRUE,
+		    TRUE, 5);
+		gtk_widget_show(progress);
+		g_signal_connect(G_OBJECT(entry), "changed",
+				 G_CALLBACK(move_progress), progress);
+
 	}
 
 	/* Grab focus */

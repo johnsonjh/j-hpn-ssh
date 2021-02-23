@@ -101,37 +101,6 @@ ssh_selinux_getctxbyname(char *pwname)
 	return sc;
 }
 
-/* Set the execution context to the default for the specified user */
-void
-ssh_selinux_setup_exec_context(char *pwname)
-{
-	security_context_t user_ctx = NULL;
-
-	if (!ssh_selinux_enabled())
-		return;
-
-	debug3("%s: setting execution context", __func__);
-
-	user_ctx = ssh_selinux_getctxbyname(pwname);
-	if (setexeccon(user_ctx) != 0) {
-		switch (security_getenforce()) {
-		case -1:
-			fatal("%s: security_getenforce() failed", __func__);
-		case 0:
-			error("%s: Failed to set SELinux execution "
-			    "context for %s", __func__, pwname);
-			break;
-		default:
-			fatal("%s: Failed to set SELinux execution context "
-			    "for %s (in enforcing mode)", __func__, pwname);
-		}
-	}
-	if (user_ctx != NULL)
-		freecon(user_ctx);
-
-	debug3("%s: done", __func__);
-}
-
 /* Set the TTY context for the specified user */
 void
 ssh_selinux_setup_pty(char *pwname, const char *tty)
@@ -146,7 +115,11 @@ ssh_selinux_setup_pty(char *pwname, const char *tty)
 
 	debug3("%s: setting TTY context on %s", __func__, tty);
 
-	user_ctx = ssh_selinux_getctxbyname(pwname);
+	if (getexeccon(&user_ctx) != 0) {
+		error("%s: getexeccon: %s", __func__, strerror(errno));
+		goto out;
+	}
+
 
 	/* XXX: should these calls fatal() upon failure in enforcing mode? */
 

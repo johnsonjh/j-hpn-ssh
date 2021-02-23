@@ -131,7 +131,16 @@ userauth_hostbased(struct ssh *ssh)
 	/* reconstruct packet */
 	if ((r = sshbuf_put_string(b, session_id2, session_id2_len)) != 0 ||
 	    (r = sshbuf_put_u8(b, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
+#ifdef WITH_SELINUX
+	    (authctxt->role
+	    ? ( (r = sshbuf_put_u32(b, strlen(authctxt->user)+strlen(authctxt->role)+1)) != 0 ||
+	        (r = sshbuf_put(b, authctxt->user, strlen(authctxt->user))) != 0 ||
+	        (r = sshbuf_put_u8(b, '/') != 0) ||
+	        (r = sshbuf_put(b, authctxt->role, strlen(authctxt->role))) != 0)
+	    : (r = sshbuf_put_cstring(b, authctxt->user)) != 0) ||
+#else
 	    (r = sshbuf_put_cstring(b, authctxt->user)) != 0 ||
+#endif
 	    (r = sshbuf_put_cstring(b, authctxt->service)) != 0 ||
 	    (r = sshbuf_put_cstring(b, "hostbased")) != 0 ||
 	    (r = sshbuf_put_string(b, pkalg, alen)) != 0 ||
@@ -150,7 +159,7 @@ userauth_hostbased(struct ssh *ssh)
 	authenticated = 0;
 	if (PRIVSEP(hostbased_key_allowed(ssh, authctxt->pw, cuser,
 	    chost, key)) &&
-	    PRIVSEP(sshkey_verify(key, sig, slen,
+	    PRIVSEP(hostbased_key_verify(ssh, key, sig, slen,
 	    sshbuf_ptr(b), sshbuf_len(b), pkalg, ssh->compat, NULL)) == 0)
 		authenticated = 1;
 
@@ -165,6 +174,20 @@ done:
 	free(chost);
 	free(sig);
 	return authenticated;
+}
+
+int
+hostbased_key_verify(struct ssh *ssh, const struct sshkey *key, const u_char *sig,
+    size_t slen, const u_char *data, size_t datalen, const char *pkalg, u_int compat,
+    struct sshkey_sig_details **detailsp)
+{
+	int rv;
+
+	rv = sshkey_verify(key, sig, slen, data, datalen, pkalg, compat, detailsp);
+#ifdef SSH_AUDIT_EVENTS
+	audit_key(ssh, 0, &rv, key);
+#endif
+	return rv;
 }
 
 /* return 1 if given hostkey is allowed */

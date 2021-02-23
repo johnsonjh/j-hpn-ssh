@@ -68,6 +68,7 @@
 #include "digest.h"
 #include "ssh-sk.h"
 #include "sk-api.h"
+#include "ssh-pkcs11-uri.h"
 
 /* argv0 */
 extern char *__progname;
@@ -229,6 +230,32 @@ delete_all(int agent_fd, int qflag)
 
 	return ret;
 }
+
+#ifdef ENABLE_PKCS11
+static int update_card(int, int, const char *, int, char *);
+
+int
+update_pkcs11_uri(int agent_fd, int adding, const char *pkcs11_uri, int qflag)
+{
+	char *pin = NULL;
+	struct pkcs11_uri *uri;
+
+	/* dry-run parse to make sure the URI is valid and to report errors */
+	uri = pkcs11_uri_init();
+	if (pkcs11_uri_parse((char *) pkcs11_uri, uri) != 0)
+		fatal("Failed to parse PKCS#11 URI");
+	if (uri->pin != NULL) {
+		pin = strdup(uri->pin);
+		if (pin == NULL) {
+			fatal("Failed to dupplicate string");
+		}
+		/* pin is freed in the update_card() */
+	}
+	pkcs11_uri_cleanup(uri);
+
+	return update_card(agent_fd, adding, pkcs11_uri, qflag, pin);
+}
+#endif
 
 static int
 add_file(int agent_fd, const char *filename, int key_only, int qflag,
@@ -447,12 +474,11 @@ add_file(int agent_fd, const char *filename, int key_only, int qflag,
 }
 
 static int
-update_card(int agent_fd, int add, const char *id, int qflag)
+update_card(int agent_fd, int add, const char *id, int qflag, char *pin)
 {
-	char *pin = NULL;
 	int r, ret = -1;
 
-	if (add) {
+	if (add && pin == NULL) {
 		if ((pin = read_passphrase("Enter passphrase for PKCS#11: ",
 		    RP_ALLOW_STDIN)) == NULL)
 			return -1;
@@ -634,6 +660,13 @@ static int
 do_file(int agent_fd, int deleting, int key_only, char *file, int qflag,
     const char *skprovider)
 {
+#ifdef ENABLE_PKCS11
+	if (strlen(file) >= strlen(PKCS11_URI_SCHEME) &&
+	    strncmp(file, PKCS11_URI_SCHEME,
+	    strlen(PKCS11_URI_SCHEME)) == 0) {
+		return update_pkcs11_uri(agent_fd, !deleting, file, qflag);
+	}
+#endif
 	if (deleting) {
 		if (delete_file(agent_fd, file, key_only, qflag) == -1)
 			return -1;
@@ -817,7 +850,7 @@ main(int argc, char **argv)
 	}
 	if (pkcs11provider != NULL) {
 		if (update_card(agent_fd, !deleting, pkcs11provider,
-		    qflag) == -1)
+		    qflag, NULL) == -1)
 			ret = 1;
 		goto done;
 	}

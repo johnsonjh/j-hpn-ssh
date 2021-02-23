@@ -93,6 +93,7 @@
 #include "compat.h"
 #include "ssh2.h"
 #include "authfd.h"
+#include "audit.h"
 #include "match.h"
 #include "ssherr.h"
 #include "sk-api.h"
@@ -108,6 +109,8 @@ extern u_char session_id[];
 extern struct sshbuf *loginmsg;
 extern struct sshauthopt *auth_opts; /* XXX move to permanent ssh->authctxt? */
 
+extern void destroy_sensitive_data(struct ssh *, int);
+
 /* State exported from the child */
 static struct sshbuf *child_state;
 
@@ -118,6 +121,9 @@ int mm_answer_sign(struct ssh *, int, struct sshbuf *);
 int mm_answer_pwnamallow(struct ssh *, int, struct sshbuf *);
 int mm_answer_auth2_read_banner(struct ssh *, int, struct sshbuf *);
 int mm_answer_authserv(struct ssh *, int, struct sshbuf *);
+#ifdef WITH_SELINUX
+int mm_answer_authrole(struct ssh *, int, struct sshbuf *);
+#endif
 int mm_answer_authpassword(struct ssh *, int, struct sshbuf *);
 int mm_answer_bsdauthquery(struct ssh *, int, struct sshbuf *);
 int mm_answer_bsdauthrespond(struct ssh *, int, struct sshbuf *);
@@ -153,6 +159,11 @@ int mm_answer_gss_checkmic(struct ssh *, int, struct sshbuf *);
 #ifdef SSH_AUDIT_EVENTS
 int mm_answer_audit_event(struct ssh *, int, struct sshbuf *);
 int mm_answer_audit_command(struct ssh *, int, struct sshbuf *);
+int mm_answer_audit_end_command(struct ssh *, int, struct sshbuf *);
+int mm_answer_audit_unsupported_body(struct ssh *, int, struct sshbuf *);
+int mm_answer_audit_kex_body(struct ssh *, int, struct sshbuf *);
+int mm_answer_audit_session_key_free_body(struct ssh *, int, struct sshbuf *);
+int mm_answer_audit_server_key_free(struct ssh *, int, struct sshbuf *);
 #endif
 
 static Authctxt *authctxt;
@@ -196,6 +207,9 @@ struct mon_table mon_dispatch_proto20[] = {
     {MONITOR_REQ_SIGN, MON_ONCE, mm_answer_sign},
     {MONITOR_REQ_PWNAM, MON_ONCE, mm_answer_pwnamallow},
     {MONITOR_REQ_AUTHSERV, MON_ONCE, mm_answer_authserv},
+#ifdef WITH_SELINUX
+    {MONITOR_REQ_AUTHROLE, MON_ONCE, mm_answer_authrole},
+#endif
     {MONITOR_REQ_AUTH2_READ_BANNER, MON_ONCE, mm_answer_auth2_read_banner},
     {MONITOR_REQ_AUTHPASSWORD, MON_AUTH, mm_answer_authpassword},
 #ifdef USE_PAM
@@ -208,6 +222,10 @@ struct mon_table mon_dispatch_proto20[] = {
 #endif
 #ifdef SSH_AUDIT_EVENTS
     {MONITOR_REQ_AUDIT_EVENT, MON_PERMIT, mm_answer_audit_event},
+    {MONITOR_REQ_AUDIT_UNSUPPORTED, MON_PERMIT, mm_answer_audit_unsupported_body},
+    {MONITOR_REQ_AUDIT_KEX, MON_PERMIT, mm_answer_audit_kex_body},
+    {MONITOR_REQ_AUDIT_SESSION_KEY_FREE, MON_PERMIT, mm_answer_audit_session_key_free_body},
+    {MONITOR_REQ_AUDIT_SERVER_KEY_FREE, MON_PERMIT, mm_answer_audit_server_key_free},
 #endif
 #ifdef BSD_AUTH
     {MONITOR_REQ_BSDAUTHQUERY, MON_ISAUTH, mm_answer_bsdauthquery},
@@ -235,6 +253,11 @@ struct mon_table mon_dispatch_postauth20[] = {
 #ifdef SSH_AUDIT_EVENTS
     {MONITOR_REQ_AUDIT_EVENT, MON_PERMIT, mm_answer_audit_event},
     {MONITOR_REQ_AUDIT_COMMAND, MON_PERMIT, mm_answer_audit_command},
+    {MONITOR_REQ_AUDIT_END_COMMAND, MON_PERMIT, mm_answer_audit_end_command},
+    {MONITOR_REQ_AUDIT_UNSUPPORTED, MON_PERMIT, mm_answer_audit_unsupported_body},
+    {MONITOR_REQ_AUDIT_KEX, MON_PERMIT, mm_answer_audit_kex_body},
+    {MONITOR_REQ_AUDIT_SESSION_KEY_FREE, MON_PERMIT, mm_answer_audit_session_key_free_body},
+    {MONITOR_REQ_AUDIT_SERVER_KEY_FREE, MON_PERMIT, mm_answer_audit_server_key_free},
 #endif
     {0, 0, NULL}
 };
@@ -282,6 +305,8 @@ monitor_child_preauth(struct ssh *ssh, struct monitor *pmonitor)
 	if (pmonitor->m_log_sendfd >= 0)
 		close(pmonitor->m_log_sendfd);
 	pmonitor->m_log_sendfd = pmonitor->m_recvfd = -1;
+
+	pmonitor->m_state = "preauth";
 
 	authctxt = (Authctxt *)ssh->authctxt;
 	memset(authctxt, 0, sizeof(*authctxt));
@@ -364,7 +389,7 @@ monitor_child_preauth(struct ssh *ssh, struct monitor *pmonitor)
 	mm_get_keystate(ssh, pmonitor);
 
 	/* Drain any buffered messages from the child */
-	while (pmonitor->m_log_recvfd != -1 && monitor_read_log(pmonitor) == 0)
+	while (pmonitor->m_log_recvfd >= 0 && monitor_read_log(pmonitor) == 0)
 		;
 
 	if (pmonitor->m_recvfd >= 0)
@@ -391,6 +416,8 @@ monitor_child_postauth(struct ssh *ssh, struct monitor *pmonitor)
 {
 	close(pmonitor->m_recvfd);
 	pmonitor->m_recvfd = -1;
+
+	pmonitor->m_state = "postauth";
 
 	monitor_set_child_handler(pmonitor->m_pid);
 	ssh_signal(SIGHUP, &monitor_child_handler);
@@ -460,7 +487,7 @@ monitor_read_log(struct monitor *pmonitor)
 	if (log_level_name(level) == NULL)
 		fatal("%s: invalid log level %u (corrupted message?)",
 		    __func__, level);
-	do_log2(level, "%s [preauth]", msg);
+	do_log2(level, "%s [%s]", msg, pmonitor->m_state);
 
 	sshbuf_free(logmsg);
 	free(msg);
@@ -803,6 +830,9 @@ mm_answer_pwnamallow(struct ssh *ssh, int sock, struct sshbuf *m)
 
 	/* Allow service/style information on the auth context */
 	monitor_permit(mon_dispatch, MONITOR_REQ_AUTHSERV, 1);
+#ifdef WITH_SELINUX
+	monitor_permit(mon_dispatch, MONITOR_REQ_AUTHROLE, 1);
+#endif
 	monitor_permit(mon_dispatch, MONITOR_REQ_AUTH2_READ_BANNER, 1);
 
 #ifdef USE_PAM
@@ -877,6 +907,26 @@ key_base_type_match(const char *method, const struct sshkey *key,
 	free(ol);
 	return found;
 }
+
+#ifdef WITH_SELINUX
+int
+mm_answer_authrole(struct ssh *ssh, int sock, struct sshbuf *m)
+{
+	int r;
+	monitor_permit_authentications(1);
+
+	if ((r = sshbuf_get_cstring(m, &authctxt->role, NULL)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	debug3("%s: role=%s", __func__, authctxt->role);
+
+	if (strlen(authctxt->role) == 0) {
+		free(authctxt->role);
+		authctxt->role = NULL;
+	}
+
+	return (0);
+}
+#endif
 
 int
 mm_answer_authpassword(struct ssh *ssh, int sock, struct sshbuf *m)
@@ -1251,7 +1301,7 @@ monitor_valid_userblob(const u_char *data, u_int datalen)
 {
 	struct sshbuf *b;
 	const u_char *p;
-	char *userstyle, *cp;
+	char *userstyle, *s, *cp;
 	size_t len;
 	u_char type;
 	int r, fail = 0;
@@ -1282,6 +1332,8 @@ monitor_valid_userblob(const u_char *data, u_int datalen)
 		fail++;
 	if ((r = sshbuf_get_cstring(b, &cp, NULL)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	if ((s = strchr(cp, '/')) != NULL)
+		*s = '\0';
 	xasprintf(&userstyle, "%s%s%s", authctxt->user,
 	    authctxt->style ? ":" : "",
 	    authctxt->style ? authctxt->style : "");
@@ -1317,7 +1369,7 @@ monitor_valid_hostbasedblob(const u_char *data, u_int datalen,
 {
 	struct sshbuf *b;
 	const u_char *p;
-	char *cp, *userstyle;
+	char *cp, *s, *userstyle;
 	size_t len;
 	int r, fail = 0;
 	u_char type;
@@ -1338,6 +1390,8 @@ monitor_valid_hostbasedblob(const u_char *data, u_int datalen,
 		fail++;
 	if ((r = sshbuf_get_cstring(b, &cp, NULL)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	if ((s = strchr(p, '/')) != NULL)
+		*s = '\0';
 	xasprintf(&userstyle, "%s%s%s", authctxt->user,
 	    authctxt->style ? ":" : "",
 	    authctxt->style ? authctxt->style : "");
@@ -1390,8 +1444,10 @@ mm_answer_keyverify(struct ssh *ssh, int sock, struct sshbuf *m)
 	int r, ret, req_presence = 0, req_verify = 0, valid_data = 0;
 	int encoded_ret;
 	struct sshkey_sig_details *sig_details = NULL;
+	int type = 0;
 
-	if ((r = sshbuf_get_string_direct(m, &blob, &bloblen)) != 0 ||
+	if ((r = sshbuf_get_u32(m, &type)) != 0 ||
+	    (r = sshbuf_get_string_direct(m, &blob, &bloblen)) != 0 ||
 	    (r = sshbuf_get_string_direct(m, &signature, &signaturelen)) != 0 ||
 	    (r = sshbuf_get_string_direct(m, &data, &datalen)) != 0 ||
 	    (r = sshbuf_get_cstring(m, &sigalg, NULL)) != 0)
@@ -1400,6 +1456,8 @@ mm_answer_keyverify(struct ssh *ssh, int sock, struct sshbuf *m)
 	if (hostbased_cuser == NULL || hostbased_chost == NULL ||
 	  !monitor_allowed_key(blob, bloblen))
 		fatal("%s: bad key, not previously allowed", __func__);
+	if (type != key_blobtype)
+		fatal("%s: bad key type", __func__);
 
 	/* Empty signature algorithm means NULL. */
 	if (*sigalg == '\0') {
@@ -1415,14 +1473,19 @@ mm_answer_keyverify(struct ssh *ssh, int sock, struct sshbuf *m)
 	case MM_USERKEY:
 		valid_data = monitor_valid_userblob(data, datalen);
 		auth_method = "publickey";
+		ret = user_key_verify(ssh, key, signature, signaturelen, data,
+		    datalen, sigalg, ssh->compat, &sig_details);
 		break;
 	case MM_HOSTKEY:
 		valid_data = monitor_valid_hostbasedblob(data, datalen,
 		    hostbased_cuser, hostbased_chost);
 		auth_method = "hostbased";
+		ret = hostbased_key_verify(ssh, key, signature, signaturelen, data,
+		    datalen, sigalg, ssh->compat, &sig_details);
 		break;
 	default:
 		valid_data = 0;
+		ret = 0;
 		break;
 	}
 	if (!valid_data)
@@ -1432,8 +1495,6 @@ mm_answer_keyverify(struct ssh *ssh, int sock, struct sshbuf *m)
 	    SSH_FP_DEFAULT)) == NULL)
 		fatal("%s: sshkey_fingerprint failed", __func__);
 
-	ret = sshkey_verify(key, signature, signaturelen, data, datalen,
-	    sigalg, ssh->compat, &sig_details);
 	debug3("%s: %s %p signature %s%s%s", __func__, auth_method, key,
 	    (ret == 0) ? "verified" : "unverified",
 	    (ret != 0) ? ": " : "", (ret != 0) ? ssh_err(ret) : "");
@@ -1520,13 +1581,19 @@ mm_record_login(struct ssh *ssh, Session *s, struct passwd *pw)
 }
 
 static void
-mm_session_close(Session *s)
+mm_session_close(struct ssh *ssh, Session *s)
 {
 	debug3("%s: session %d pid %ld", __func__, s->self, (long)s->pid);
 	if (s->ttyfd != -1) {
 		debug3("%s: tty %s ptyfd %d", __func__, s->tty, s->ptyfd);
 		session_pty_cleanup2(s);
 	}
+#ifdef SSH_AUDIT_EVENTS
+	if (s->command != NULL) {
+		debug3("%s: command %d", __func__, s->command_handle);
+		session_end_command2(ssh, s);
+	}
+#endif
 	session_unused(s->self);
 }
 
@@ -1593,7 +1660,7 @@ mm_answer_pty(struct ssh *ssh, int sock, struct sshbuf *m)
 
  error:
 	if (s != NULL)
-		mm_session_close(s);
+		mm_session_close(ssh, s);
 	if ((r = sshbuf_put_u32(m, 0)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	mm_request_send(sock, MONITOR_ANS_PTY, m);
@@ -1612,7 +1679,7 @@ mm_answer_pty_cleanup(struct ssh *ssh, int sock, struct sshbuf *m)
 	if ((r = sshbuf_get_cstring(m, &tty, NULL)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	if ((s = session_by_tty(tty)) != NULL)
-		mm_session_close(s);
+		mm_session_close(ssh, s);
 	sshbuf_reset(m);
 	free(tty);
 	return (0);
@@ -1633,6 +1700,8 @@ mm_answer_term(struct ssh *ssh, int sock, struct sshbuf *req)
 	if (options.use_pam)
 		sshpam_cleanup();
 #endif
+
+	destroy_sensitive_data(ssh, 0);
 
 	while (waitpid(pmonitor->m_pid, &status, 0) == -1)
 		if (errno != EINTR)
@@ -1680,12 +1749,47 @@ mm_answer_audit_command(struct ssh *ssh, int socket, struct sshbuf *m)
 {
 	char *cmd;
 	int r;
+	Session *s;
 
 	debug3("%s entering", __func__);
 	if ((r = sshbuf_get_cstring(m, &cmd, NULL)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+
 	/* sanity check command, if so how? */
-	audit_run_command(cmd);
+	s = session_new();
+	if (s == NULL)
+		fatal("%s: error allocating a session", __func__);
+	s->command = cmd;
+#ifdef SSH_AUDIT_EVENTS
+	s->command_handle = audit_run_command(ssh, cmd);
+#endif
+
+	sshbuf_reset(m);
+	sshbuf_put_u32(m, s->self);
+
+	mm_request_send(socket, MONITOR_ANS_AUDIT_COMMAND, m);
+
+	return (0);
+}
+
+int
+mm_answer_audit_end_command(struct ssh *ssh, int socket, struct sshbuf *m)
+{
+	int handle, r;
+	size_t len;
+	u_char *cmd = NULL;
+	Session *s;
+
+	debug3("%s entering", __func__);
+	if ((r = sshbuf_get_u32(m, &handle)) != 0 ||
+	    (r = sshbuf_get_string(m, &cmd, &len)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+
+	s = session_by_id(handle);
+	if (s == NULL || s->ttyfd != -1 || s->command == NULL ||
+	    strcmp(s->command, cmd) != 0)
+		fatal("%s: invalid handle", __func__);
+	mm_session_close(ssh, s);
 	free(cmd);
 	return (0);
 }
@@ -1740,6 +1844,7 @@ monitor_apply_keystate(struct ssh *ssh, struct monitor *pmonitor)
 void
 mm_get_keystate(struct ssh *ssh, struct monitor *pmonitor)
 {
+	struct sshbuf *m;
 	debug3("%s: Waiting for new keys", __func__);
 
 	if ((child_state = sshbuf_new()) == NULL)
@@ -1747,6 +1852,19 @@ mm_get_keystate(struct ssh *ssh, struct monitor *pmonitor)
 	mm_request_receive_expect(pmonitor->m_sendfd, MONITOR_REQ_KEYEXPORT,
 	    child_state);
 	debug3("%s: GOT new keys", __func__);
+
+#ifdef SSH_AUDIT_EVENTS
+	m = sshbuf_new();
+	mm_request_receive_expect(pmonitor->m_sendfd,
+				  MONITOR_REQ_AUDIT_SESSION_KEY_FREE, m);
+	mm_answer_audit_session_key_free_body(ssh, pmonitor->m_sendfd, m);
+	sshbuf_free(m);
+#endif
+
+	/* Drain any buffered messages from the child */
+	while (pmonitor->m_log_recvfd >= 0 && monitor_read_log(pmonitor) == 0)
+		;
+
 }
 
 
@@ -1799,13 +1917,28 @@ monitor_init(void)
 	mon = xcalloc(1, sizeof(*mon));
 	monitor_openfds(mon, 1);
 
+	mon->m_state = "";
+
 	return mon;
 }
 
 void
-monitor_reinit(struct monitor *mon)
+monitor_reinit(struct monitor *mon, const char *chroot_dir)
 {
-	monitor_openfds(mon, 0);
+	struct stat dev_log_stat;
+	char *dev_log_path;
+	int do_logfds = 0;
+
+	if (chroot_dir != NULL) {
+		xasprintf(&dev_log_path, "%s/dev/log", chroot_dir);
+
+		if (stat(dev_log_path, &dev_log_stat) != 0) {
+			debug("%s: /dev/log doesn't exist in %s chroot - will try to log via monitor using [postauth] suffix", __func__, chroot_dir);
+			do_logfds = 1;
+		}
+		free(dev_log_path);
+	}
+	monitor_openfds(mon, do_logfds);
 }
 
 #ifdef GSSAPI
@@ -1935,3 +2068,102 @@ mm_answer_gss_userok(struct ssh *ssh, int sock, struct sshbuf *m)
 }
 #endif /* GSSAPI */
 
+#ifdef SSH_AUDIT_EVENTS
+int
+mm_answer_audit_unsupported_body(struct ssh *ssh, int sock, struct sshbuf *m)
+{
+	int what, r;
+
+	if ((r = sshbuf_get_u32(m, &what)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+
+	audit_unsupported_body(ssh, what);
+
+	sshbuf_reset(m);
+
+	mm_request_send(sock, MONITOR_ANS_AUDIT_UNSUPPORTED, m);
+	return 0;
+}
+
+int
+mm_answer_audit_kex_body(struct ssh *ssh, int sock, struct sshbuf *m)
+{
+	int ctos, r;
+	char *cipher, *mac, *compress, *pfs;
+	u_int64_t tmp;
+	pid_t pid;
+	uid_t uid;
+
+	if ((r = sshbuf_get_u32(m, &ctos)) != 0 ||
+	    (r = sshbuf_get_cstring(m, &cipher, NULL)) != 0 ||
+	    (r = sshbuf_get_cstring(m, &mac, NULL)) != 0 ||
+	    (r = sshbuf_get_cstring(m, &compress, NULL)) != 0 ||
+	    (r = sshbuf_get_cstring(m, &pfs, NULL)) != 0 ||
+	    (r = sshbuf_get_u64(m, &tmp)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	pid = (pid_t) tmp;
+	if ((r = sshbuf_get_u64(m, &tmp)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	uid = (pid_t) tmp;
+
+	audit_kex_body(ssh, ctos, cipher, mac, compress, pfs, pid, uid);
+
+	free(cipher);
+	free(mac);
+	free(compress);
+	free(pfs);
+	sshbuf_reset(m);
+
+	mm_request_send(sock, MONITOR_ANS_AUDIT_KEX, m);
+	return 0;
+}
+
+int
+mm_answer_audit_session_key_free_body(struct ssh *ssh, int sock, struct sshbuf *m)
+{
+	int ctos, r;
+	u_int64_t tmp;
+	pid_t pid;
+	uid_t uid;
+
+	if ((r = sshbuf_get_u32(m, &ctos)) != 0 ||
+	    (r = sshbuf_get_u64(m, &tmp)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	pid = (pid_t) tmp;
+	if ((r = sshbuf_get_u64(m, &tmp)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	uid = (uid_t) tmp;
+
+	audit_session_key_free_body(ssh, ctos, pid, uid);
+
+	sshbuf_reset(m);
+
+	mm_request_send(sock, MONITOR_ANS_AUDIT_SESSION_KEY_FREE, m);
+	return 0;
+}
+
+int
+mm_answer_audit_server_key_free(struct ssh *ssh, int sock, struct sshbuf *m)
+{
+	size_t len, r;
+	char *fp;
+	u_int64_t tmp;
+	pid_t pid;
+	uid_t uid;
+
+	if ((r = sshbuf_get_cstring(m, &fp, &len)) != 0 ||
+	    (r = sshbuf_get_u64(m, &tmp)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	pid = (pid_t) tmp;
+	if ((r = sshbuf_get_u64(m, &tmp)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	uid = (uid_t) tmp;
+
+	audit_destroy_sensitive_data(ssh, fp, pid, uid);
+
+	free(fp);
+	sshbuf_reset(m);
+
+	return 0;
+}
+#endif /* SSH_AUDIT_EVENTS */

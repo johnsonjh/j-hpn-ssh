@@ -137,7 +137,7 @@ extern char *__progname;
 extern int debug_flag;
 extern u_int utmp_len;
 extern int startup_pipe;
-extern void destroy_sensitive_data(void);
+extern void destroy_sensitive_data(struct ssh *, int);
 extern struct sshbuf *loginmsg;
 extern struct sshauthopt *auth_opts;
 extern char *tun_fwd_ifnames; /* serverloop.c */
@@ -161,6 +161,7 @@ login_cap_t *lc;
 
 static int is_child = 0;
 static int in_chroot = 0;
+static int have_dev_log = 1;
 
 /* File containing userauth info, if ExposeAuthInfo set */
 static char *auth_info_file = NULL;
@@ -649,6 +650,14 @@ do_exec_pty(struct ssh *ssh, Session *s, const char *command)
 	/* Parent.  Close the slave side of the pseudo tty. */
 	close(ttyfd);
 
+#if !defined(HAVE_OSF_SIA) && defined(SSH_AUDIT_EVENTS)
+	/* do_login in the child did not affect state in this process,
+	   compensate.  From an architectural standpoint, this is extremely
+	   ugly. */
+	if (command != NULL)
+		audit_count_session_open();
+#endif
+
 	/* Enter interactive session. */
 	s->ptymaster = ptymaster;
 	ssh_packet_set_interactive(ssh, 1,
@@ -667,6 +676,7 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
 	int ret;
 	const char *forced = NULL, *tty = NULL;
 	char session_type[1024];
+	struct stat dev_log_stat;
 
 	if (options.adm_forced_command) {
 		original_command = command;
@@ -677,6 +687,29 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
 		command = auth_opts->force_command;
 		forced = "(key-option)";
 	}
+#ifdef GSSAPI
+#ifdef KRB5 /* k5users_allowed_cmds only available w/ GSSAPI+KRB5 */
+	else if (k5users_allowed_cmds) {
+		const char *match = command;
+		int allowed = 0, i = 0;
+
+		if (!match)
+			match = s->pw->pw_shell;
+		while (k5users_allowed_cmds[i]) {
+			if (strcmp(match, k5users_allowed_cmds[i++]) == 0) {
+				debug("Allowed command '%.900s'", match);
+				allowed = 1;
+				break;
+			}
+		}
+		if (!allowed) {
+			debug("command '%.900s' not allowed", match);
+			return 1;
+		}
+	}
+#endif
+#endif
+
 	s->forced = 0;
 	if (forced != NULL) {
 		s->forced = 1;
@@ -703,6 +736,10 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
 			tty += 5;
 	}
 
+	if (lstat("/dev/log", &dev_log_stat) != 0) {
+		have_dev_log = 0;
+	}
+
 	verbose("Starting session: %s%s%s for %s from %.200s port %d id %d",
 	    session_type,
 	    tty == NULL ? "" : " on ",
@@ -713,15 +750,19 @@ do_exec(struct ssh *ssh, Session *s, const char *command)
 	    s->self);
 
 #ifdef SSH_AUDIT_EVENTS
+	if (s->command != NULL || s->command_handle != -1)
+		fatal("do_exec: command already set");
 	if (command != NULL)
-		PRIVSEP(audit_run_command(command));
+		s->command = xstrdup(command);
 	else if (s->ttyfd == -1) {
 		char *shell = s->pw->pw_shell;
 
 		if (shell[0] == '\0')	/* empty shell means /bin/sh */
 			shell =_PATH_BSHELL;
-		PRIVSEP(audit_run_command(shell));
+		s->command = xstrdup(shell);
 	}
+	if (s->command != NULL && s->ptyfd == -1)
+		s->command_handle = PRIVSEP(audit_run_command(ssh, s->command));
 #endif
 	if (s->ttyfd != -1)
 		ret = do_exec_pty(ssh, s, command);
@@ -1372,7 +1413,7 @@ do_setusercontext(struct passwd *pw)
 
 	platform_setusercontext(pw);
 
-	if (platform_privileged_uidswap()) {
+	if (platform_privileged_uidswap() && (!is_child || !use_privsep)) {
 #ifdef HAVE_LOGIN_CAP
 		if (setusercontext(lc, pw, pw->pw_uid,
 		    (LOGIN_SETALL & ~(LOGIN_SETPATH|LOGIN_SETUSER))) < 0) {
@@ -1404,6 +1445,9 @@ do_setusercontext(struct passwd *pw)
 			    (unsigned long long)pw->pw_uid);
 			chroot_path = percent_expand(tmp, "h", pw->pw_dir,
 			    "u", pw->pw_name, "U", uidstr, (char *)NULL);
+#ifdef WITH_SELINUX
+			sshd_selinux_copy_context();
+#endif
 			safely_chroot(chroot_path, pw->pw_uid);
 			free(tmp);
 			free(chroot_path);
@@ -1439,6 +1483,11 @@ do_setusercontext(struct passwd *pw)
 		/* Permanently switch to the desired uid. */
 		permanently_set_uid(pw);
 #endif
+
+#ifdef WITH_SELINUX
+		if (in_chroot == 0)
+			sshd_selinux_copy_context();
+#endif
 	} else if (options.chroot_directory != NULL &&
 	    strcasecmp(options.chroot_directory, "none") != 0) {
 		fatal("server lacks privileges to chroot to ChrootDirectory");
@@ -1456,9 +1505,6 @@ do_pwchange(Session *s)
 	if (s->ttyfd != -1) {
 		fprintf(stderr,
 		    "You must change your password now and login again!\n");
-#ifdef WITH_SELINUX
-		setexeccon(NULL);
-#endif
 #ifdef PASSWD_NEEDS_USERNAME
 		execl(_PATH_PASSWD_PROG, "passwd", s->pw->pw_name,
 		    (char *)NULL);
@@ -1505,14 +1551,6 @@ child_close_fds(struct ssh *ssh)
 
 	/* Stop directing logs to a high-numbered fd before we close it */
 	log_redirect_stderr_to(NULL);
-
-	/*
-	 * Close any extra open file descriptors so that we don't have them
-	 * hanging around in clients.  Note that we want to do this after
-	 * initgroups, because at least on Solaris 2.3 it leaves file
-	 * descriptors open.
-	 */
-	closefrom(STDERR_FILENO + 1);
 }
 
 /*
@@ -1533,8 +1571,11 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 	sshpkt_fmt_connection_id(ssh, remote_id, sizeof(remote_id));
 
 	/* remove hostkey from the child's memory */
-	destroy_sensitive_data();
+	destroy_sensitive_data(ssh, 1);
 	ssh_packet_clear_keys(ssh);
+	/* Don't audit this - both us and the parent would be talking to the
+	   monitor over a single socket, with no synchronization. */
+	packet_destroy_all(ssh, 0, 1);
 
 	/* Force a password change */
 	if (s->authctxt->force_pwchange) {
@@ -1646,8 +1687,6 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 			exit(1);
 	}
 
-	closefrom(STDERR_FILENO + 1);
-
 	do_rc_files(ssh, s, shell);
 
 	/* restore SIGPIPE for child */
@@ -1672,10 +1711,7 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 		argv[i] = NULL;
 		optind = optreset = 1;
 		__progname = argv[0];
-#ifdef WITH_SELINUX
-		ssh_selinux_change_context("sftpd_t");
-#endif
-		exit(sftp_server_main(i, argv, s->pw));
+		exit(sftp_server_main(i, argv, s->pw, have_dev_log));
 	}
 
 	fflush(NULL);
@@ -1743,6 +1779,9 @@ session_unused(int id)
 	sessions[id].ttyfd = -1;
 	sessions[id].ptymaster = -1;
 	sessions[id].x11_chanids = NULL;
+#ifdef SSH_AUDIT_EVENTS
+	sessions[id].command_handle = -1;
+#endif
 	sessions[id].next_unused = sessions_first_unused;
 	sessions_first_unused = id;
 }
@@ -1822,6 +1861,19 @@ session_open(Authctxt *authctxt, int chanid)
 	debug("session_open: session %d: link with channel %d", s->self, chanid);
 	s->chanid = chanid;
 	return 1;
+}
+
+Session *
+session_by_id(int id)
+{
+	if (id >= 0 && id < sessions_nalloc) {
+		Session *s = &sessions[id];
+		if (s->used)
+			return s;
+	}
+	debug("%s: unknown id %d", __func__, id);
+	session_dump();
+	return NULL;
 }
 
 Session *
@@ -2436,6 +2488,32 @@ session_exit_message(struct ssh *ssh, Session *s, int status)
 		chan_write_failed(ssh, c);
 }
 
+#ifdef SSH_AUDIT_EVENTS
+void
+session_end_command2(struct ssh *ssh, Session *s)
+{
+	if (s->command != NULL) {
+		if (s->command_handle != -1)
+			audit_end_command(ssh, s->command_handle, s->command);
+		free(s->command);
+		s->command = NULL;
+		s->command_handle = -1;
+	}
+}
+
+static void
+session_end_command(struct ssh *ssh, Session *s)
+{
+	if (s->command != NULL) {
+		if (s->command_handle != -1)
+			PRIVSEP(audit_end_command(ssh, s->command_handle, s->command));
+		free(s->command);
+		s->command = NULL;
+		s->command_handle = -1;
+	}
+}
+#endif
+
 void
 session_close(struct ssh *ssh, Session *s)
 {
@@ -2449,6 +2527,10 @@ session_close(struct ssh *ssh, Session *s)
 
 	if (s->ttyfd != -1)
 		session_pty_cleanup(s);
+#ifdef SSH_AUDIT_EVENTS
+	if (s->command)
+		session_end_command(ssh, s);
+#endif
 	free(s->term);
 	free(s->display);
 	free(s->x11_chanids);
@@ -2524,14 +2606,14 @@ session_close_by_channel(struct ssh *ssh, int id, void *arg)
 }
 
 void
-session_destroy_all(struct ssh *ssh, void (*closefunc)(Session *))
+session_destroy_all(struct ssh *ssh, void (*closefunc)(struct ssh *ssh, Session *))
 {
 	int i;
 	for (i = 0; i < sessions_nalloc; i++) {
 		Session *s = &sessions[i];
 		if (s->used) {
 			if (closefunc != NULL)
-				closefunc(s);
+				closefunc(ssh, s);
 			else
 				session_close(ssh, s);
 		}
@@ -2657,6 +2739,15 @@ do_authenticated2(struct ssh *ssh, Authctxt *authctxt)
 	server_loop2(ssh, authctxt);
 }
 
+static void
+do_cleanup_one_session(struct ssh *ssh, Session *s)
+{
+	session_pty_cleanup2(s);
+#ifdef SSH_AUDIT_EVENTS
+	session_end_command2(ssh, s);
+#endif
+}
+
 void
 do_cleanup(struct ssh *ssh, Authctxt *authctxt)
 {
@@ -2714,7 +2805,7 @@ do_cleanup(struct ssh *ssh, Authctxt *authctxt)
 	 * or if running in monitor.
 	 */
 	if (!use_privsep || mm_is_monitor())
-		session_destroy_all(ssh, session_pty_cleanup2);
+		session_destroy_all(ssh, do_cleanup_one_session);
 }
 
 /* Return a name for the remote host that fits inside utmp_size */

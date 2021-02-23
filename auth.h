@@ -63,6 +63,9 @@ struct Authctxt {
 	char		*service;
 	struct passwd	*pw;		/* set if 'valid' */
 	char		*style;
+#ifdef WITH_SELINUX
+	char		*role;
+#endif
 
 	/* Method lists for multiple authentication */
 	char		**auth_methods;	/* modified from server config */
@@ -189,6 +192,8 @@ struct passwd * getpwnamallow(struct ssh *, const char *user);
 
 char	*expand_authorized_keys(const char *, struct passwd *pw);
 char	*authorized_principals_file(struct passwd *);
+int	 user_key_verify(struct ssh *, const struct sshkey *, const u_char *, size_t,
+    const u_char *, size_t, const char *, u_int, struct sshkey_sig_details **);
 
 FILE	*auth_openkeyfile(const char *, struct passwd *, int);
 FILE	*auth_openprincipals(const char *, struct passwd *, int);
@@ -208,6 +213,8 @@ struct sshkey	*get_hostkey_private_by_type(int, int, struct ssh *);
 int	 get_hostkey_index(struct sshkey *, int, struct ssh *);
 int	 sshd_hostkey_sign(struct ssh *, struct sshkey *, struct sshkey *,
     u_char **, size_t *, const u_char *, size_t, const char *);
+int	 hostbased_key_verify(struct ssh *, const struct sshkey *, const u_char *, size_t,
+    const u_char *, size_t, const char *, u_int, struct sshkey_sig_details **);
 
 /* Key / cert options linkage to auth layer */
 const struct sshauthopt *auth_options(struct ssh *);

@@ -240,6 +240,20 @@ mac_clear(struct sshmac *mac)
 	mac->umac_ctx = NULL;
 }
 
+void
+mac_destroy(struct sshmac *mac)
+{
+	if (mac == NULL)
+		return;
+
+	if (mac->key) {
+		memset(mac->key, 0, mac->key_len);
+		free(mac->key);
+	}
+
+	memset(mac, 0, sizeof(*mac));
+}
+
 /* XXX copied from ciphers_valid */
 #define	MAC_SEP	","
 int

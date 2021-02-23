@@ -201,6 +201,9 @@ static const struct sock_filter preauth_insns[] = {
 #ifdef __NR_exit_group
 	SC_ALLOW(__NR_exit_group),
 #endif
+#if defined(__NR_flock) && defined(__s390__)
+	SC_ALLOW(__NR_flock),
+#endif
 #ifdef __NR_futex
 	SC_ALLOW(__NR_futex),
 #endif
@@ -219,11 +222,29 @@ static const struct sock_filter preauth_insns[] = {
 #ifdef __NR_getpid
 	SC_ALLOW(__NR_getpid),
 #endif
+#ifdef __NR_getuid
+	SC_ALLOW(__NR_getuid),
+#endif
+#ifdef __NR_getuid32
+	SC_ALLOW(__NR_getuid32),
+#endif
+#ifdef __NR_geteuid
+	SC_ALLOW(__NR_geteuid),
+#endif
+#ifdef __NR_geteuid32
+	SC_ALLOW(__NR_geteuid32),
+#endif
+#ifdef __NR_gettid
+	SC_ALLOW(__NR_gettid),
+#endif
 #ifdef __NR_getrandom
 	SC_ALLOW(__NR_getrandom),
 #endif
 #ifdef __NR_gettimeofday
 	SC_ALLOW(__NR_gettimeofday),
+#endif
+#if defined(__NR_ipc) && defined(__s390__)
+	SC_ALLOW(__NR_ipc),
 #endif
 #ifdef __NR_getuid
 	SC_ALLOW(__NR_getuid),
@@ -269,6 +290,9 @@ static const struct sock_filter preauth_insns[] = {
 #endif
 #ifdef __NR_pselect6
 	SC_ALLOW(__NR_pselect6),
+#endif
+#ifdef __NR_pselect6_time64
+	SC_ALLOW(__NR_pselect6_time64),
 #endif
 #ifdef __NR_read
 	SC_ALLOW(__NR_read),

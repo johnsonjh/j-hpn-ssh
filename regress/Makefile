@@ -118,7 +118,8 @@ CLEANFILES=	*.core actual agent-key.* authorized_keys_${USERNAME} \
 		known_hosts known_hosts-cert known_hosts.* krl-* ls.copy \
 		modpipe netcat no_identity_config \
 		pidfile putty.rsa2 ready regress.log remote_pid \
-		revoked-* rsa rsa-agent rsa-agent.pub rsa.pub rsa_ssh2_cr.prv \
+		revoked-* rsa rsa-agent rsa-agent.pub rsa-agent-cert.pub \
+		rsa.pub rsa_ssh2_cr.prv pkcs11*.crt pkcs11*.key pkcs11.info \
 		rsa_ssh2_crnl.prv scp-ssh-wrapper.exe \
 		scp-ssh-wrapper.scp setuid-allowed sftp-server.log \
 		sftp-server.sh sftp.log ssh-log-wrapper.sh ssh.log \
@@ -248,6 +249,7 @@ unit:
 		V="" ; \
 		test "x${USE_VALGRIND}" = "x" || \
 		    V=${.CURDIR}/valgrind-unit.sh ; \
+		$$V ${.OBJDIR}/unittests/pkcs11/test_pkcs11 ; \
 		$$V ${.OBJDIR}/unittests/sshbuf/test_sshbuf ; \
 		$$V ${.OBJDIR}/unittests/sshkey/test_sshkey \
 			-d ${.CURDIR}/unittests/sshkey/testdata ; \

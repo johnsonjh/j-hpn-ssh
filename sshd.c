@@ -85,6 +85,10 @@
 #include <prot.h>
 #endif
 
+#ifdef HAVE_SYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
+
 #include "xmalloc.h"
 #include "ssh.h"
 #include "ssh2.h"
@@ -118,6 +122,7 @@
 #include "ssh-gss.h"
 #endif
 #include "monitor_wrap.h"
+#include "audit.h"
 #include "ssh-sandbox.h"
 #include "auth-options.h"
 #include "version.h"
@@ -261,8 +266,8 @@ struct sshbuf *loginmsg;
 struct passwd *privsep_pw = NULL;
 
 /* Prototypes for various functions defined later in this file. */
-void destroy_sensitive_data(void);
-void demote_sensitive_data(void);
+void destroy_sensitive_data(struct ssh *, int);
+void demote_sensitive_data(struct ssh *);
 static void do_ssh2_kex(struct ssh *);
 
 static char *listener_proctitle;
@@ -278,6 +283,15 @@ close_listen_socks(void)
 	for (i = 0; i < num_listen_socks; i++)
 		close(listen_socks[i]);
 	num_listen_socks = -1;
+}
+
+/*
+ * Is this process listening for clients (i.e. not specific to any specific
+ * client connection?)
+ */
+int listening_for_clients(void)
+{
+	return num_listen_socks >= 0;
 }
 
 static void
@@ -382,18 +396,45 @@ grace_alarm_handler(int sig)
 
 }
 
-/* Destroy the host and server keys.  They will no longer be needed. */
+/*
+ * Destroy the host and server keys.  They will no longer be needed.  Careful,
+ * this can be called from cleanup_exit() - i.e. from just about anywhere.
+ */
 void
-destroy_sensitive_data(void)
+destroy_sensitive_data(struct ssh *ssh, int privsep)
 {
 	u_int i;
+#ifdef SSH_AUDIT_EVENTS
+	pid_t pid;
+	uid_t uid;
 
+	pid = getpid();
+	uid = getuid();
+#endif
 	for (i = 0; i < options.num_host_key_files; i++) {
 		if (sensitive_data.host_keys[i]) {
+			char *fp;
+
+			if (sshkey_is_private(sensitive_data.host_keys[i]))
+				fp = sshkey_fingerprint(sensitive_data.host_keys[i], options.fingerprint_hash, SSH_FP_HEX);
+			else
+				fp = NULL;
 			sshkey_free(sensitive_data.host_keys[i]);
 			sensitive_data.host_keys[i] = NULL;
+			if (fp != NULL) {
+#ifdef SSH_AUDIT_EVENTS
+				if (privsep)
+					PRIVSEP(audit_destroy_sensitive_data(ssh, fp,
+						pid, uid));
+				else
+					audit_destroy_sensitive_data(ssh, fp,
+						pid, uid);
+#endif
+				free(fp);
+			}
 		}
-		if (sensitive_data.host_certificates[i]) {
+		if (sensitive_data.host_certificates
+		    && sensitive_data.host_certificates[i]) {
 			sshkey_free(sensitive_data.host_certificates[i]);
 			sensitive_data.host_certificates[i] = NULL;
 		}
@@ -402,14 +443,26 @@ destroy_sensitive_data(void)
 
 /* Demote private to public keys for network child */
 void
-demote_sensitive_data(void)
+demote_sensitive_data(struct ssh *ssh)
 {
 	struct sshkey *tmp;
 	u_int i;
 	int r;
+#ifdef SSH_AUDIT_EVENTS
+	pid_t pid;
+	uid_t uid;
 
+	pid = getpid();
+	uid = getuid();
+#endif
 	for (i = 0; i < options.num_host_key_files; i++) {
 		if (sensitive_data.host_keys[i]) {
+			char *fp;
+
+			if (sshkey_is_private(sensitive_data.host_keys[i]))
+				fp = sshkey_fingerprint(sensitive_data.host_keys[i], options.fingerprint_hash, SSH_FP_HEX);
+			else
+				fp = NULL;
 			if ((r = sshkey_from_private(
 			    sensitive_data.host_keys[i], &tmp)) != 0)
 				fatal("could not demote host %s key: %s",
@@ -417,6 +470,12 @@ demote_sensitive_data(void)
 				    ssh_err(r));
 			sshkey_free(sensitive_data.host_keys[i]);
 			sensitive_data.host_keys[i] = tmp;
+			if (fp != NULL) {
+#ifdef SSH_AUDIT_EVENTS
+				audit_destroy_sensitive_data(ssh, fp, pid, uid);
+#endif
+				free(fp);
+			}
 		}
 		/* Certs do not need demotion */
 	}
@@ -444,7 +503,7 @@ reseed_prngs(void)
 }
 
 static void
-privsep_preauth_child(void)
+privsep_preauth_child(struct ssh *ssh)
 {
 	gid_t gidset[1];
 
@@ -459,7 +518,11 @@ privsep_preauth_child(void)
 	reseed_prngs();
 
 	/* Demote the private keys to public keys. */
-	demote_sensitive_data();
+	demote_sensitive_data(ssh);
+
+#ifdef WITH_SELINUX
+	ssh_selinux_change_context("sshd_net_t");
+#endif
 
 	/* Demote the child */
 	if (privsep_chroot) {
@@ -494,7 +557,7 @@ privsep_preauth(struct ssh *ssh)
 
 	if (use_privsep == PRIVSEP_ON)
 		box = ssh_sandbox_init(pmonitor);
-	pid = fork();
+	pmonitor->m_pid = pid = fork();
 	if (pid == -1) {
 		fatal("fork of unprivileged child failed");
 	} else if (pid != 0) {
@@ -540,10 +603,12 @@ privsep_preauth(struct ssh *ssh)
 		/* Arrange for logging to be sent to the monitor */
 		set_log_handler(mm_log_handler, pmonitor);
 
-		privsep_preauth_child();
+		privsep_preauth_child(ssh);
 		setproctitle("%s", "[net]");
-		if (box != NULL)
+		if (box != NULL) {
 			ssh_sandbox_child(box);
+			free(box);
+		}
 
 		return 0;
 	}
@@ -554,6 +619,9 @@ privsep_postauth(struct ssh *ssh, Authctxt *authctxt)
 {
 #ifdef DISABLE_FD_PASSING
 	if (1) {
+#elif defined(WITH_SELINUX)
+	if (0) {
+		/* even root user can be confined by SELinux */
 #else
 	if (authctxt->pw->pw_uid == 0) {
 #endif
@@ -563,7 +631,7 @@ privsep_postauth(struct ssh *ssh, Authctxt *authctxt)
 	}
 
 	/* New socket pair */
-	monitor_reinit(pmonitor);
+	monitor_reinit(pmonitor, options.chroot_directory);
 
 	pmonitor->m_pid = fork();
 	if (pmonitor->m_pid == -1)
@@ -582,9 +650,14 @@ privsep_postauth(struct ssh *ssh, Authctxt *authctxt)
 
 	close(pmonitor->m_sendfd);
 	pmonitor->m_sendfd = -1;
+	close(pmonitor->m_log_recvfd);
+	pmonitor->m_log_recvfd = -1;
+
+	if (pmonitor->m_log_sendfd != -1)
+		set_log_handler(mm_log_handler, pmonitor);
 
 	/* Demote the private keys to public keys. */
-	demote_sensitive_data();
+	demote_sensitive_data(ssh);
 
 	reseed_prngs();
 
@@ -1158,7 +1231,7 @@ server_listen(void)
  * from this function are in a forked subprocess.
  */
 static void
-server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
+server_accept_loop(struct ssh *ssh, int *sock_in, int *sock_out, int *newsock, int *config_s)
 {
 	fd_set *fdset;
 	int i, j, ret, maxfd;
@@ -1219,6 +1292,7 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 		if (received_sigterm) {
 			logit("Received signal %d; terminating.",
 			    (int) received_sigterm);
+			destroy_sensitive_data(ssh, 0);
 			close_listen_socks();
 			if (options.pid_file != NULL)
 				unlink(options.pid_file);
@@ -1397,6 +1471,9 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 			explicit_bzero(rnd, sizeof(rnd));
 		}
 	}
+
+	if (fdset != NULL)
+		free(fdset);
 }
 
 /*
@@ -1430,12 +1507,29 @@ check_ip_options(struct ssh *ssh)
 
 	if (getsockopt(sock_in, IPPROTO_IP, IP_OPTIONS, opts,
 	    &option_size) >= 0 && option_size != 0) {
-		text[0] = '\0';
-		for (i = 0; i < option_size; i++)
-			snprintf(text + i*3, sizeof(text) - i*3,
-			    " %2.2x", opts[i]);
-		fatal("Connection from %.100s port %d with IP opts: %.800s",
-		    ssh_remote_ipaddr(ssh), ssh_remote_port(ssh), text);
+		i = 0;
+		do {
+			switch (opts[i]) {
+				case 0:
+				case 1:
+					++i;
+					break;
+				case 130:
+				case 133:
+				case 134:
+					i += opts[i + 1];
+					break;
+				default:
+				/* Fail, fatally, if we detect either loose or strict
+			 	 * source routing options. */
+					text[0] = '\0';
+					for (i = 0; i < option_size; i++)
+						snprintf(text + i*3, sizeof(text) - i*3,
+							" %2.2x", opts[i]);
+					fatal("Connection from %.100s port %d with IP options:%.800s",
+						ssh_remote_ipaddr(ssh), ssh_remote_port(ssh), text);
+			}
+		} while (i < option_size);
 	}
 	return;
 #endif /* IP_OPTIONS */
@@ -1751,6 +1845,10 @@ main(int ac, char **av)
 
 	parse_server_config(&options, rexeced_flag ? "rexec" : config_file_name,
 	    cfg, &includes, NULL);
+
+	/* 'UsePAM no' is not supported in Fedora */
+	if (! options.use_pam)
+		logit("WARNING: 'UsePAM no' is not supported in Fedora and may cause several problems.");
 
 	/* Fill in default values for those options not explicitly set. */
 	fill_default_server_options(&options);
@@ -2090,8 +2188,13 @@ main(int ac, char **av)
 			}
 		}
 
+#ifdef HAVE_SYSTEMD
+		/* Signal systemd that we are ready to accept connections */
+		sd_notify(0, "READY=1");
+#endif
+
 		/* Accept a connection and return in a forked child */
-		server_accept_loop(&sock_in, &sock_out,
+		server_accept_loop(ssh, &sock_in, &sock_out,
 		    &newsock, config_s);
 	}
 
@@ -2304,6 +2407,9 @@ main(int ac, char **av)
 		restore_uid();
 	}
 #endif
+#ifdef WITH_SELINUX
+	sshd_selinux_setup_exec_context(authctxt->pw->pw_name);
+#endif
 #ifdef USE_PAM
 	if (options.use_pam) {
 		do_pam_setcred(1);
@@ -2349,6 +2455,9 @@ main(int ac, char **av)
 	do_authenticated(ssh, authctxt);
 
 	/* The connection has been terminated. */
+	packet_destroy_all(ssh, 1, 1);
+	destroy_sensitive_data(ssh, 1);
+
 	ssh_packet_get_bytes(ssh, &ibytes, &obytes);
 	verbose("Transferred: sent %llu, received %llu bytes",
 	    (unsigned long long)obytes, (unsigned long long)ibytes);
@@ -2485,6 +2594,15 @@ do_ssh2_kex(struct ssh *ssh)
 void
 cleanup_exit(int i)
 {
+	static int in_cleanup = 0;
+	int is_privsep_child;
+
+	/* cleanup_exit can be called at the very least from the privsep
+	   wrappers used for auditing.  Make sure we don't recurse
+	   indefinitely. */
+	if (in_cleanup)
+		_exit(i);
+	in_cleanup = 1;
 	if (the_active_state != NULL && the_authctxt != NULL) {
 		do_cleanup(the_active_state, the_authctxt);
 		if (use_privsep && privsep_is_preauth &&
@@ -2496,9 +2614,16 @@ cleanup_exit(int i)
 				    pmonitor->m_pid, strerror(errno));
 		}
 	}
+	is_privsep_child = use_privsep && pmonitor != NULL && pmonitor->m_pid == 0;
+	if (sensitive_data.host_keys != NULL && the_active_state != NULL)
+		destroy_sensitive_data(the_active_state, is_privsep_child);
+	if (the_active_state != NULL)
+		packet_destroy_all(the_active_state, 1, is_privsep_child);
 #ifdef SSH_AUDIT_EVENTS
 	/* done after do_cleanup so it can cancel the PAM auth 'thread' */
-	if (the_active_state != NULL && (!use_privsep || mm_is_monitor()))
+	if (the_active_state != NULL &&
+	    (the_authctxt == NULL || !the_authctxt->authenticated) &&
+	    (!use_privsep || mm_is_monitor()))
 		audit_event(the_active_state, SSH_CONNECTION_ABANDON);
 #endif
 	_exit(i);

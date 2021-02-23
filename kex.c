@@ -40,6 +40,9 @@
 #ifdef WITH_OPENSSL
 #include <openssl/crypto.h>
 #include <openssl/dh.h>
+# ifdef HAVE_EVP_KDF_CTX_NEW_ID
+# include <openssl/kdf.h>
+# endif
 #endif
 
 #include "ssh.h"
@@ -62,6 +65,7 @@
 #include "sshbuf.h"
 #include "canohost.h"
 #include "digest.h"
+#include "audit.h"
 
 /* prototype */
 static int kex_choose_conf(struct ssh *);
@@ -752,12 +756,16 @@ kex_start_rekex(struct ssh *ssh)
 }
 
 static int
-choose_enc(struct sshenc *enc, char *client, char *server)
+choose_enc(struct ssh *ssh, struct sshenc *enc, char *client, char *server)
 {
 	char *name = match_list(client, server, NULL);
 
-	if (name == NULL)
+	if (name == NULL) {
+#ifdef SSH_AUDIT_EVENTS
+		audit_unsupported(ssh, SSH_AUDIT_UNSUPPORTED_CIPHER);
+#endif
 		return SSH_ERR_NO_CIPHER_ALG_MATCH;
+	}
 	if ((enc->cipher = cipher_by_name(name)) == NULL) {
 		error("%s: unsupported cipher %s", __func__, name);
 		free(name);
@@ -778,8 +786,12 @@ choose_mac(struct ssh *ssh, struct sshmac *mac, char *client, char *server)
 {
 	char *name = match_list(client, server, NULL);
 
-	if (name == NULL)
+	if (name == NULL) {
+#ifdef SSH_AUDIT_EVENTS
+		audit_unsupported(ssh, SSH_AUDIT_UNSUPPORTED_MAC);
+#endif
 		return SSH_ERR_NO_MAC_ALG_MATCH;
+	}
 	if (mac_setup(mac, name) < 0) {
 		error("%s: unsupported MAC %s", __func__, name);
 		free(name);
@@ -792,12 +804,16 @@ choose_mac(struct ssh *ssh, struct sshmac *mac, char *client, char *server)
 }
 
 static int
-choose_comp(struct sshcomp *comp, char *client, char *server)
+choose_comp(struct ssh *ssh, struct sshcomp *comp, char *client, char *server)
 {
 	char *name = match_list(client, server, NULL);
 
-	if (name == NULL)
+	if (name == NULL) {
+#ifdef SSH_AUDIT_EVENTS
+		audit_unsupported(ssh, SSH_AUDIT_UNSUPPORTED_COMPRESSION);
+#endif
 		return SSH_ERR_NO_COMPRESS_ALG_MATCH;
+	}
 #ifdef WITH_ZLIB
 	if (strcmp(name, "zlib@openssh.com") == 0) {
 		comp->type = COMP_DELAYED;
@@ -943,7 +959,7 @@ kex_choose_conf(struct ssh *ssh)
 		nenc  = ctos ? PROPOSAL_ENC_ALGS_CTOS  : PROPOSAL_ENC_ALGS_STOC;
 		nmac  = ctos ? PROPOSAL_MAC_ALGS_CTOS  : PROPOSAL_MAC_ALGS_STOC;
 		ncomp = ctos ? PROPOSAL_COMP_ALGS_CTOS : PROPOSAL_COMP_ALGS_STOC;
-		if ((r = choose_enc(&newkeys->enc, cprop[nenc],
+		if ((r = choose_enc(ssh, &newkeys->enc, cprop[nenc],
 		    sprop[nenc])) != 0) {
 			kex->failed_choice = peer[nenc];
 			peer[nenc] = NULL;
@@ -958,7 +974,7 @@ kex_choose_conf(struct ssh *ssh)
 			peer[nmac] = NULL;
 			goto out;
 		}
-		if ((r = choose_comp(&newkeys->comp, cprop[ncomp],
+		if ((r = choose_comp(ssh, &newkeys->comp, cprop[ncomp],
 		    sprop[ncomp])) != 0) {
 			kex->failed_choice = peer[ncomp];
 			peer[ncomp] = NULL;
@@ -1010,6 +1026,10 @@ kex_choose_conf(struct ssh *ssh)
 		dh_need = MAXIMUM(dh_need, newkeys->enc.block_size);
 		dh_need = MAXIMUM(dh_need, newkeys->enc.iv_len);
 		dh_need = MAXIMUM(dh_need, newkeys->mac.key_len);
+		debug("kex: %s need=%d dh_need=%d", kex->name, need, dh_need);
+#ifdef SSH_AUDIT_EVENTS
+		audit_kex(ssh, mode, newkeys->enc.name, newkeys->mac.name, newkeys->comp.name, kex->name);
+#endif
 	}
 	/* XXX need runden? */
 	kex->we_need = need;
@@ -1025,6 +1045,95 @@ kex_choose_conf(struct ssh *ssh)
 	return r;
 }
 
+#ifdef HAVE_EVP_KDF_CTX_NEW_ID
+static const EVP_MD *
+digest_to_md(int digest_type)
+{
+	switch (digest_type) {
+	case SSH_DIGEST_SHA1:
+		return EVP_sha1();
+	case SSH_DIGEST_SHA256:
+		return EVP_sha256();
+	case SSH_DIGEST_SHA384:
+		return EVP_sha384();
+	case SSH_DIGEST_SHA512:
+		return EVP_sha512();
+	}
+	return NULL;
+}
+
+static int
+derive_key(struct ssh *ssh, int id, u_int need, u_char *hash, u_int hashlen,
+    const struct sshbuf *shared_secret, u_char **keyp)
+{
+	struct kex *kex = ssh->kex;
+	EVP_KDF_CTX *ctx = NULL;
+	u_char *key = NULL;
+	int r, key_len;
+
+	if ((key_len = ssh_digest_bytes(kex->hash_alg)) == 0)
+		return SSH_ERR_INVALID_ARGUMENT;
+	key_len = ROUNDUP(need, key_len);
+	if ((key = calloc(1, key_len)) == NULL) {
+		r = SSH_ERR_ALLOC_FAIL;
+		goto out;
+	}
+
+	ctx = EVP_KDF_CTX_new_id(EVP_KDF_SSHKDF);
+	if (!ctx) {
+		r = SSH_ERR_LIBCRYPTO_ERROR;
+		goto out;
+	}
+
+	r = EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_MD, digest_to_md(kex->hash_alg));
+	if (r != 1) {
+		r = SSH_ERR_LIBCRYPTO_ERROR;
+		goto out;
+	}
+	r = EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_KEY,
+	    sshbuf_ptr(shared_secret), sshbuf_len(shared_secret));
+	if (r != 1) {
+		r = SSH_ERR_LIBCRYPTO_ERROR;
+		goto out;
+	}
+	r = EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_SSHKDF_XCGHASH, hash, hashlen);
+	if (r != 1) {
+		r = SSH_ERR_LIBCRYPTO_ERROR;
+		goto out;
+	}
+	r = EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_SSHKDF_TYPE, id);
+	if (r != 1) {
+		r = SSH_ERR_LIBCRYPTO_ERROR;
+		goto out;
+	}
+	r = EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_SSHKDF_SESSION_ID,
+	    kex->session_id, kex->session_id_len);
+	if (r != 1) {
+		r = SSH_ERR_LIBCRYPTO_ERROR;
+		goto out;
+	}
+	r = EVP_KDF_derive(ctx, key, key_len);
+	if (r != 1) {
+		r = SSH_ERR_LIBCRYPTO_ERROR;
+		goto out;
+	}
+#ifdef DEBUG_KEX
+	fprintf(stderr, "key '%c'== ", id);
+	dump_digest("key", key, key_len);
+#endif
+	*keyp = key;
+	key = NULL;
+	r = 0;
+
+out:
+	free (key);
+	EVP_KDF_CTX_free(ctx);
+	if (r < 0) {
+		return r;
+	}
+	return 0;
+}
+#else
 static int
 derive_key(struct ssh *ssh, int id, u_int need, u_char *hash, u_int hashlen,
     const struct sshbuf *shared_secret, u_char **keyp)
@@ -1089,6 +1198,7 @@ derive_key(struct ssh *ssh, int id, u_int need, u_char *hash, u_int hashlen,
 	ssh_digest_free(hashctx);
 	return r;
 }
+#endif /* HAVE_OPENSSL_EVP_KDF_CTX_NEW_ID */
 
 #define NKEYS	6
 int
@@ -1174,6 +1284,36 @@ dump_digest(const char *msg, const u_char *digest, int len)
 }
 #endif
 
+static void
+enc_destroy(struct sshenc *enc)
+{
+	if (enc == NULL)
+		return;
+
+	if (enc->key) {
+		memset(enc->key, 0, enc->key_len);
+		free(enc->key);
+	}
+
+	if (enc->iv) {
+		memset(enc->iv,  0, enc->iv_len);
+		free(enc->iv);
+	}
+
+	memset(enc, 0, sizeof(*enc));
+}
+
+void
+newkeys_destroy(struct newkeys *newkeys)
+{
+	if (newkeys == NULL)
+		return;
+
+	enc_destroy(&newkeys->enc);
+	mac_destroy(&newkeys->mac);
+	memset(&newkeys->comp, 0, sizeof(newkeys->comp));
+}
+
 /*
  * Send a plaintext error message to the peer, suffixed by \r\n.
  * Only used during banner exchange, and there only for the server.
@@ -1217,8 +1357,8 @@ kex_exchange_identification(struct ssh *ssh, int timeout_ms,
 	sshbuf_reset(our_version);
 	if (version_addendum != NULL && *version_addendum == '\0')
 		version_addendum = NULL;
-	if ((r = sshbuf_putf(our_version, "SSH-%d.%d-%.100s%s%s\r\n",
-	   PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2, SSH_RELEASE,
+	if ((r = sshbuf_putf(our_version, "SSH-%d.%d-%.100s%s%s%s\r\n",
+	   PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2, SSH_RELEASE, SSH_HPN,
 	    version_addendum == NULL ? "" : " ",
 	    version_addendum == NULL ? "" : version_addendum)) != 0) {
 		oerrno = errno;

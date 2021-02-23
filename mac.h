@@ -49,5 +49,6 @@ int	 mac_compute(struct sshmac *, u_int32_t, const u_char *, int,
 int	 mac_check(struct sshmac *, u_int32_t, const u_char *, size_t,
     const u_char *, size_t);
 void	 mac_clear(struct sshmac *);
+void	 mac_destroy(struct sshmac *);
 
 #endif /* SSHMAC_H */

@@ -51,6 +51,7 @@ typedef enum {
 typedef void (log_handler_fn)(LogLevel, const char *, void *);
 
 void     log_init(char *, LogLevel, SyslogFacility, int);
+void     log_init_handler(char *, LogLevel, SyslogFacility, int, int);
 LogLevel log_level_get(void);
 int      log_change_level(LogLevel);
 int      log_is_on_stderr(void);

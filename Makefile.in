@@ -23,6 +23,7 @@ SSH_PROGRAM=@bindir@/ssh
 ASKPASS_PROGRAM=$(libexecdir)/ssh-askpass
 SFTP_SERVER=$(libexecdir)/sftp-server
 SSH_KEYSIGN=$(libexecdir)/ssh-keysign
+SSH_KEYCAT=$(libexecdir)/ssh-keycat
 SSH_PKCS11_HELPER=$(libexecdir)/ssh-pkcs11-helper
 SSH_SK_HELPER=$(libexecdir)/ssh-sk-helper
 PRIVSEP_PATH=@PRIVSEP_PATH@
@@ -50,6 +51,7 @@ LIBS=@LIBS@ -lpthread
 K5LIBS=@K5LIBS@
 GSSLIBS=@GSSLIBS@
 SSHDLIBS=@SSHDLIBS@
+KEYCATLIBS=@KEYCATLIBS@
 LIBEDIT=@LIBEDIT@
 LIBFIDO2=@LIBFIDO2@
 AR=@AR@
@@ -66,7 +68,7 @@ MKDIR_P=@MKDIR_P@
 
 .SUFFIXES: .lo
 
-TARGETS=ssh$(EXEEXT) sshd$(EXEEXT) ssh-add$(EXEEXT) ssh-keygen$(EXEEXT) ssh-keyscan${EXEEXT} ssh-keysign${EXEEXT} ssh-pkcs11-helper$(EXEEXT) ssh-agent$(EXEEXT) scp$(EXEEXT) sftp-server$(EXEEXT) sftp$(EXEEXT) ssh-sk-helper$(EXEEXT)
+TARGETS=ssh$(EXEEXT) sshd$(EXEEXT) ssh-add$(EXEEXT) ssh-keygen$(EXEEXT) ssh-keyscan${EXEEXT} ssh-keysign${EXEEXT} ssh-pkcs11-helper$(EXEEXT) ssh-agent$(EXEEXT) scp$(EXEEXT) sftp-server$(EXEEXT) sftp$(EXEEXT) ssh-sk-helper$(EXEEXT) ssh-keycat$(EXEEXT)
 
 XMSS_OBJS=\
 	ssh-xmss.o \
@@ -100,7 +102,7 @@ LIBSSH_OBJS=${LIBOPENSSH_OBJS} \
 	monitor_fdpass.o rijndael.o ssh-dss.o ssh-ecdsa.o ssh-ecdsa-sk.o \
 	ssh-ed25519-sk.o ssh-rsa.o dh.o \
 	msg.o progressmeter.o dns.o entropy.o gss-genr.o umac.o umac128.o \
-	ssh-pkcs11.o smult_curve25519_ref.o \
+	ssh-pkcs11.o ssh-pkcs11-uri.o smult_curve25519_ref.o \
 	poly1305.o chacha.o cipher-chachapoly.o cipher-chachapoly-libcrypto.o \
 	ssh-ed25519.o digest-openssl.o digest-libc.o \
 	hmac.o sc25519.o ge25519.o fe25519.o ed25519.o verify.o hash.o \
@@ -108,7 +110,7 @@ LIBSSH_OBJS=${LIBOPENSSH_OBJS} \
 	kexgexc.o kexgexs.o \
 	sntrup4591761.o kexsntrup4591761x25519.o kexgen.o \
 	sftp-realpath.o platform-pledge.o platform-tracing.o platform-misc.o \
-	sshbuf-io.o
+	sshbuf-io.o auditstub.o
 
 SKOBJS=	ssh-sk-client.o
 
@@ -230,6 +232,9 @@ ssh-pkcs11-helper$(EXEEXT): $(LIBCOMPAT) libssh.a $(P11HELPER_OBJS)
 ssh-sk-helper$(EXEEXT): $(LIBCOMPAT) libssh.a $(SKHELPER_OBJS)
 	$(LD) -o $@ $(SKHELPER_OBJS) $(LDFLAGS) -lssh -lopenbsd-compat -lssh -lopenbsd-compat $(LIBS) $(LIBFIDO2)
 
+ssh-keycat$(EXEEXT): $(LIBCOMPAT) $(SSHDOBJS) libssh.a ssh-keycat.o uidswap.o
+	$(LD) -o $@ ssh-keycat.o uidswap.o $(LDFLAGS) -lssh -lopenbsd-compat $(KEYCATLIBS) $(LIBS)
+
 ssh-keyscan$(EXEEXT): $(LIBCOMPAT) libssh.a $(SSHKEYSCAN_OBJS)
 	$(LD) -o $@ $(SSHKEYSCAN_OBJS) $(LDFLAGS) -lssh -lopenbsd-compat -lssh $(LIBS)
 
@@ -289,6 +294,8 @@ clean:	regressclean
 	rm -f regress/unittests/match/test_match$(EXEEXT)
 	rm -f regress/unittests/utf8/*.o
 	rm -f regress/unittests/utf8/test_utf8$(EXEEXT)
+	rm -f regress/unittests/pkcs11/*.o
+	rm -f regress/unittests/pkcs11/test_pkcs11$(EXEEXT)
 	rm -f regress/misc/kexfuzz/*.o
 	rm -f regress/misc/kexfuzz/kexfuzz$(EXEEXT)
 	rm -f regress/misc/sk-dummy/*.o
@@ -324,6 +331,8 @@ distclean:	regressclean
 	rm -f regress/unittests/match/test_match
 	rm -f regress/unittests/utf8/*.o
 	rm -f regress/unittests/utf8/test_utf8
+	rm -f regress/unittests/pkcs11/*.o
+	rm -f regress/unittests/pkcs11/test_pkcs11
 	rm -f regress/misc/kexfuzz/*.o
 	rm -f regress/misc/kexfuzz/kexfuzz$(EXEEXT)
 	(cd openbsd-compat && $(MAKE) distclean)
@@ -395,6 +404,7 @@ install-files:
 	$(INSTALL) -m 4711 $(STRIP_OPT) ssh-keysign$(EXEEXT) $(DESTDIR)$(SSH_KEYSIGN)$(EXEEXT)
 	$(INSTALL) -m 0755 $(STRIP_OPT) ssh-pkcs11-helper$(EXEEXT) $(DESTDIR)$(SSH_PKCS11_HELPER)$(EXEEXT)
 	$(INSTALL) -m 0755 $(STRIP_OPT) ssh-sk-helper$(EXEEXT) $(DESTDIR)$(SSH_SK_HELPER)$(EXEEXT)
+	$(INSTALL) -m 0755 $(STRIP_OPT) ssh-keycat$(EXEEXT) $(DESTDIR)$(libexecdir)/ssh-keycat$(EXEEXT)
 	$(INSTALL) -m 0755 $(STRIP_OPT) sftp$(EXEEXT) $(DESTDIR)$(bindir)/sftp$(EXEEXT)
 	$(INSTALL) -m 0755 $(STRIP_OPT) sftp-server$(EXEEXT) $(DESTDIR)$(SFTP_SERVER)$(EXEEXT)
 	$(INSTALL) -m 644 ssh.1.out $(DESTDIR)$(mandir)/$(mansubdir)1/ssh.1
@@ -497,6 +507,7 @@ regress-prep:
 	$(MKDIR_P) `pwd`/regress/unittests/kex
 	$(MKDIR_P) `pwd`/regress/unittests/match
 	$(MKDIR_P) `pwd`/regress/unittests/utf8
+	$(MKDIR_P) `pwd`/regress/unittests/pkcs11
 	$(MKDIR_P) `pwd`/regress/misc/kexfuzz
 	$(MKDIR_P) `pwd`/regress/misc/sk-dummy
 	[ -f `pwd`/regress/Makefile ] || \
@@ -635,6 +646,16 @@ regress/unittests/utf8/test_utf8$(EXEEXT): \
 	    regress/unittests/test_helper/libtest_helper.a \
 	    -lssh -lopenbsd-compat -lssh -lopenbsd-compat $(LIBS)
 
+UNITTESTS_TEST_PKCS11_OBJS=\
+	regress/unittests/pkcs11/tests.o
+
+regress/unittests/pkcs11/test_pkcs11$(EXEEXT): \
+    ${UNITTESTS_TEST_PKCS11_OBJS} \
+    regress/unittests/test_helper/libtest_helper.a libssh.a
+	$(LD) -o $@ $(LDFLAGS) $(UNITTESTS_TEST_PKCS11_OBJS) \
+	    regress/unittests/test_helper/libtest_helper.a \
+	    -lssh -lopenbsd-compat -lssh -lopenbsd-compat $(LIBS)
+
 MISC_KEX_FUZZ_OBJS=\
 	regress/misc/kexfuzz/kexfuzz.o \
 	$(SKOBJS)
@@ -676,6 +697,7 @@ regress-unit-binaries: regress-prep $(REGRESSLIBS) \
 	regress/unittests/kex/test_kex$(EXEEXT) \
 	regress/unittests/match/test_match$(EXEEXT) \
 	regress/unittests/utf8/test_utf8$(EXEEXT) \
+	regress/unittests/pkcs11/test_pkcs11$(EXEEXT) \
 	regress/misc/kexfuzz/kexfuzz$(EXEEXT)
 
 tests:	file-tests t-exec interop-tests unit

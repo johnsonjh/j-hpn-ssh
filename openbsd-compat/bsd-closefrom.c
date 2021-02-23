@@ -137,7 +137,33 @@ closefrom(int lowfd)
 	    fd = strtol(dent->d_name, &endp, 10);
 	    if (dent->d_name != endp && *endp == '\0' &&
 		fd >= 0 && fd < INT_MAX && fd >= lowfd && fd != dirfd(dirp))
+#ifdef __s390__
+		{
+		    /*
+		     * the filedescriptors used to communicate with
+		     * the device drivers to provide hardware support
+		     * should survive. HF <freude@de.ibm.com>
+		     */
+		    char fpath[PATH_MAX], lpath[PATH_MAX];
+		    len = snprintf(fpath, sizeof(fpath), "%s/%s",
+				   fdpath, dent->d_name);
+		    if (len > 0 && (size_t)len <= sizeof(fpath)) {
+			len = readlink(fpath, lpath, sizeof(lpath));
+			if (len > 0) {
+			    lpath[len] = 0;
+			    if (strstr(lpath, "dev/z90crypt")
+				|| strstr(lpath, "dev/zcrypt")
+				|| strstr(lpath, "dev/prandom")
+				|| strstr(lpath, "dev/shm/icastats"))
+				fd = -1;
+			}
+		    }
+		    if (fd >= 0)
+			(void) close((int) fd);
+		}
+#else
 		(void) close((int) fd);
+#endif
 	}
 	(void) closedir(dirp);
 	return;

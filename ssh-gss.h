@@ -49,6 +49,10 @@
 #  endif /* !HAVE_DECL_GSS_C_NT_... */
 
 # endif /* !HEIMDAL */
+
+/* .k5users support */
+extern char **k5users_allowed_cmds;
+
 #endif /* KRB5 */
 
 /* draft-ietf-secsh-gsskeyex-06 */

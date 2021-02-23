@@ -31,6 +31,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -101,7 +102,19 @@ sshkey_perm_ok(int fd, const char *filename)
 #ifdef HAVE_CYGWIN
 	if (check_ntsec(filename))
 #endif
+
 	if ((st.st_uid == getuid()) && (st.st_mode & 077) != 0) {
+		if (st.st_mode & 040) {
+			struct group *gr;
+
+			if ((gr = getgrnam("ssh_keys")) && (st.st_gid == gr->gr_gid)) {
+				/* The only additional bit is read
+				 * for ssh_keys group, which is fine */
+				if ((st.st_mode & 077) == 040 ) {
+					return 0;
+				}
+			}
+		}
 		error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 		error("@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @");
 		error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");

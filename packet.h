@@ -235,4 +235,5 @@ const u_char	*sshpkt_ptr(struct ssh *, size_t *lenp);
 # undef EC_POINT
 #endif
 
+void	 packet_destroy_all(struct ssh *, int, int);
 #endif				/* PACKET_H */

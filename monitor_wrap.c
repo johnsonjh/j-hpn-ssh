@@ -385,6 +385,27 @@ mm_inform_authserv(char *service, char *style)
 	sshbuf_free(m);
 }
 
+/* Inform the privileged process about role */
+
+#ifdef WITH_SELINUX
+void
+mm_inform_authrole(char *role)
+{
+	int r;
+	struct sshbuf *m;
+
+	debug3("%s entering", __func__);
+
+	if ((m = sshbuf_new()) == NULL)
+		fatal("%s: sshbuf_new failed", __func__);
+	if ((r = sshbuf_put_cstring(m, role ? role : "")) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_AUTHROLE, m);
+
+	sshbuf_free(m);
+}
+#endif
+
 /* Do the password authentication */
 int
 mm_auth_password(struct ssh *ssh, char *password)
@@ -492,7 +513,7 @@ mm_key_allowed(enum mm_keytype type, const char *user, const char *host,
  */
 
 int
-mm_sshkey_verify(const struct sshkey *key, const u_char *sig, size_t siglen,
+mm_sshkey_verify(enum mm_keytype type, const struct sshkey *key, const u_char *sig, size_t siglen,
     const u_char *data, size_t datalen, const char *sigalg, u_int compat,
     struct sshkey_sig_details **sig_detailsp)
 {
@@ -508,7 +529,8 @@ mm_sshkey_verify(const struct sshkey *key, const u_char *sig, size_t siglen,
 		*sig_detailsp = NULL;
 	if ((m = sshbuf_new()) == NULL)
 		fatal("%s: sshbuf_new failed", __func__);
-	if ((r = sshkey_puts(key, m)) != 0 ||
+	if ((r = sshbuf_put_u32(m, type)) != 0 ||
+	    (r = sshkey_puts(key, m)) != 0 ||
 	    (r = sshbuf_put_string(m, sig, siglen)) != 0 ||
 	    (r = sshbuf_put_string(m, data, datalen)) != 0 ||
 	    (r = sshbuf_put_cstring(m, sigalg == NULL ? "" : sigalg)) != 0)
@@ -541,6 +563,22 @@ mm_sshkey_verify(const struct sshkey *key, const u_char *sig, size_t siglen,
 	return 0;
 }
 
+int
+mm_hostbased_key_verify(struct ssh *ssh, const struct sshkey *key, const u_char *sig, size_t siglen,
+    const u_char *data, size_t datalen, const char *pkalg, u_int compat,
+    struct sshkey_sig_details **detailsp)
+{
+	return mm_sshkey_verify(MM_HOSTKEY, key, sig, siglen, data, datalen, pkalg, compat, detailsp);
+}
+
+int
+mm_user_key_verify(struct ssh *ssh, const struct sshkey *key, const u_char *sig, size_t siglen,
+    const u_char *data, size_t datalen, const char *pkalg, u_int compat,
+    struct sshkey_sig_details **detailsp)
+{
+	return mm_sshkey_verify(MM_USERKEY, key, sig, siglen, data, datalen, pkalg, compat, detailsp);
+}
+
 void
 mm_send_keystate(struct ssh *ssh, struct monitor *monitor)
 {
@@ -568,10 +606,10 @@ mm_pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, size_t namebuflen)
 	if ((tmp1 = dup(pmonitor->m_recvfd)) == -1 ||
 	    (tmp2 = dup(pmonitor->m_recvfd)) == -1) {
 		error("%s: cannot allocate fds for pty", __func__);
-		if (tmp1 > 0)
+		if (tmp1 >= 0)
 			close(tmp1);
-		if (tmp2 > 0)
-			close(tmp2);
+		/*DEAD CODE if (tmp2 >= 0)
+			close(tmp2);*/
 		return 0;
 	}
 	close(tmp1);
@@ -894,11 +932,12 @@ mm_audit_event(struct ssh *ssh, ssh_audit_event_t event)
 	sshbuf_free(m);
 }
 
-void
-mm_audit_run_command(const char *command)
+int
+mm_audit_run_command(struct ssh *ssh, const char *command)
 {
 	struct sshbuf *m;
 	int r;
+	int handle;
 
 	debug3("%s entering command %s", __func__, command);
 
@@ -908,6 +947,30 @@ mm_audit_run_command(const char *command)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 
 	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_AUDIT_COMMAND, m);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_AUDIT_COMMAND, m);
+
+	if ((r = sshbuf_get_u32(m, &handle)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	sshbuf_free(m);
+
+	return (handle);
+}
+
+void
+mm_audit_end_command(struct ssh *ssh, int handle, const char *command)
+{
+	int r;
+	struct sshbuf *m;
+
+	debug3("%s entering command %s", __func__, command);
+
+ 	if ((m = sshbuf_new()) == NULL)
+ 		fatal("%s: sshbuf_new failed", __func__);
+	if ((r = sshbuf_put_u32(m, handle)) != 0 ||
+	    (r = sshbuf_put_cstring(m, command)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_AUDIT_END_COMMAND, m);
 	sshbuf_free(m);
 }
 #endif /* SSH_AUDIT_EVENTS */
@@ -1013,3 +1076,83 @@ mm_ssh_gssapi_userok(char *user)
 	return (authenticated);
 }
 #endif /* GSSAPI */
+#ifdef SSH_AUDIT_EVENTS
+void
+mm_audit_unsupported_body(struct ssh *ssh, int what)
+{
+	int r;
+	struct sshbuf *m;
+
+ 	if ((m = sshbuf_new()) == NULL)
+ 		fatal("%s: sshbuf_new failed", __func__);
+	if ((r = sshbuf_put_u32(m, what)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_AUDIT_UNSUPPORTED, m);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_AUDIT_UNSUPPORTED,
+				  m);
+
+	sshbuf_free(m);
+}
+
+void
+mm_audit_kex_body(struct ssh *ssh, int ctos, char *cipher, char *mac, char *compress, char *fps, pid_t pid,
+		  uid_t uid)
+{
+	int r;
+	struct sshbuf *m;
+
+ 	if ((m = sshbuf_new()) == NULL)
+ 		fatal("%s: sshbuf_new failed", __func__);
+	if ((r = sshbuf_put_u32(m, ctos)) != 0 ||
+	    (r = sshbuf_put_cstring(m, cipher)) != 0 ||
+	    (r = sshbuf_put_cstring(m, (mac ? mac : "<implicit>"))) != 0 ||
+	    (r = sshbuf_put_cstring(m, compress)) != 0 ||
+	    (r = sshbuf_put_cstring(m, fps)) != 0 ||
+	    (r = sshbuf_put_u64(m, pid)) != 0 ||
+	    (r = sshbuf_put_u64(m, uid)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_AUDIT_KEX, m);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_AUDIT_KEX,
+				  m);
+
+	sshbuf_free(m);
+}
+
+void
+mm_audit_session_key_free_body(struct ssh *ssh, int ctos, pid_t pid, uid_t uid)
+{
+	int r;
+	struct sshbuf *m;
+
+ 	if ((m = sshbuf_new()) == NULL)
+ 		fatal("%s: sshbuf_new failed", __func__);
+	if ((r = sshbuf_put_u32(m, ctos)) != 0 ||
+	    (r = sshbuf_put_u64(m, pid)) != 0 ||
+	    (r = sshbuf_put_u64(m, uid)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_AUDIT_SESSION_KEY_FREE, m);
+	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_AUDIT_SESSION_KEY_FREE,
+				  m);
+	sshbuf_free(m);
+}
+
+void
+mm_audit_destroy_sensitive_data(struct ssh *ssh, const char *fp, pid_t pid, uid_t uid)
+{
+	int r;
+	struct sshbuf *m;
+
+ 	if ((m = sshbuf_new()) == NULL)
+ 		fatal("%s: sshbuf_new failed", __func__);
+	if ((r = sshbuf_put_cstring(m, fp)) != 0 ||
+	    (r = sshbuf_put_u64(m, pid)) != 0 ||
+	    (r = sshbuf_put_u64(m, uid)) != 0)
+		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_AUDIT_SERVER_KEY_FREE, m);
+	sshbuf_free(m);
+}
+#endif /* SSH_AUDIT_EVENTS */

@@ -76,7 +76,7 @@
 #include "session.h"
 #include "dispatch.h"
 #include "auth-options.h"
-#include "serverloop.h"
+//#include "serverloop.h"
 #include "ssherr.h"
 
 extern ServerOptions options;
@@ -141,13 +141,13 @@ notify_setup(void)
 static void
 notify_parent(void)
 {
-	if (notify_pipe[1] != -1)
+	if (notify_pipe[1] >= 0)
 		(void)write(notify_pipe[1], "", 1);
 }
 static void
 notify_prepare(fd_set *readset)
 {
-	if (notify_pipe[0] != -1)
+	if (notify_pipe[0] >= 0)
 		FD_SET(notify_pipe[0], readset);
 }
 static void
@@ -155,8 +155,8 @@ notify_done(fd_set *readset)
 {
 	char c;
 
-	if (notify_pipe[0] != -1 && FD_ISSET(notify_pipe[0], readset))
-		while (read(notify_pipe[0], &c, 1) != -1)
+	if (notify_pipe[0] >= 0 && FD_ISSET(notify_pipe[0], readset))
+		while (read(notify_pipe[0], &c, 1) >= 0)
 			debug2("%s: reading", __func__);
 }
 
@@ -610,7 +610,7 @@ server_request_tun(struct ssh *ssh)
 		debug("%s: invalid tun", __func__);
 		goto done;
 	}
-	if (auth_opts->force_tun_device != -1) {
+	if (auth_opts->force_tun_device >= 0) {
 		if (tun != SSH_TUNID_ANY &&
 		    auth_opts->force_tun_device != (int)tun)
 			goto done;

@@ -194,9 +194,16 @@ userauth_pubkey(struct ssh *ssh)
 			goto done;
 		}
 		/* reconstruct packet */
-		xasprintf(&userstyle, "%s%s%s", authctxt->user,
+		xasprintf(&userstyle, "%s%s%s%s%s", authctxt->user,
 		    authctxt->style ? ":" : "",
-		    authctxt->style ? authctxt->style : "");
+		    authctxt->style ? authctxt->style : "",
+#ifdef WITH_SELINUX
+		    authctxt->role ? "/" : "",
+		    authctxt->role ? authctxt->role : ""
+#else
+		    "", ""
+#endif
+		    );
 		if ((r = sshbuf_put_u8(b, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
 		    (r = sshbuf_put_cstring(b, userstyle)) != 0 ||
 		    (r = sshbuf_put_cstring(b, authctxt->service)) != 0 ||
@@ -212,7 +219,7 @@ userauth_pubkey(struct ssh *ssh)
 		/* test for correct signature */
 		authenticated = 0;
 		if (PRIVSEP(user_key_allowed(ssh, pw, key, 1, &authopts)) &&
-		    PRIVSEP(sshkey_verify(key, sig, slen,
+		    PRIVSEP(user_key_verify(ssh, key, sig, slen,
 		    sshbuf_ptr(b), sshbuf_len(b),
 		    (ssh->compat & SSH_BUG_SIGTYPE) == 0 ? pkalg : NULL,
 		    ssh->compat, &sig_details)) == 0) {
@@ -306,6 +313,20 @@ done:
 	free(sig);
 	sshkey_sig_details_free(sig_details);
 	return authenticated;
+}
+
+int
+user_key_verify(struct ssh *ssh, const struct sshkey *key, const u_char *sig,
+    size_t slen, const u_char *data, size_t datalen, const char *pkalg, u_int compat,
+    struct sshkey_sig_details **detailsp)
+{
+	int rv;
+
+	rv = sshkey_verify(key, sig, slen, data, datalen, pkalg, compat, detailsp);
+#ifdef SSH_AUDIT_EVENTS
+	audit_key(ssh, 1, &rv, key);
+#endif
+	return rv;
 }
 
 static int

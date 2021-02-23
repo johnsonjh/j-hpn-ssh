@@ -1,18 +1,21 @@
-# **HPN-SSH** - **High Performance SSH**
+# **J-HPN-SSH** - **High Performance SSH**
+
 
 ## What is **HPN-SSH**?
 
 **HPN-SSH** is a series of modifications to *OpenSSH*, the predominant implementation of the *SSH* protocol. It was originally developed to address performance issues when using *SSH* on high speed long distance networks (also known as *Long Fat Networks* or *LFN's*). By taking advantage of automatically optimized receive buffers, **HPN-SSH** can improve performance dramatically on these paths. Other advances include optionally disabling encryption after authentication to transport non-sensitive bulk data, modifying the AES-CTR cipher to use multiple CPU cores, more detailed connection logging, and peak throughput value calculations shown in the *SCP* progress bar.
 
 
-## **HPN-SSH** Fork Information
+## **J-HPN-SSH** Fork Information
 
-This is an experimental development fork. It currently incorporates changes from IBM and Red Hat's SSH distribtions, as well as adjustments to the congestion control and buffering algorithms.
+**J-HPN-SSH** is an experimental development fork of **HPN-SSH**. It is not associated in any way with the upstream project. It currently incorporates changes from IBM and Red Hat's SSH distribtions, as well as adjustments to the congestion control and buffering algorithms.
 
 
-## Fork Future Plans
+## **J-HPN-SSH** Future Plans
 
 Current plans include the tuning and assembly-level optimization of existing code, as well as the addition of new cryptographic functionality, including post-quantum algorithms, enhanced hashing and key exchange mechanisms, and new key systems, such as SHAKE, SHA-3, BLAKE-3, Schnorrkel/Ristretto-Sr25519, Ristretto255/Curve25519-Dalek, X448-Goldilocks, E-5321, Kyber, SIDH, Dilithium, SPHINCS-SHAKE256, SPHINCS+, etc.
+
+Experiments that are successful will be made available to the upstream **HPN-SSH** project.
 
 
 ## Security Information
@@ -22,7 +25,7 @@ This software may contain bugs, including critical security vulnerabilties, desp
 
 ## Warranty
 
-BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIESPROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHERPROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+**BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIESPROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHERPROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.**
         
 
 ## Licensing
@@ -47,12 +50,12 @@ With most high-bandwidth connections, there is a performance gap between what *S
 **HPN-SSH** offers _significantly_ enhanced *SCP* throughput performance. Increasing the size of the *SSH* channel receive buffers has been shown to improve *SCP* throughput by as much as **1,000%**.
 
 
-## Possible bug with `buffer_append_space` in **HPN-SSH**
+## Possible bug with `buffer_append_space`
 
 If you are experiencing disconnects due to a failure in `buffer_append_space`, you should try using `-oHPNBufferSize=16384` to restrict the growth of this buffer.
 
 
-## Upstream **HPN-SSH* Future Plans
+## Upstream **HPN-SSH** Future Plans
 
 - Automatic resumption of failed transfers
 - AES-NI hardware acceleration for the AES-CTR cipher
@@ -62,7 +65,7 @@ If you are experiencing disconnects due to a failure in `buffer_append_space`, y
 - Enhanced distribution packaging
 
 
-## Original Authors
+## **HPN-SSH** Original Authors
 
 - Chris Rapier
 - Michael Stevens
@@ -70,6 +73,7 @@ If you are experiencing disconnects due to a failure in `buffer_append_space`, y
 - Mike Tasota
 
 
-## Upstream Homepage
+## Upstream **HPN-SSH** Homepage
 
 - https://www.psc.edu/research/networking/hpn-ssh/
+

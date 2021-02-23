@@ -26,6 +26,7 @@
 # define _SSH_AUDIT_H
 
 #include "loginrec.h"
+#include "sshkey.h"
 
 struct ssh;
 
@@ -45,13 +46,32 @@ enum ssh_audit_event_type {
 	SSH_CONNECTION_ABANDON,	/* closed without completing auth */
 	SSH_AUDIT_UNKNOWN
 };
+
+enum ssh_audit_kex {
+	SSH_AUDIT_UNSUPPORTED_CIPHER,
+	SSH_AUDIT_UNSUPPORTED_MAC,
+	SSH_AUDIT_UNSUPPORTED_COMPRESSION
+};
 typedef enum ssh_audit_event_type ssh_audit_event_t;
+
+int	listening_for_clients(void);
 
 void	audit_connection_from(const char *, int);
 void	audit_event(struct ssh *, ssh_audit_event_t);
+void	audit_count_session_open(void);
 void	audit_session_open(struct logininfo *);
 void	audit_session_close(struct logininfo *);
-void	audit_run_command(const char *);
+int	audit_run_command(struct ssh *, const char *);
+void 	audit_end_command(struct ssh *, int, const char *);
 ssh_audit_event_t audit_classify_auth(const char *);
+int	audit_keyusage(struct ssh *, int, char *, int);
+void	audit_key(struct ssh *, int, int *, const struct sshkey *);
+void	audit_unsupported(struct ssh *, int);
+void	audit_kex(struct ssh *, int, char *, char *, char *, char *);
+void	audit_unsupported_body(struct ssh *, int);
+void	audit_kex_body(struct ssh *, int, char *, char *, char *, char *, pid_t, uid_t);
+void	audit_session_key_free(struct ssh *, int ctos);
+void	audit_session_key_free_body(struct ssh *, int ctos, pid_t, uid_t);
+void	audit_destroy_sensitive_data(struct ssh *, const char *, pid_t, uid_t);
 
 #endif /* _SSH_AUDIT_H */
