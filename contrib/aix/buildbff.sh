@@ -22,29 +22,29 @@ umask 022
 
 startdir=$(pwd)
 
-perl -v >/dev/null || (echo perl required; exit 1)
+perl -v > /dev/null || (
+	echo                     perl required
+	exit                                         1
+)
 
 # Path to inventory.sh: same place as buildbff.sh
-if  echo $0 | egrep '^/'
-then
-	inventory=$(dirname $0)/inventory.sh		# absolute path
+if  echo $0 | egrep '^/'; then
+	inventory=$(dirname $0)/inventory.sh # absolute path
 else
-	inventory=$(pwd)/$(dirname $0)/inventory.sh	# relative path
+	inventory=$(pwd)/$(dirname $0)/inventory.sh # relative path
 fi
 
 #
 # We still support running from contrib/aix, but this is deprecated
 #
-if pwd | egrep 'contrib/aix$'
-then
+if pwd | egrep 'contrib/aix$'; then
 	echo "Changing directory to $(pwd)/../.."
 	echo "Please run buildbff.sh from your build directory in future."
 	cd ../..
 	contribaix=1
 fi
 
-if [ ! -f Makefile ]
-then
+if [ ! -f Makefile ]; then
 	echo "Makefile not found (did you run configure?)"
 	exit 1
 fi
@@ -62,8 +62,7 @@ PKGDIR=package
 #
 # Collect local configuration settings to override defaults
 #
-if [ -s ./config.local ]
-then
+if [ -s ./config.local ]; then
 	echo Reading local settings from config.local
 	. ./config.local
 fi
@@ -73,8 +72,7 @@ fi
 #	the eval also expands variables like sysconfdir=${prefix}/etc
 #	provided they are eval'ed in the correct order
 #
-for confvar in prefix exec_prefix bindir sbindir libexecdir datadir mandir mansubdir sysconfdir piddir srcdir
-do
+for confvar in prefix exec_prefix bindir sbindir libexecdir datadir mandir mansubdir sysconfdir piddir srcdir; do
 	eval $confvar=$(grep "^$confvar=" $objdir/Makefile | cut -d = -f 2)
 done
 
@@ -82,18 +80,15 @@ done
 # Collect values of privsep user and privsep path
 #	currently only found in config.h
 #
-for confvar in SSH_PRIVSEP_USER PRIVSEP_PATH
-do
+for confvar in SSH_PRIVSEP_USER PRIVSEP_PATH; do
 	eval $confvar=$(awk '/#define[ \t]'$confvar'/{print $3}' $objdir/config.h)
 done
 
 # Set privsep defaults if not defined
-if [ -z "$SSH_PRIVSEP_USER" ]
-then
+if [ -z "$SSH_PRIVSEP_USER" ]; then
 	SSH_PRIVSEP_USER=sshd
 fi
-if [ -z "$PRIVSEP_PATH" ]
-then
+if [ -z "$PRIVSEP_PATH" ]; then
 	PRIVSEP_PATH=/var/empty
 fi
 
@@ -107,8 +102,7 @@ echo "Faking root install..."
 cd $objdir
 make install-nokeys DESTDIR=$FAKE_ROOT
 
-if [ $? -gt 0 ]
-then
+if [ $? -gt 0 ]; then
 	echo "Fake root install failed, stopping."
 	exit 1
 fi
@@ -137,21 +131,17 @@ echo "Building BFF for ${PKGNAME} ${VERSION} (package version ${BFFVERSION})"
 #
 # Set ssh and sshd parameters as per config.local
 #
-if [ "${PERMIT_ROOT_LOGIN}" = no ]
-then
+if [ "${PERMIT_ROOT_LOGIN}" = no ]; then
 	perl -p -i -e "s/#PermitRootLogin yes/PermitRootLogin no/" \
 		$FAKE_ROOT/${sysconfdir}/sshd_config
 fi
-if [ "${X11_FORWARDING}" = yes ]
-then
+if [ "${X11_FORWARDING}" = yes ]; then
 	perl -p -i -e "s/#X11Forwarding no/X11Forwarding yes/" \
 		$FAKE_ROOT/${sysconfdir}/sshd_config
 fi
 
-
 # Rename config files; postinstall script will copy them if necessary
-for cfgfile in ssh_config sshd_config
-do
+for cfgfile in ssh_config sshd_config; do
 	mv $FAKE_ROOT/$sysconfdir/$cfgfile $FAKE_ROOT/$sysconfdir/$cfgfile.default
 done
 
@@ -162,10 +152,10 @@ done
 #
 cd $FAKE_ROOT
 echo Generating LPP control files
-find . ! -name . -print >../openssh.al
-$inventory >../openssh.inventory
+find . ! -name . -print > ../openssh.al
+$inventory > ../openssh.inventory
 
-cat <<EOD >../openssh.copyright
+cat << EOD > ../openssh.copyright
 This software is distributed under a BSD-style license.
 For the full text of the license, see /usr/lpp/openssh/LICENCE
 EOD
@@ -177,15 +167,14 @@ EOD
 #
 files=$(find . -type f -print)
 dirs=$(for file in $files; do dirname $file; done | sort -u)
-for dir in $dirs
-do
+for dir in $dirs; do
 	du $dir
 done > ../openssh.size
 
 #
 # Create postinstall script
 #
-cat <<EOF >>../openssh.post_i
+cat << EOF >> ../openssh.post_i
 #!/bin/sh
 
 echo Creating configs from defaults if necessary.
@@ -288,8 +277,7 @@ EOF
 echo Creating liblpp.a
 (
 	cd ..
-	for i in openssh.al openssh.copyright openssh.inventory openssh.post_i openssh.size LICENCE README*
-	do
+	for i in openssh.al openssh.copyright openssh.inventory openssh.post_i openssh.size LICENCE README*; do
 		ar -r liblpp.a $i
 		rm $i
 	done
@@ -315,26 +303,24 @@ echo Creating liblpp.a
 # }
 
 echo Creating lpp_name
-cat <<EOF >../lpp_name
+cat << EOF > ../lpp_name
 4 R I $PKGNAME {
 $PKGNAME $BFFVERSION 1 N U en_US OpenSSH $VERSION Portable for AIX
 [
 %
 EOF
 
-for i in $bindir $sysconfdir $libexecdir $mandir/${mansubdir}1 $mandir/${mansubdir}8 $sbindir $datadir /usr/lpp/openssh
-do
+for i in $bindir $sysconfdir $libexecdir $mandir/${mansubdir}1 $mandir/${mansubdir}8 $sbindir $datadir /usr/lpp/openssh; do
 	# get size in 512 byte blocks
-	if [ -d $FAKE_ROOT/$i ]
-	then
+	if [ -d $FAKE_ROOT/$i ]; then
 		size=$(du $FAKE_ROOT/$i | awk '{print $1}')
-		echo "$i $size" >>../lpp_name
+		echo "$i $size" >> ../lpp_name
 	fi
 done
 
-echo '%' >>../lpp_name
-echo ']' >>../lpp_name
-echo '}' >>../lpp_name
+echo '%' >> ../lpp_name
+echo ']' >> ../lpp_name
+echo '}' >> ../lpp_name
 
 #
 # Move pieces into place
@@ -363,4 +349,3 @@ cd $startdir
 rm -rf $objdir/$PKGDIR
 
 echo $0: done.
-

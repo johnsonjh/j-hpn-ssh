@@ -7,9 +7,9 @@ set -ex
 
 cd testdata
 
-if [ -f ../../../misc/sk-dummy/sk-dummy.so ] ; then
+if [ -f ../../../misc/sk-dummy/sk-dummy.so ]; then
 	SK_DUMMY=../../../misc/sk-dummy/sk-dummy.so
-elif [ -f ../../../misc/sk-dummy/obj/sk-dummy.so ] ; then
+elif [ -f ../../../misc/sk-dummy/obj/sk-dummy.so ]; then
 	SK_DUMMY=../../../misc/sk-dummy/obj/sk-dummy.so
 else
 	echo "Can't find sk-dummy.so" 1>&2
@@ -28,9 +28,9 @@ ssh-keygen -t dsa -C "DSA test" -N "" -f dsa -m PEM
 ssh-keygen -t ecdsa -C "ECDSA test" -N "" -f ecdsa -m PEM
 ssh-keygen -t ed25519 -C "ED25519 test key" -N "" -f ed25519
 ssh-keygen -w "$SK_DUMMY" -t ecdsa-sk -C "ECDSA-SK test key" \
-    -N "" -f ecdsa_sk
+	-N  "" -f ecdsa_sk
 ssh-keygen -w "$SK_DUMMY" -t ed25519-sk -C "ED25519-SK test key" \
-    -N "" -f ed25519_sk
+	-N  "" -f ed25519_sk
 
 ssh-keygen -Y sign -f rsa -n $NAMESPACE - < signed-data > rsa.sig
 ssh-keygen -Y sign -f dsa -n $NAMESPACE - < signed-data > dsa.sig

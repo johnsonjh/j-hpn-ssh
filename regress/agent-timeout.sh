@@ -6,7 +6,7 @@ tid="agent timeout test"
 SSHAGENT_TIMEOUT=10
 
 trace "start agent"
-eval `${SSHAGENT} -s ${EXTRA_AGENT_ARGS}` > /dev/null
+eval $(${SSHAGENT} -s ${EXTRA_AGENT_ARGS}) > /dev/null
 r=$?
 if [ $r -ne 0 ]; then
 	fail "could not start ssh-agent: exit code $r"
@@ -18,9 +18,9 @@ else
 		if [ $? -ne 0 ]; then
 			fail "ssh-add did succeed exit code 0"
 		fi
-		keys=$((${keys} + 1))
+		keys=$((keys + 1))
 	done
-	n=`${SSHADD} -l 2> /dev/null | wc -l`
+	n=$(${SSHADD} -l 2> /dev/null | wc -l)
 	trace "agent has $n keys"
 	if [ $n -ne $keys ]; then
 		fail "ssh-add -l did not return $keys keys: $n"
@@ -28,7 +28,7 @@ else
 	trace "sleeping 2*${SSHAGENT_TIMEOUT} seconds"
 	sleep ${SSHAGENT_TIMEOUT}
 	sleep ${SSHAGENT_TIMEOUT}
-	${SSHADD} -l 2> /dev/null | grep 'The agent has no identities.' >/dev/null
+	${SSHADD} -l 2> /dev/null | grep 'The agent has no identities.' > /dev/null
 	if [ $? -ne 0 ]; then
 		fail "ssh-add -l still returns keys after timeout"
 	fi

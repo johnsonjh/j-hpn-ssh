@@ -7,7 +7,7 @@ echo 'PermitLocalCommand yes' >> $OBJ/ssh_proxy
 echo 'LocalCommand echo foo' >> $OBJ/ssh_proxy
 
 verbose "test $tid: proto $p localcommand"
-a=`${SSH} -F $OBJ/ssh_proxy somehost true`
-if [ "$a" != "foo" ] ; then
+a=$(${SSH} -F $OBJ/ssh_proxy somehost true)
+if [ "$a" != "foo" ]; then
 	fail "$tid proto $p"
 fi

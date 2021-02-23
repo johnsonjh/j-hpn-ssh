@@ -14,7 +14,7 @@ for s in 0 1 4 5 44; do
 
 	# same with early close of stdout/err
 	${SSH} -F $OBJ/ssh_proxy -n otherhost exec \
-	    sh -c \'"sleep 2; exec > /dev/null 2>&1; sleep 3; exit $s"\'
+		sh  -c \'"sleep 2; exec > /dev/null 2>&1; sleep 3; exit $s"\'
 	r=$?
 	if [ $r -ne $s ]; then
 		fail "exit code (with sleep) mismatch for: $r != $s"

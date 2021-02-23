@@ -47,11 +47,11 @@ for i in $FILES; do
 	echo "/* from $i */"
 	b=$(basename $i .c)
 	grep \
-	   -v '#include' $i | \
-	   grep -v "extern crypto_int32 small_random32" |
-	   sed -e "s/crypto_kem_/crypto_kem_sntrup4591761_/g" \
-		-e "s/smaller_mask/smaller_mask_${b}/g" \
-		-e "s/^extern void /static void /" \
-		-e "s/^void /static void /"
+		-v '#include' $i |
+		grep -v "extern crypto_int32 small_random32" |
+		sed -e "s/crypto_kem_/crypto_kem_sntrup4591761_/g" \
+			-e "s/smaller_mask/smaller_mask_${b}/g" \
+			-e "s/^extern void /static void /" \
+			-e "s/^void /static void /"
 	echo
 done

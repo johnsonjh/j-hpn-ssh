@@ -7,7 +7,7 @@ cp $OBJ/sshd_proxy $OBJ/sshd_proxy_bak
 
 cp /dev/null $OBJ/authorized_keys_$USER
 for t in ${SSH_KEYTYPES}; do
-	printf 'command="true" ' >>$OBJ/authorized_keys_$USER
+	printf 'command="true" ' >> $OBJ/authorized_keys_$USER
 	cat $OBJ/$t.pub >> $OBJ/authorized_keys_$USER
 done
 

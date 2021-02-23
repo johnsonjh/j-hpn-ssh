@@ -8,7 +8,8 @@ cd testdata
 rm -f rsa* dsa* ecdsa* ed25519*
 rm -f known_hosts*
 
-gen_all() {
+gen_all()
+{
 	_n=$1
 	_ecdsa_bits=256
 	test "x$_n" = "x1" && _ecdsa_bits=384
@@ -21,7 +22,8 @@ gen_all() {
 	rm -f rsa_$_n dsa_$_n ecdsa_$_n ed25519_$_n
 }
 
-hentries() {
+hentries()
+{
 	_preamble=$1
 	_kspec=$2
 	for k in $(find . -name "${_kspec}" | sort); do
@@ -63,14 +65,18 @@ rm -f known_hosts_hash_frag.old
 	echo
 
 	echo "# Revoked and CA keys"
-	printf "@revoked sisyphus.example.com " ; cat ed25519_4.pub
-	printf "@cert-authority prometheus.example.com " ; cat ecdsa_4.pub
-	printf "@cert-authority *.example.com " ; cat dsa_4.pub
+	printf "@revoked sisyphus.example.com "
+	cat                                         ed25519_4.pub
+	printf "@cert-authority prometheus.example.com "
+	cat                                                  ecdsa_4.pub
+	printf "@cert-authority *.example.com "
+	cat                                         dsa_4.pub
 
 	printf "\n"
 	echo "# Some invalid lines"
 	# Invalid marker
-	printf "@what sisyphus.example.com " ; cat dsa_1.pub
+	printf "@what sisyphus.example.com "
+	cat                                      dsa_1.pub
 	# Key missing
 	echo "sisyphus.example.com      "
 	# Key blob missing

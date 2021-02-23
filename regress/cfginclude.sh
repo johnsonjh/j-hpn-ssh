@@ -83,13 +83,14 @@ Match all
 	Hostname xxxx
 _EOF
 
-trial() {
+trial()
+{
 	_host="$1"
 	_exp="$2"
 	${REAL_SSH} -F $OBJ/ssh_config.i -G "$_host" > $OBJ/ssh_config.out ||
 		fatal "ssh config parse failed"
-	_got=`grep -i '^hostname ' $OBJ/ssh_config.out | awk '{print $2}'`
-	if test "x$_exp" != "x$_got" ; then
+	_got=$(grep -i '^hostname ' $OBJ/ssh_config.out | awk '{print $2}')
+	if test "x$_exp" != "x$_got"; then
 		fail "host $_host include fail: expected $_exp got $_got"
 	fi
 }
@@ -111,10 +112,10 @@ Hostname xxxx
 	Junk
 _EOF
 
-${REAL_SSH} -F $OBJ/ssh_config.i -G a 2>/dev/null && \
+${REAL_SSH} -F $OBJ/ssh_config.i -G a 2> /dev/null &&
 	fail "ssh include allowed invalid config"
 
-${REAL_SSH} -F $OBJ/ssh_config.i -G x 2>/dev/null && \
+${REAL_SSH} -F $OBJ/ssh_config.i -G x 2> /dev/null &&
 	fail "ssh include allowed invalid config"
 
 rm -f $OBJ/ssh_config.i.*
@@ -224,13 +225,14 @@ Match all
 	Hostname xxxx
 _EOF
 
-trial() {
+trial()
+{
 	_host="$1"
 	_exp="$2"
 	${REAL_SSH} -F $OBJ/ssh_config.i -G "$_host" > $OBJ/ssh_config.out ||
 		fatal "ssh config parse failed"
-	_got=`grep -i '^hostname ' $OBJ/ssh_config.out | awk '{print $2}'`
-	if test "x$_exp" != "x$_got" ; then
+	_got=$(grep -i '^hostname ' $OBJ/ssh_config.out | awk '{print $2}')
+	if test "x$_exp" != "x$_got"; then
 		fail "host $_host include fail: expected $_exp got $_got"
 	fi
 }
@@ -252,10 +254,10 @@ Hostname xxxx
 	Junk
 _EOF
 
-${REAL_SSH} -F $OBJ/ssh_config.i -G a 2>/dev/null && \
+${REAL_SSH} -F $OBJ/ssh_config.i -G a 2> /dev/null &&
 	fail "ssh include allowed invalid config"
 
-${REAL_SSH} -F $OBJ/ssh_config.i -G x 2>/dev/null && \
+${REAL_SSH} -F $OBJ/ssh_config.i -G x 2> /dev/null &&
 	fail "ssh include allowed invalid config"
 
 rm -f $OBJ/ssh_config.i.*
@@ -286,7 +288,7 @@ cat > $OBJ/ssh_config.i << _EOF
 Include $OBJ/ssh_config.i
 _EOF
 
-${REAL_SSH} -F $OBJ/ssh_config.i -G a 2>/dev/null && \
+${REAL_SSH} -F $OBJ/ssh_config.i -G a 2> /dev/null &&
 	fail "ssh include allowed infinite recursion?" # or hang...
 
 # cleanup

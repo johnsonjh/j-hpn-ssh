@@ -9,17 +9,18 @@ rm -f *.cert
 ssh-keygen -q -f ca_key -t ed25519 -C CA -N ''
 ssh-keygen -q -f user_key -t ed25519 -C "user key" -N ''
 
-sign() {
+sign()
+{
 	output=$1
 	shift
 	set -xe
 	ssh-keygen -q -s ca_key -I user -n user \
-	    -V 19990101:19991231 -z 1 "$@" user_key.pub
+		-V  19990101:19991231 -z 1 "$@" user_key.pub
 	mv user_key-cert.pub "$output"
 }
 
 sign all_permit.cert -Opermit-agent-forwarding -Opermit-port-forwarding \
-    -Opermit-pty -Opermit-user-rc -Opermit-X11-forwarding
+	-Opermit-pty  -Opermit-user-rc -Opermit-X11-forwarding
 sign no_permit.cert -Oclear
 
 sign no_agentfwd.cert -Ono-agent-forwarding

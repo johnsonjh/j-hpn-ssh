@@ -6,11 +6,10 @@ tid="expand %h and %n"
 echo 'PermitLocalCommand yes' >> $OBJ/ssh_proxy
 printf 'LocalCommand printf "%%%%s\\n" "%%n" "%%h"\n' >> $OBJ/ssh_proxy
 
-cat >$OBJ/expect <<EOE
+cat > $OBJ/expect << EOE
 somehost
 127.0.0.1
 EOE
 
-${SSH} -F $OBJ/ssh_proxy somehost true >$OBJ/actual
+${SSH} -F $OBJ/ssh_proxy somehost true > $OBJ/actual
 diff $OBJ/expect $OBJ/actual || fail "$tid"
-

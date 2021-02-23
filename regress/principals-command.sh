@@ -13,25 +13,25 @@ if [ -z "$SUDO" -a ! -w /var/run ]; then
 fi
 
 case "$SSH_KEYTYPES" in
-	*ssh-rsa*)	userkeytype=rsa ;;
-	*)		userkeytype=ed25519 ;;
+	*ssh-rsa*) userkeytype=rsa ;;
+	*) userkeytype=ed25519 ;;
 esac
 
 SERIAL=$$
 
 # Create a CA key and a user certificate.
-${SSHKEYGEN} -q -N '' -t ed25519  -f $OBJ/user_ca_key || \
+${SSHKEYGEN} -q -N '' -t ed25519  -f $OBJ/user_ca_key ||
 	fatal "ssh-keygen of user_ca_key failed"
-${SSHKEYGEN} -q -N '' -t ${userkeytype} -f $OBJ/cert_user_key || \
+${SSHKEYGEN} -q -N '' -t ${userkeytype} -f $OBJ/cert_user_key ||
 	fatal "ssh-keygen of cert_user_key failed"
 ${SSHKEYGEN} -q -s $OBJ/user_ca_key -I "Joanne User" \
-    -z $$ -n ${USER},mekmitasdigoat $OBJ/cert_user_key || \
+	-z  $$ -n ${USER},mekmitasdigoat $OBJ/cert_user_key ||
 	fatal "couldn't sign cert_user_key"
 
-CERT_BODY=`cat $OBJ/cert_user_key-cert.pub | awk '{ print $2 }'`
-CA_BODY=`cat $OBJ/user_ca_key.pub | awk '{ print $2 }'`
-CERT_FP=`${SSHKEYGEN} -lf $OBJ/cert_user_key-cert.pub | awk '{ print $2 }'`
-CA_FP=`${SSHKEYGEN} -lf $OBJ/user_ca_key.pub | awk '{ print $2 }'`
+CERT_BODY=$(cat $OBJ/cert_user_key-cert.pub | awk '{ print $2 }')
+CA_BODY=$(cat $OBJ/user_ca_key.pub | awk '{ print $2 }')
+CERT_FP=$(${SSHKEYGEN} -lf $OBJ/cert_user_key-cert.pub | awk '{ print $2 }')
+CA_FP=$(${SSHKEYGEN} -lf $OBJ/user_ca_key.pub | awk '{ print $2 }')
 
 # Establish a AuthorizedPrincipalsCommand in /var/run where it will have
 # acceptable directory permissions.
@@ -54,16 +54,16 @@ _EOF
 test $? -eq 0 || fatal "couldn't prepare principals command"
 $SUDO chmod 0755 "$PRINCIPALS_COMMAND"
 
-if ! $OBJ/check-perm -m keys-command $PRINCIPALS_COMMAND ; then
+if ! $OBJ/check-perm -m keys-command $PRINCIPALS_COMMAND; then
 	echo "skipping: $PRINCIPALS_COMMAND is unsuitable as " \
-	    "AuthorizedPrincipalsCommand"
+		"AuthorizedPrincipalsCommand"
 	$SUDO rm -f $PRINCIPALS_COMMAND
 	exit 0
 fi
 
 if [ -x $PRINCIPALS_COMMAND ]; then
 	# Test explicitly-specified principals
-	for privsep in yes ; do
+	for privsep in yes; do
 		_prefix="privsep $privsep"
 
 		# Setup for AuthorizedPrincipalsCommand
@@ -73,7 +73,7 @@ if [ -x $PRINCIPALS_COMMAND ]; then
 			echo "UsePrivilegeSeparation $privsep"
 			echo "AuthorizedKeysFile none"
 			echo "AuthorizedPrincipalsCommand $PRINCIPALS_COMMAND" \
-			    "%u %t %T %i %s %F %f %k %K"
+				"%u %t %T %i %s %F %f %k %K"
 			echo "AuthorizedPrincipalsCommandUser ${LOGNAME}"
 			echo "TrustedUserCAKeys $OBJ/user_ca_key.pub"
 		) > $OBJ/sshd_proxy
@@ -85,7 +85,7 @@ if [ -x $PRINCIPALS_COMMAND ]; then
 		verbose "$tid: ${_prefix} empty authorized_principals"
 		echo > $OBJ/authorized_principals_$USER
 		${SSH} -i $OBJ/cert_user_key \
-		    -F $OBJ/ssh_proxy somehost true >/dev/null 2>&1
+			-F  $OBJ/ssh_proxy somehost true > /dev/null 2>&1
 		if [ $? -eq 0 ]; then
 			fail "ssh cert connect succeeded unexpectedly"
 		fi
@@ -94,7 +94,7 @@ if [ -x $PRINCIPALS_COMMAND ]; then
 		verbose "$tid: ${_prefix} wrong authorized_principals"
 		echo gregorsamsa > $OBJ/authorized_principals_$USER
 		${SSH} -i $OBJ/cert_user_key \
-		    -F $OBJ/ssh_proxy somehost true >/dev/null 2>&1
+			-F  $OBJ/ssh_proxy somehost true > /dev/null 2>&1
 		if [ $? -eq 0 ]; then
 			fail "ssh cert connect succeeded unexpectedly"
 		fi
@@ -103,7 +103,7 @@ if [ -x $PRINCIPALS_COMMAND ]; then
 		verbose "$tid: ${_prefix} correct authorized_principals"
 		echo mekmitasdigoat > $OBJ/authorized_principals_$USER
 		${SSH} -i $OBJ/cert_user_key \
-		    -F $OBJ/ssh_proxy somehost true >/dev/null 2>&1
+			-F  $OBJ/ssh_proxy somehost true > /dev/null 2>&1
 		if [ $? -ne 0 ]; then
 			fail "ssh cert connect failed"
 		fi
@@ -112,7 +112,7 @@ if [ -x $PRINCIPALS_COMMAND ]; then
 		verbose "$tid: ${_prefix} authorized_principals bad key opt"
 		echo 'blah mekmitasdigoat' > $OBJ/authorized_principals_$USER
 		${SSH} -i $OBJ/cert_user_key \
-		    -F $OBJ/ssh_proxy somehost true >/dev/null 2>&1
+			-F  $OBJ/ssh_proxy somehost true > /dev/null 2>&1
 		if [ $? -eq 0 ]; then
 			fail "ssh cert connect succeeded unexpectedly"
 		fi
@@ -120,9 +120,9 @@ if [ -x $PRINCIPALS_COMMAND ]; then
 		# authorized_principals with command=false
 		verbose "$tid: ${_prefix} authorized_principals command=false"
 		echo 'command="false" mekmitasdigoat' > \
-		    $OBJ/authorized_principals_$USER
+			$OBJ/authorized_principals_$USER
 		${SSH} -i $OBJ/cert_user_key \
-		    -F $OBJ/ssh_proxy somehost true >/dev/null 2>&1
+			-F  $OBJ/ssh_proxy somehost true > /dev/null 2>&1
 		if [ $? -eq 0 ]; then
 			fail "ssh cert connect succeeded unexpectedly"
 		fi
@@ -130,9 +130,9 @@ if [ -x $PRINCIPALS_COMMAND ]; then
 		# authorized_principals with command=true
 		verbose "$tid: ${_prefix} authorized_principals command=true"
 		echo 'command="true" mekmitasdigoat' > \
-		    $OBJ/authorized_principals_$USER
+			$OBJ/authorized_principals_$USER
 		${SSH} -i $OBJ/cert_user_key \
-		    -F $OBJ/ssh_proxy somehost false >/dev/null 2>&1
+			-F  $OBJ/ssh_proxy somehost false > /dev/null 2>&1
 		if [ $? -ne 0 ]; then
 			fail "ssh cert connect failed"
 		fi
@@ -151,7 +151,7 @@ if [ -x $PRINCIPALS_COMMAND ]; then
 			cat $OBJ/user_ca_key.pub
 		) > $OBJ/authorized_keys_$USER
 		${SSH} -i $OBJ/cert_user_key \
-		    -F $OBJ/ssh_proxy somehost true >/dev/null 2>&1
+			-F  $OBJ/ssh_proxy somehost true > /dev/null 2>&1
 		if [ $? -eq 0 ]; then
 			fail "ssh cert connect succeeded unexpectedly"
 		fi
@@ -163,12 +163,12 @@ if [ -x $PRINCIPALS_COMMAND ]; then
 			cat $OBJ/user_ca_key.pub
 		) > $OBJ/authorized_keys_$USER
 		${SSH} -i $OBJ/cert_user_key \
-		    -F $OBJ/ssh_proxy somehost true >/dev/null 2>&1
+			-F  $OBJ/ssh_proxy somehost true > /dev/null 2>&1
 		if [ $? -ne 0 ]; then
 			fail "ssh cert connect failed"
 		fi
 	done
 else
 	echo "SKIPPED: $PRINCIPALS_COMMAND not executable " \
-	    "(/var/run mounted noexec?)"
+		"(/var/run mounted noexec?)"
 fi

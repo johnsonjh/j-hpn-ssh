@@ -35,21 +35,19 @@ cat << EOF > ${BATCH}.fail.2
 EOF
 
 verbose "$tid: good commands"
-${SFTP} -b ${BATCH}.pass.1 -D ${SFTPSERVER} >/dev/null 2>&1 \
-	|| fail "good commands failed"
+${SFTP} -b ${BATCH}.pass.1 -D ${SFTPSERVER} > /dev/null 2>&1 ||
+	fail  "good commands failed"
 
 verbose "$tid: bad commands"
-${SFTP} -b ${BATCH}.fail.1 -D ${SFTPSERVER} >/dev/null 2>&1 \
-	&& fail "bad commands succeeded"
+${SFTP} -b ${BATCH}.fail.1 -D ${SFTPSERVER} > /dev/null 2>&1 &&
+	fail  "bad commands succeeded"
 
 verbose "$tid: comments and blanks"
-${SFTP} -b ${BATCH}.pass.2 -D ${SFTPSERVER} >/dev/null 2>&1 \
-	|| fail "comments & blanks failed"
+${SFTP} -b ${BATCH}.pass.2 -D ${SFTPSERVER} > /dev/null 2>&1 ||
+	fail  "comments & blanks failed"
 
 verbose "$tid: junk command"
-${SFTP} -b ${BATCH}.fail.2 -D ${SFTPSERVER} >/dev/null 2>&1 \
-	&& fail "junk command succeeded"
+${SFTP} -b ${BATCH}.fail.2 -D ${SFTPSERVER} > /dev/null 2>&1 &&
+	fail  "junk command succeeded"
 
 rm -rf ${COPY} ${COPY}.1 ${COPY}.2 ${COPY}.dd ${BATCH}.*
-
-

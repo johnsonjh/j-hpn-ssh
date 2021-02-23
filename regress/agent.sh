@@ -9,13 +9,13 @@ if [ $? -ne 2 ]; then
 fi
 
 trace "start agent, args ${EXTRA_AGENT_ARGS} -s"
-eval `${SSHAGENT} ${EXTRA_AGENT_ARGS} -s` > /dev/null
+eval $(${SSHAGENT} ${EXTRA_AGENT_ARGS} -s) > /dev/null
 r=$?
 if [ $r -ne 0 ]; then
 	fatal "could not start ssh-agent: exit code $r"
 fi
 
-eval `${SSHAGENT} ${EXTRA_AGENT_ARGS} -s | sed 's/SSH_/FW_SSH_/g'` > /dev/null
+eval $(${SSHAGENT} ${EXTRA_AGENT_ARGS} -s | sed 's/SSH_/FW_SSH_/g') > /dev/null
 r=$?
 if [ $r -ne 0 ]; then
 	fatal "could not start second ssh-agent: exit code $r"
@@ -27,8 +27,8 @@ if [ $? -ne 1 ]; then
 fi
 
 rm -f $OBJ/user_ca_key $OBJ/user_ca_key.pub
-${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_ca_key \
-	|| fatal "ssh-keygen failed"
+${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_ca_key ||
+	fatal  "ssh-keygen failed"
 
 trace "overwrite authorized keys"
 printf '' > $OBJ/authorized_keys_$USER
@@ -36,8 +36,8 @@ printf '' > $OBJ/authorized_keys_$USER
 for t in ${SSH_KEYTYPES}; do
 	# generate user key for agent
 	rm -f $OBJ/$t-agent $OBJ/$t-agent.pub*
-	${SSHKEYGEN} -q -N '' -t $t -f $OBJ/$t-agent ||\
-		 fatal "ssh-keygen for $t-agent failed"
+	${SSHKEYGEN} -q -N '' -t $t -f $OBJ/$t-agent ||
+		fatal "ssh-keygen for $t-agent failed"
 	# Make a certificate for each too.
 	${SSHKEYGEN} -qs $OBJ/user_ca_key -I "$t cert" \
 		-n estragon $OBJ/$t-agent.pub || fatal "ca sign failed"
@@ -140,19 +140,22 @@ if [ $r -ne 1 ]; then
 	fail "ssh-add -l with different agent did not fail with exit code 1 (exit code $r)"
 fi
 
-(printf 'cert-authority,principals="estragon" '; cat $OBJ/user_ca_key.pub) \
+(
+	printf 'cert-authority,principals="estragon" '
+	cat                                               $OBJ/user_ca_key.pub
+) \
 	> $OBJ/authorized_keys_$USER
 for t in ${SSH_KEYTYPES}; do
-    if [ "$t" != "ssh-dss" ]; then
-	trace "connect via agent using $t key"
-	${SSH} -F $OBJ/ssh_proxy -i $OBJ/$t-agent.pub \
-		-oCertificateFile=$OBJ/$t-agent-cert.pub \
-		-oIdentitiesOnly=yes somehost exit 52
-	r=$?
-	if [ $r -ne 52 ]; then
-		fail "ssh connect with failed (exit code $r)"
+	if  [ "$t" != "ssh-dss" ]; then
+		trace "connect via agent using $t key"
+		${SSH} -F $OBJ/ssh_proxy -i $OBJ/$t-agent.pub \
+			-oCertificateFile=$OBJ/$t-agent-cert.pub \
+			-oIdentitiesOnly=yes somehost exit 52
+		r=$?
+		if [ $r -ne 52 ]; then
+			fail "ssh connect with failed (exit code $r)"
+		fi
 	fi
-    fi
 done
 
 ## Deletion tests.
@@ -172,7 +175,7 @@ fi
 trace "readd keys"
 # re-add keys/certs to agent
 for t in ${SSH_KEYTYPES}; do
-	${SSHADD} $OBJ/$t-agent-private >/dev/null 2>&1 || \
+	${SSHADD} $OBJ/$t-agent-private > /dev/null 2>&1 ||
 		fail "ssh-add failed exit code $?"
 done
 # make sure they are there
@@ -182,14 +185,16 @@ if [ $r -ne 0 ]; then
 	fail "ssh-add -l failed: exit code $r"
 fi
 
-check_key_absent() {
-	${SSHADD} -L | grep "^$1 " >/dev/null
+check_key_absent()
+{
+	${SSHADD} -L | grep "^$1 " > /dev/null
 	if [ $? -eq 0 ]; then
 		fail "$1 key unexpectedly present"
 	fi
 }
-check_key_present() {
-	${SSHADD} -L | grep "^$1 " >/dev/null
+check_key_present()
+{
+	${SSHADD} -L | grep "^$1 " > /dev/null
 	if [ $? -ne 0 ]; then
 		fail "$1 key missing from agent"
 	fi
@@ -201,7 +206,7 @@ ${SSHADD} -qdk $OBJ/ssh-ed25519-agent || fail "ssh-add -d ed25519 failed"
 check_key_absent ssh-ed25519
 check_key_present ssh-ed25519-cert-v01@openssh.com
 # Put key/cert back.
-${SSHADD} $OBJ/ssh-ed25519-agent-private >/dev/null 2>&1 || \
+${SSHADD} $OBJ/ssh-ed25519-agent-private > /dev/null 2>&1 ||
 	fail "ssh-add failed exit code $?"
 check_key_present ssh-ed25519
 # Delete both key and certificate.
@@ -210,7 +215,7 @@ ${SSHADD} -qd $OBJ/ssh-ed25519-agent || fail "ssh-add -d ed25519 failed"
 check_key_absent ssh-ed25519
 check_key_absent ssh-ed25519-cert-v01@openssh.com
 # Put key/cert back.
-${SSHADD} $OBJ/ssh-ed25519-agent-private >/dev/null 2>&1 || \
+${SSHADD} $OBJ/ssh-ed25519-agent-private > /dev/null 2>&1 ||
 	fail "ssh-add failed exit code $?"
 check_key_present ssh-ed25519
 # Delete certificate via stdin

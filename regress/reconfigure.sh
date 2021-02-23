@@ -4,14 +4,15 @@
 tid="simple connect after reconfigure"
 
 # we need the full path to sshd for -HUP
-if test "x$USE_VALGRIND" = "x" ; then
+if test "x$USE_VALGRIND" = "x"; then
 	case $SSHD in
-	/*)
-		# full path is OK
-		;;
-	*)
-		# otherwise make fully qualified
-		SSHD=$OBJ/$SSHD
+		/*)
+			# full path is OK
+			;;
+		*)
+			# otherwise make fully qualified
+			SSHD=$OBJ/$SSHD
+			;;
 	esac
 fi
 
@@ -23,14 +24,14 @@ if [ $? -ne 0 ]; then
 	fail "ssh connect with failed before reconfigure"
 fi
 
-PID=`$SUDO cat $PIDFILE`
+PID=$($SUDO cat $PIDFILE)
 rm -f $PIDFILE
 $SUDO kill -HUP $PID
 
 trace "wait for sshd to restart"
-i=0;
+i=0
 while [ ! -f $PIDFILE -a $i -lt 10 ]; do
-	i=`expr $i + 1`
+	i=$(expr $i + 1)
 	sleep $i
 done
 

@@ -8,9 +8,10 @@ tid="sftp-uri"
 COPY2=${OBJ}/copy2
 DIR=${COPY}.dd
 DIR2=${COPY}.dd2
-SRC=`dirname ${SCRIPT}`
+SRC=$(dirname ${SCRIPT})
 
-sftpclean() {
+sftpclean()
+{
 	rm -rf ${COPY} ${COPY2} ${DIR} ${DIR2}
 	mkdir ${DIR} ${DIR2}
 }
@@ -35,7 +36,7 @@ cmp ${COPY} ${DIR}/copy || fail "corrupted copy"
 verbose "$tid: put to remote directory (trailing slash)"
 sftpclean
 ${SFTP} -q -S "$SSH" -F $OBJ/ssh_config -b - \
-    "sftp://${USER}@somehost:${PORT}/${DIR}/" > /dev/null 2>&1 << EOF
+	"sftp://${USER}@somehost:${PORT}/${DIR}/"  > /dev/null 2>&1 << EOF
 	version
 	put ${DATA} copy
 EOF
@@ -49,7 +50,7 @@ fi
 verbose "$tid: put to remote directory (no slash)"
 sftpclean
 ${SFTP} -q -S "$SSH" -F $OBJ/ssh_config -b - \
-    "sftp://${USER}@somehost:${PORT}/${DIR}" > /dev/null 2>&1 << EOF
+	"sftp://${USER}@somehost:${PORT}/${DIR}"  > /dev/null 2>&1 << EOF
 	version
 	put ${DATA} copy
 EOF

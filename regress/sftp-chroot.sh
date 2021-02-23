@@ -14,18 +14,18 @@ if [ -z "$SUDO" -a ! -w /var/run ]; then
 	exit 0
 fi
 
-if ! $OBJ/check-perm -m chroot "$CHROOT" ; then
-  echo "skipped: $CHROOT is unsuitable as ChrootDirectory"
-  exit 0
+if ! $OBJ/check-perm -m chroot "$CHROOT"; then
+	echo "skipped: $CHROOT is unsuitable as ChrootDirectory"
+	exit 0
 fi
 
-$SUDO sh -c "echo mekmitastdigoat > $PRIVDATA" || \
+$SUDO sh -c "echo mekmitastdigoat > $PRIVDATA" ||
 	fatal "create $PRIVDATA failed"
 
 start_sshd -oChrootDirectory=$CHROOT -oForceCommand="internal-sftp -d /"
 
 verbose "test $tid: get"
 ${SFTP} -S "$SSH" -F $OBJ/ssh_config host:/${FILENAME} $COPY \
-    >>$TEST_REGRESS_LOGFILE 2>&1 || \
+	>> $TEST_REGRESS_LOGFILE 2>&1 ||
 	fatal "Fetch ${FILENAME} failed"
 cmp $PRIVDATA $COPY || fail "$PRIVDATA $COPY differ"

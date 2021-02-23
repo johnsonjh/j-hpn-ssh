@@ -80,17 +80,18 @@ Match all
 	Banner /xxxx
 _EOF
 
-trial() {
+trial()
+{
 	_host="$1"
 	_exp="$2"
 	_desc="$3"
 	test -z "$_desc" && _desc="test match"
 	trace "$_desc host=$_host expect=$_exp"
 	${SUDO} ${REAL_SSHD} -f $OBJ/sshd_config.i -T \
-	    -C "host=$_host,user=test,addr=127.0.0.1" > $OBJ/sshd_config.out ||
+		-C  "host=$_host,user=test,addr=127.0.0.1" > $OBJ/sshd_config.out ||
 		fatal "ssh config parse failed: $_desc host=$_host expect=$_exp"
-	_got=`grep -i '^banner ' $OBJ/sshd_config.out | awk '{print $2}'`
-	if test "x$_exp" != "x$_got" ; then
+	_got=$(grep -i '^banner ' $OBJ/sshd_config.out | awk '{print $2}')
+	if test "x$_exp" != "x$_got"; then
 		fail "$desc_ host $_host include fail: expected $_exp got $_got"
 	fi
 }
@@ -114,12 +115,12 @@ _EOF
 
 trace "disallow invalid config host=a"
 ${SUDO} ${REAL_SSHD} -f $OBJ/sshd_config.i \
-    -C "host=a,user=test,addr=127.0.0.1" 2>/dev/null && \
+	-C  "host=a,user=test,addr=127.0.0.1" 2> /dev/null &&
 	fail "sshd include allowed invalid config"
 
 trace "disallow invalid config host=x"
 ${SUDO} ${REAL_SSHD} -f $OBJ/sshd_config.i \
-    -C "host=x,user=test,addr=127.0.0.1" 2>/dev/null && \
+	-C  "host=x,user=test,addr=127.0.0.1" 2> /dev/null &&
 	fail "sshd include allowed invalid config"
 
 rm -f $OBJ/sshd_config.i.*
@@ -147,7 +148,7 @@ _EOF
 
 trace "disallow invalid with no argument"
 ${SUDO} ${REAL_SSHD} -f $OBJ/sshd_config.i.x -T \
-    -C "host=x,user=test,addr=127.0.0.1" 2>/dev/null && \
+	-C  "host=x,user=test,addr=127.0.0.1" 2> /dev/null &&
 	fail "sshd allowed Include with no argument"
 
 # Ensure the Include before any Match block works as expected (bug #3122)
@@ -177,10 +178,10 @@ _EOF
 
 trace "Port after included files"
 ${SUDO} ${REAL_SSHD} -f $OBJ/sshd_config.i -T \
-    -C "host=x,user=test,addr=127.0.0.1" > $OBJ/sshd_config.out || \
+	-C  "host=x,user=test,addr=127.0.0.1" > $OBJ/sshd_config.out ||
 	fail "failed to parse Port after included files"
-_port=`grep -i '^port ' $OBJ/sshd_config.out | awk '{print $2}'`
-if test "x7722" != "x$_port" ; then
+_port=$(grep -i '^port ' $OBJ/sshd_config.out | awk '{print $2}')
+if test "x7722" != "x$_port"; then
 	fail "The Port in included file was intertepretted wrongly. Expected 7722, got $_port"
 fi
 

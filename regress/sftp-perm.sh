@@ -7,32 +7,39 @@ SERVER_LOG=${OBJ}/sftp-server.log
 CLIENT_LOG=${OBJ}/sftp.log
 TEST_SFTP_SERVER=${OBJ}/sftp-server.sh
 
-prepare_server() {
+prepare_server()
+{
 	printf "#!/bin/sh\nexec $SFTPSERVER -el debug3 $* 2>$SERVER_LOG\n" \
-	> $TEST_SFTP_SERVER
+		> $TEST_SFTP_SERVER
 	chmod a+x $TEST_SFTP_SERVER
 }
 
-run_client() {
-	echo "$@" | ${SFTP} -D ${TEST_SFTP_SERVER} -vvvb - >$CLIENT_LOG 2>&1
+run_client()
+{
+	echo "$@" | ${SFTP} -D ${TEST_SFTP_SERVER} -vvvb - > $CLIENT_LOG 2>&1
 }
 
-prepare_files() {
+prepare_files()
+{
 	_prep="$1"
 	rm -f ${COPY} ${COPY}.1
-	test -d ${COPY}.dd && { rmdir ${COPY}.dd || fatal "rmdir ${COPY}.dd"; }
+	test -d ${COPY}.dd && {
+		rmdir                      ${COPY}.dd || fatal "rmdir ${COPY}.dd"
+	}
 	test -z "$_prep" && return
 	sh -c "$_prep" || fail "preparation failed: \"$_prep\""
 }
 
-postcondition() {
+postcondition()
+{
 	_title="$1"
 	_check="$2"
 	test -z "$_check" && return
 	${TEST_SHELL} -c "$_check" || fail "postcondition check failed: $_title"
 }
 
-ro_test() {
+ro_test()
+{
 	_desc=$1
 	_cmd="$2"
 	_prep="$3"
@@ -51,7 +58,8 @@ ro_test() {
 	postcondition "$_desc readonly" "$_expect_fail_post"
 }
 
-perm_test() {
+perm_test()
+{
 	_op=$1
 	_whitelist_ops=$2
 	_cmd="$3"
@@ -266,4 +274,3 @@ perm_test \
 # fstatvfs
 
 rm -rf ${COPY} ${COPY}.1 ${COPY}.dd
-

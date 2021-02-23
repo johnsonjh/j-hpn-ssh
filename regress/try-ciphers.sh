@@ -5,9 +5,9 @@ tid="try ciphers"
 
 cp $OBJ/sshd_proxy $OBJ/sshd_proxy_bak
 
-for c in `${SSH} -Q cipher`; do
+for c in $(${SSH} -Q cipher); do
 	n=0
-	for m in `${SSH} -Q mac`; do
+	for m in $(${SSH} -Q mac); do
 		trace "cipher $c mac $m"
 		verbose "test $tid: cipher $c mac $m"
 		cp $OBJ/sshd_proxy_bak $OBJ/sshd_proxy
@@ -19,10 +19,9 @@ for c in `${SSH} -Q cipher`; do
 		fi
 		# No point trying all MACs for AEAD ciphers since they
 		# are ignored.
-		if ${SSH} -Q cipher-auth | grep "^${c}\$" >/dev/null 2>&1 ; then
+		if ${SSH} -Q cipher-auth | grep "^${c}\$" > /dev/null 2>&1; then
 			break
 		fi
-		n=`expr $n + 1`
+		n=$(expr $n + 1)
 	done
 done
-

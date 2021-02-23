@@ -6,7 +6,7 @@ tid="AllowUsers/DenyUsers"
 
 me="$LOGNAME"
 if [ "x$me" = "x" ]; then
-	me=`whoami`
+	me=$(whoami)
 fi
 other="nobody"
 
@@ -28,8 +28,8 @@ test_auth()
 	${SSH} -F $OBJ/ssh_proxy "$me@somehost" true
 	status=$?
 
-	if (test $status -eq 0 && ! $should_succeed) \
-	    || (test $status -ne 0 && $should_succeed); then
+	if (test $status -eq 0 && ! $should_succeed) ||
+		(    test $status -ne 0 && $should_succeed); then
 		fail "$failmsg"
 	fi
 }

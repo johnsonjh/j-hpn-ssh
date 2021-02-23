@@ -3,20 +3,21 @@
 # fixpaths  - substitute makefile variables into text files
 # Usage: fixpaths -Dsomething=somethingelse ...
 
-die() {
+die()
+{
 	printf '%s\n' "${*}"
 	exit 1
 }
 
-test -n "$(printf '%s\n' "$1"|grep -- -D)" || \
+test -n "$(printf '%s\n' "$1" | grep -- -D)" ||
 	die $0: nothing to do - no substitutions listed!
 
-test -n "$(printf '%s\n' "$1"|grep -- '-D[^=]\+=[^ ]\+')" || \
+test -n "$(printf '%s\n' "$1" | grep -- '-D[^=]\+=[^ ]\+')" ||
 	die $0: error in command line arguments.
 
-test -n "$(printf '%s\n' "${*}"|grep -- ' [^-]')" || \
+test -n "$(printf '%s\n' "${*}" | grep -- ' [^-]')" ||
 	die Usage: $0 '[-Dstring=replacement] [[infile] ...]'
 
-sed $(printf '%\n' "${*}"|sed -e 's/-D\([^=]\+\)=\([^ ]*\)/-e s=\1=\2=g/g')
+sed $(printf '%\n' "${*}" | sed -e 's/-D\([^=]\+\)=\([^ ]*\)/-e s=\1=\2=g/g')
 
 exit 0

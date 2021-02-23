@@ -3,9 +3,10 @@
 
 tid="pkcs11 agent test"
 
-try_token_libs() {
-	for _lib in "$@" ; do
-		if test -f "$_lib" ; then
+try_token_libs()
+{
+	for _lib in "$@"; do
+		if test -f "$_lib"; then
 			verbose "Using token library $_lib"
 			TEST_SSH_PKCS11="$_lib"
 			return
@@ -54,7 +55,8 @@ export SSH_ASKPASS
 unset DISPLAY
 
 # start command w/o tty, so ssh-add accepts pin from stdin
-notty() {
+notty()
+{
 	perl -e 'use POSIX; POSIX::setsid(); 
 	    if (fork) { wait; exit($? >> 8); } else { exec(@ARGV) }' "$@"
 }
@@ -63,19 +65,19 @@ trace "generating keys"
 RSA=${DIR}/RSA
 EC=${DIR}/EC
 openssl genpkey -algorithm rsa > $RSA
-openssl pkcs8 -nocrypt -in $RSA |\
-    softhsm2-util --slot "$slot" --label 01 --id 01 --pin "$TEST_SSH_PIN" --import /dev/stdin
+openssl pkcs8 -nocrypt -in $RSA |
+	softhsm2-util  --slot "$slot" --label 01 --id 01 --pin "$TEST_SSH_PIN" --import /dev/stdin
 openssl genpkey \
-    -genparam \
-    -algorithm ec \
-    -pkeyopt ec_paramgen_curve:prime256v1 |\
-    openssl genpkey \
-    -paramfile /dev/stdin > $EC
-openssl pkcs8 -nocrypt -in $EC |\
-    softhsm2-util --slot "$slot" --label 02 --id 02 --pin "$TEST_SSH_PIN" --import /dev/stdin
+	-genparam \
+	-algorithm  ec \
+	-pkeyopt  ec_paramgen_curve:prime256v1 |
+	openssl  genpkey \
+		-paramfile /dev/stdin > $EC
+openssl pkcs8 -nocrypt -in $EC |
+	softhsm2-util  --slot "$slot" --label 02 --id 02 --pin "$TEST_SSH_PIN" --import /dev/stdin
 
 trace "start agent"
-eval `${SSHAGENT} ${EXTRA_AGENT_ARGS} -s` > /dev/null
+eval $(${SSHAGENT} ${EXTRA_AGENT_ARGS} -s) > /dev/null
 r=$?
 if [ $r -ne 0 ]; then
 	fail "could not start ssh-agent: exit code $r"

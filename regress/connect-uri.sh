@@ -23,7 +23,7 @@ fi
 
 verbose "$tid: with path name"
 ${SSH} -F $OBJ/ssh_config "ssh://${USER}@somehost:${PORT}/${DATA}" true \
-    > /dev/null 2>&1
+	> /dev/null  2>&1
 if [ $? -eq 0 ]; then
 	fail "ssh connection succeeded, expected failure"
 fi

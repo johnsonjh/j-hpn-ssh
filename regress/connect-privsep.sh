@@ -25,9 +25,9 @@ fi
 if [ -z "TEST_MALLOC_OPTIONS" ]; then
 	mopts="C F G J R S U X < >"
 else
-	mopts=`echo $TEST_MALLOC_OPTIONS | sed 's/./& /g'`
+	mopts=$(echo $TEST_MALLOC_OPTIONS | sed 's/./& /g')
 fi
-for m in '' $mopts ; do
+for m in '' $mopts; do
 	env MALLOC_OPTIONS="$m" ${SSH} -F $OBJ/ssh_proxy 999.999.999.999 true
 	if [ $? -ne 0 ]; then
 		fail "ssh privsep/sandbox+proxyconnect mopt '$m' failed"

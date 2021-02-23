@@ -39,11 +39,11 @@ for v in ${VERSIONS}; do
 		continue
 	fi
 	types="dss"
-        case $v in
-        2.3.1|3.*)
-                types="$types rsa"
-                ;;
-        esac
+	case $v in
+		2.3.1 |   3.*)
+			types="$types rsa"
+			;;
+	esac
 	for t in $types; do
 		verbose "ssh-keygen $v/$t"
 		rm -f $COMPRV $COMPUB $OPENSSHPRV $OPENSSHPUB
@@ -63,7 +63,7 @@ for v in ${VERSIONS}; do
 			continue
 		fi
 		chmod 600 ${OPENSSHPRV}
-		${SSHKEYGEN} -yf ${OPENSSHPRV} |\
+		${SSHKEYGEN} -yf ${OPENSSHPRV} |
 			diff - ${OPENSSHPUB}
 		if [ $? -ne 0 ]; then
 			fail "public keys ($v/$t) differ"

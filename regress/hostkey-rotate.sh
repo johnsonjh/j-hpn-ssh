@@ -20,31 +20,34 @@ all_algs=""
 for k in $SSH_HOSTKEY_TYPES; do
 	${SSHKEYGEN} -qt $k -f $OBJ/hkr.$k -N '' || fatal "ssh-keygen $k"
 	echo "Hostkey $OBJ/hkr.${k}" >> $OBJ/sshd_proxy.orig
-	nkeys=`expr $nkeys + 1`
+	nkeys=$(expr $nkeys + 1)
 	test "x$all_algs" = "x" || all_algs="${all_algs},"
 	all_algs="${all_algs}$k"
 	case "$k" in
-		ssh-rsa)	secondary="ssh-rsa" ;;
+		ssh-rsa) secondary="ssh-rsa" ;;
 	esac
 done
 
-dossh() {
+dossh()
+{
 	# All ssh should succeed in this test
 	${SSH} -F $OBJ/ssh_proxy "$@" x true || fail "ssh $@ failed"
 }
 
-expect_nkeys() {
+expect_nkeys()
+{
 	_expected=$1
 	_message=$2
-	_n=`wc -l $OBJ/known_hosts | awk '{ print $1 }'` || fatal "wc failed"
+	_n=$(wc -l $OBJ/known_hosts | awk '{ print $1 }') || fatal "wc failed"
 	[ "x$_n" = "x$_expected" ] || fail "$_message (got $_n wanted $_expected)"
 }
 
-check_key_present() {
+check_key_present()
+{
 	_type=$1
 	_kfile=$2
 	test "x$_kfile" = "x" && _kfile="$OBJ/hkr.${_type}.pub"
-	_kpub=`awk "/$_type /"' { print $2 }' < $_kfile` || \
+	_kpub=$(awk "/$_type /"' { print $2 }' < $_kfile) ||
 		fatal "awk failed"
 	fgrep "$_kpub" $OBJ/known_hosts > /dev/null
 }
@@ -53,7 +56,7 @@ cp $OBJ/sshd_proxy.orig $OBJ/sshd_proxy
 
 # Connect to sshd with StrictHostkeyChecking=no
 verbose "learn hostkey with StrictHostKeyChecking=no"
->$OBJ/known_hosts
+> $OBJ/known_hosts
 dossh -oHostKeyAlgorithms=$primary -oStrictHostKeyChecking=no
 # Verify no additional keys learned
 expect_nkeys 1 "unstrict connect keys"
@@ -81,24 +84,27 @@ if [ "$primary" != "$secondary" ]; then
 	verbose "learn changed non-primary hostkey type=${secondary}"
 	mv $OBJ/hkr.${secondary}.pub $OBJ/hkr.${secondary}.pub.old
 	rm -f $OBJ/hkr.${secondary}
-	${SSHKEYGEN} -qt ${secondary} -f $OBJ/hkr.${secondary} -N '' || \
-	    fatal "ssh-keygen $secondary"
+	${SSHKEYGEN} -qt ${secondary} -f $OBJ/hkr.${secondary} -N '' ||
+		fatal  "ssh-keygen $secondary"
 	dossh -oStrictHostKeyChecking=yes -oHostKeyAlgorithms=$all_algs
 	# Check that the key was replaced
 	expect_nkeys $nkeys "learn hostkeys"
-	check_key_present ${secondary} $OBJ/hkr.${secondary}.pub.old && \
-	    fail "old key present"
+	check_key_present ${secondary} $OBJ/hkr.${secondary}.pub.old &&
+		fail  "old key present"
 	check_key_present ${secondary} || fail "didn't learn changed key"
 fi
 
 # Add new hostkey (primary type) to sshd and connect
 verbose "learn new primary hostkey"
 ${SSHKEYGEN} -qt ${primary} -f $OBJ/hkr.${primary}-new -N '' || fatal "ssh-keygen ed25519"
-( cat $OBJ/sshd_proxy.orig ; echo HostKey $OBJ/hkr.${primary}-new ) \
-    > $OBJ/sshd_proxy
+( 
+	cat $OBJ/sshd_proxy.orig
+	echo                           HostKey $OBJ/hkr.${primary}-new 
+) \
+	> $OBJ/sshd_proxy
 # Check new hostkey added
 dossh -oStrictHostKeyChecking=yes -oHostKeyAlgorithms=${primary},$all_algs
-expect_nkeys `expr $nkeys + 1` "learn hostkeys"
+expect_nkeys $(expr $nkeys + 1) "learn hostkeys"
 check_key_present ${primary} || fail "current key missing"
 check_key_present ${primary} $OBJ/hkr.${primary}-new.pub || fail "new key missing"
 

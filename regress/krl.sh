@@ -5,15 +5,19 @@ tid="key revocation lists"
 
 # Use ed25519 by default since it's fast and it's supported when building
 # w/out OpenSSL.  Populate ktype[2-4] with the other types if supported.
-ktype1=ed25519; ktype2=ed25519; ktype3=ed25519;
-ktype4=ed25519; ktype5=ed25519; ktype6=ed25519;
+ktype1=ed25519
+ktype2=ed25519
+ktype3=ed25519
+ktype4=ed25519
+ktype5=ed25519
+ktype6=ed25519
 for t in $SSH_KEYTYPES; do
 	case "$t" in
-		ecdsa*)		ktype2=ecdsa ;;
-		ssh-rsa)	ktype3=rsa ;;
-		ssh-dss)	ktype4=dsa ;;
-		sk-ssh-ed25519@openssh.com)		ktype5=ed25519-sk ;;
-		sk-ecdsa-sha2-nistp256@openssh.com)	ktype6=ecdsa-sk ;;
+		ecdsa*) ktype2=ecdsa ;;
+		ssh-rsa) ktype3=rsa ;;
+		ssh-dss) ktype4=dsa ;;
+		sk-ssh-ed25519@openssh.com) ktype5=ed25519-sk ;;
+		sk-ecdsa-sha2-nistp256@openssh.com) ktype6=ecdsa-sk ;;
 	esac
 done
 
@@ -55,45 +59,46 @@ EOF
 
 # A specification that revokes some certificated by key ID.
 touch $OBJ/revoked-keyid
-for n in 1 2 3 4 10 15 30 50 90 `jot 500 300` 999 1000 1001 1002; do
+for n in 1 2 3 4 10 15 30 50 90 $(jot 500 300) 999 1000 1001 1002; do
 	test "x$n" = "x499" && continue
 	# Fill in by-ID revocation spec.
 	echo "id: revoked $n" >> $OBJ/revoked-keyid
 done
 
-keygen() {
+keygen()
+{
 	N=$1
-	f=$OBJ/revoked-`printf "%04d" $N`
+	f=$OBJ/revoked-$(printf "%04d" $N)
 	# Vary the keytype. We use mostly ed25519 since this is fast and well
 	# supported.
 	keytype=$ktype1
 	case $N in
-	2  | 10 | 510 | 1001)	keytype=$ktype2 ;;
-	4  | 30 | 520 | 1002)	keytype=$ktype3 ;;
-	8  | 50 | 530 | 1003)	keytype=$ktype4 ;;
-	16 | 70 | 540 | 1004)	keytype=$ktype5 ;;
-	32 | 90 | 550 | 1005)	keytype=$ktype6 ;;
+		2 | 10 | 510 | 1001) keytype=$ktype2 ;;
+		4 | 30 | 520 | 1002) keytype=$ktype3 ;;
+		8 | 50 | 530 | 1003) keytype=$ktype4 ;;
+		16 | 70 | 540 | 1004) keytype=$ktype5 ;;
+		32 | 90 | 550 | 1005) keytype=$ktype6 ;;
 	esac
-	$SSHKEYGEN -t $keytype -f $f -C "" -N "" > /dev/null \
-		|| fatal "$SSHKEYGEN failed"
+	$SSHKEYGEN -t $keytype -f $f -C "" -N "" > /dev/null ||
+		fatal  "$SSHKEYGEN failed"
 	# Sign cert
-	$SSHKEYGEN -s $OBJ/revoked-ca -z $n -I "revoked $N" $f >/dev/null 2>&1 \
-		|| fatal "$SSHKEYGEN sign failed"
+	$SSHKEYGEN -s $OBJ/revoked-ca -z $n -I "revoked $N" $f > /dev/null 2>&1 ||
+		fatal  "$SSHKEYGEN sign failed"
 	echo $f
 }
 
 # Generate some keys.
 verbose "$tid: generating test keys"
 REVOKED_SERIALS="1 4 10 50 90 500 510 520 550 799 999"
-for n in $REVOKED_SERIALS ; do
-	f=`keygen $n`
+for n in $REVOKED_SERIALS; do
+	f=$(keygen $n)
 	RKEYS="$RKEYS ${f}.pub"
 	RCERTS="$RCERTS ${f}-cert.pub"
 done
 UNREVOKED_SERIALS="5 9 14 16 29 49 51 499 800 1010 1011"
 UNREVOKED=""
-for n in $UNREVOKED_SERIALS ; do
-	f=`keygen $n`
+for n in $UNREVOKED_SERIALS; do
+	f=$(keygen $n)
 	UKEYS="$UKEYS ${f}.pub"
 	UCERTS="$UCERTS ${f}-cert.pub"
 done
@@ -101,49 +106,59 @@ done
 # Specifications that revoke keys by hash.
 touch $OBJ/revoked-sha1 $OBJ/revoked-sha256 $OBJ/revoked-hash
 for rkey in $RKEYS; do
-	(printf "sha1: "; cat $rkey) >> $OBJ/revoked-sha1
-	(printf "sha256: "; cat $rkey) >> $OBJ/revoked-sha256
-	(printf "hash: "; $SSHKEYGEN -lf $rkey | \
-		awk '{ print $2 }') >> $OBJ/revoked-hash
+	(
+		printf "sha1: "
+		cat                $rkey
+	)                          >> $OBJ/revoked-sha1
+	(
+		printf "sha256: "
+		cat                  $rkey
+	)                            >> $OBJ/revoked-sha256
+	(
+		printf "hash: "
+		$SSHKEYGEN                -lf $rkey |
+			awk '{ print $2 }'
+	)                  >> $OBJ/revoked-hash
 done
 
-genkrls() {
+genkrls()
+{
 	OPTS=$1
-$SSHKEYGEN $OPTS -kf $OBJ/krl-empty - </dev/null \
-	>/dev/null || fatal "$SSHKEYGEN KRL failed"
-$SSHKEYGEN $OPTS -kf $OBJ/krl-keys $RKEYS \
-	>/dev/null || fatal "$SSHKEYGEN KRL failed"
-$SSHKEYGEN $OPTS -kf $OBJ/krl-cert $RCERTS \
-	>/dev/null || fatal "$SSHKEYGEN KRL failed"
-$SSHKEYGEN $OPTS -kf $OBJ/krl-all $RKEYS $RCERTS \
-	>/dev/null || fatal "$SSHKEYGEN KRL failed"
-$SSHKEYGEN $OPTS -kf $OBJ/krl-ca $OBJ/revoked-ca.pub \
-	>/dev/null || fatal "$SSHKEYGEN KRL failed"
-$SSHKEYGEN $OPTS -kf $OBJ/krl-sha1 $OBJ/revoked-sha1 \
-	>/dev/null 2>&1 || fatal "$SSHKEYGEN KRL failed"
-$SSHKEYGEN $OPTS -kf $OBJ/krl-sha256 $OBJ/revoked-sha256 \
-	>/dev/null 2>&1 || fatal "$SSHKEYGEN KRL failed"
-$SSHKEYGEN $OPTS -kf $OBJ/krl-hash $OBJ/revoked-hash \
-	>/dev/null 2>&1 || fatal "$SSHKEYGEN KRL failed"
-# This should fail as KRLs from serial/key-id spec need the CA specified.
-$SSHKEYGEN $OPTS -kf $OBJ/krl-serial $OBJ/revoked-serials \
-	>/dev/null 2>&1 && fatal "$SSHKEYGEN KRL succeeded unexpectedly"
-$SSHKEYGEN $OPTS -kf $OBJ/krl-keyid $OBJ/revoked-keyid \
-	>/dev/null 2>&1 && fatal "$SSHKEYGEN KRL succeeded unexpectedly"
-# These should succeed; they specify an explicit CA key.
-$SSHKEYGEN $OPTS -kf $OBJ/krl-serial -s $OBJ/revoked-ca \
-	$OBJ/revoked-serials >/dev/null || fatal "$SSHKEYGEN KRL failed"
-$SSHKEYGEN $OPTS -kf $OBJ/krl-keyid -s $OBJ/revoked-ca.pub \
-	$OBJ/revoked-keyid >/dev/null || fatal "$SSHKEYGEN KRL failed"
-# These should succeed; they specify an wildcard CA key.
-$SSHKEYGEN $OPTS -kf $OBJ/krl-serial-wild -s NONE $OBJ/revoked-serials \
-	>/dev/null || fatal "$SSHKEYGEN KRL failed"
-$SSHKEYGEN $OPTS -kf $OBJ/krl-keyid-wild -s NONE $OBJ/revoked-keyid \
-	>/dev/null || fatal "$SSHKEYGEN KRL failed"
-# Revoke the same serials with the second CA key to ensure a multi-CA
-# KRL is generated.
-$SSHKEYGEN $OPTS -kf $OBJ/krl-serial -u -s $OBJ/revoked-ca2 \
-	$OBJ/revoked-serials >/dev/null || fatal "$SSHKEYGEN KRL failed"
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-empty - < /dev/null \
+		> /dev/null || fatal "$SSHKEYGEN KRL failed"
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-keys $RKEYS \
+		> /dev/null || fatal "$SSHKEYGEN KRL failed"
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-cert $RCERTS \
+		> /dev/null || fatal "$SSHKEYGEN KRL failed"
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-all $RKEYS $RCERTS \
+		> /dev/null || fatal "$SSHKEYGEN KRL failed"
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-ca $OBJ/revoked-ca.pub \
+		> /dev/null || fatal "$SSHKEYGEN KRL failed"
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-sha1 $OBJ/revoked-sha1 \
+		> /dev/null 2>&1 || fatal "$SSHKEYGEN KRL failed"
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-sha256 $OBJ/revoked-sha256 \
+		> /dev/null 2>&1 || fatal "$SSHKEYGEN KRL failed"
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-hash $OBJ/revoked-hash \
+		> /dev/null 2>&1 || fatal "$SSHKEYGEN KRL failed"
+	# This should fail as KRLs from serial/key-id spec need the CA specified.
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-serial $OBJ/revoked-serials \
+		> /dev/null 2>&1 && fatal "$SSHKEYGEN KRL succeeded unexpectedly"
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-keyid $OBJ/revoked-keyid \
+		> /dev/null 2>&1 && fatal "$SSHKEYGEN KRL succeeded unexpectedly"
+	# These should succeed; they specify an explicit CA key.
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-serial -s $OBJ/revoked-ca \
+		$OBJ/revoked-serials > /dev/null || fatal "$SSHKEYGEN KRL failed"
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-keyid -s $OBJ/revoked-ca.pub \
+		$OBJ/revoked-keyid > /dev/null || fatal "$SSHKEYGEN KRL failed"
+	# These should succeed; they specify an wildcard CA key.
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-serial-wild -s NONE $OBJ/revoked-serials \
+		> /dev/null || fatal "$SSHKEYGEN KRL failed"
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-keyid-wild -s NONE $OBJ/revoked-keyid \
+		> /dev/null || fatal "$SSHKEYGEN KRL failed"
+	# Revoke the same serials with the second CA key to ensure a multi-CA
+	# KRL is generated.
+	$SSHKEYGEN $OPTS -kf $OBJ/krl-serial -u -s $OBJ/revoked-ca2 \
+		$OBJ/revoked-serials > /dev/null || fatal "$SSHKEYGEN KRL failed"
 }
 
 ## XXX dump with trace and grep for set cert serials
@@ -152,20 +167,22 @@ $SSHKEYGEN $OPTS -kf $OBJ/krl-serial -u -s $OBJ/revoked-ca2 \
 verbose "$tid: generating KRLs"
 genkrls
 
-check_krl() {
+check_krl()
+{
 	KEY=$1
 	KRL=$2
 	EXPECT_REVOKED=$3
 	TAG=$4
-	$SSHKEYGEN -Qf $KRL $KEY >/dev/null
+	$SSHKEYGEN -Qf $KRL $KEY > /dev/null
 	result=$?
-	if test "x$EXPECT_REVOKED" = "xy" -a $result -eq 0 ; then
+	if test "x$EXPECT_REVOKED" = "xy" -a $result -eq 0; then
 		fatal "key $KEY not revoked by KRL $KRL: $TAG"
-	elif test "x$EXPECT_REVOKED" = "xn" -a $result -ne 0 ; then
+	elif test "x$EXPECT_REVOKED" = "xn" -a $result -ne 0; then
 		fatal "key $KEY unexpectedly revoked by KRL $KRL: $TAG"
 	fi
 }
-test_rev() {
+test_rev()
+{
 	FILES=$1
 	TAG=$2
 	KEYS_RESULT=$3
@@ -178,29 +195,30 @@ test_rev() {
 	SERIAL_WRESULT=$10
 	KEYID_WRESULT=$11
 	verbose "$tid: checking revocations for $TAG"
-	for f in $FILES ; do
-		check_krl $f $OBJ/krl-empty		no		"$TAG"
-		check_krl $f $OBJ/krl-keys		$KEYS_RESULT	"$TAG"
-		check_krl $f $OBJ/krl-all		$ALL_RESULT	"$TAG"
-		check_krl $f $OBJ/krl-sha1		$HASH_RESULT	"$TAG"
-		check_krl $f $OBJ/krl-sha256		$HASH_RESULT	"$TAG"
-		check_krl $f $OBJ/krl-hash		$HASH_RESULT	"$TAG"
-		check_krl $f $OBJ/krl-serial		$SERIAL_RESULT	"$TAG"
-		check_krl $f $OBJ/krl-keyid		$KEYID_RESULT	"$TAG"
-		check_krl $f $OBJ/krl-cert		$CERTS_RESULT	"$TAG"
-		check_krl $f $OBJ/krl-ca		$CA_RESULT	"$TAG"
-		check_krl $f $OBJ/krl-serial-wild	$SERIAL_WRESULT	"$TAG"
-		check_krl $f $OBJ/krl-keyid-wild	$KEYID_WRESULT	"$TAG"
+	for f in $FILES; do
+		check_krl $f $OBJ/krl-empty no "$TAG"
+		check_krl $f $OBJ/krl-keys $KEYS_RESULT "$TAG"
+		check_krl $f $OBJ/krl-all $ALL_RESULT "$TAG"
+		check_krl $f $OBJ/krl-sha1 $HASH_RESULT "$TAG"
+		check_krl $f $OBJ/krl-sha256 $HASH_RESULT "$TAG"
+		check_krl $f $OBJ/krl-hash $HASH_RESULT "$TAG"
+		check_krl $f $OBJ/krl-serial $SERIAL_RESULT "$TAG"
+		check_krl $f $OBJ/krl-keyid $KEYID_RESULT "$TAG"
+		check_krl $f $OBJ/krl-cert $CERTS_RESULT "$TAG"
+		check_krl $f $OBJ/krl-ca $CA_RESULT "$TAG"
+		check_krl $f $OBJ/krl-serial-wild $SERIAL_WRESULT "$TAG"
+		check_krl $f $OBJ/krl-keyid-wild $KEYID_WRESULT "$TAG"
 	done
 }
 
-test_all() {
+test_all()
+{
 	#                                                           wildcard
 	#                                 keys all hash sr# ID cert  CA srl ID
-	test_rev "$RKEYS"     "revoked keys" y   y    y   n  n    n   n   n  n
-	test_rev "$UKEYS"   "unrevoked keys" n   n    n   n  n    n   n   n  n
-	test_rev "$RCERTS"   "revoked certs" y   y    y   y  y    y   y   y  y
-	test_rev "$UCERTS" "unrevoked certs" n   n    n   n  n    n   y   n  n
+	test_rev "$RKEYS"   "revoked keys" y   y    y   n  n    n   n   n  n
+	test_rev "$UKEYS" "unrevoked keys" n   n    n   n  n    n   n   n  n
+	test_rev "$RCERTS" "revoked certs" y   y    y   y  y    y   y   y  y
+	test_rev "$UCERTS" "unrevoked certs" n n    n   n  n    n   y   n  n
 }
 
 test_all
@@ -208,8 +226,8 @@ test_all
 # Check update. Results should be identical.
 verbose "$tid: testing KRL update"
 for f in $OBJ/krl-keys $OBJ/krl-cert $OBJ/krl-all \
-    $OBJ/krl-ca $OBJ/krl-serial $OBJ/krl-keyid \
-    $OBJ/krl-serial-wild $OBJ/krl-keyid-wild; do
+	$OBJ/krl-ca  $OBJ/krl-serial $OBJ/krl-keyid \
+	$OBJ/krl-serial-wild  $OBJ/krl-keyid-wild; do
 	cp -f $OBJ/krl-empty $f
 	genkrls -u
 done

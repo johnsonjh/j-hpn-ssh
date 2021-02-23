@@ -14,8 +14,8 @@ rm -f $OBJ/keys-command-args
 touch $OBJ/keys-command-args
 chmod a+rw $OBJ/keys-command-args
 
-expected_key_text=`awk '{ print $2 }' < $OBJ/ssh-ed25519.pub`
-expected_key_fp=`$SSHKEYGEN -lf $OBJ/ssh-ed25519.pub | awk '{ print $2 }'`
+expected_key_text=$(awk '{ print $2 }' < $OBJ/ssh-ed25519.pub)
+expected_key_fp=$($SSHKEYGEN -lf $OBJ/ssh-ed25519.pub | awk '{ print $2 }')
 
 # Establish a AuthorizedKeysCommand in /var/run where it will have
 # acceptable directory permissions.
@@ -37,7 +37,7 @@ exec cat "$OBJ/authorized_keys_${LOGNAME}"
 _EOF
 $SUDO chmod 0755 "$KEY_COMMAND"
 
-if ! $OBJ/check-perm -m keys-command $KEY_COMMAND ; then
+if ! $OBJ/check-perm -m keys-command $KEY_COMMAND; then
 	echo "skipping: $KEY_COMMAND is unsuitable as AuthorizedKeysCommand"
 	$SUDO rm -f $KEY_COMMAND
 	exit 0
@@ -56,7 +56,7 @@ if [ -x $KEY_COMMAND ]; then
 
 	# Ensure that $PATH is sanitised in sshd
 	env PATH=$PATH:/sbin/mekmitasdigoat \
-	    ${SSH} -F $OBJ/ssh_proxy somehost true
+		${SSH}  -F $OBJ/ssh_proxy somehost true
 	if [ $? -ne 0 ]; then
 		fail "connect failed"
 	fi
@@ -72,7 +72,7 @@ if [ -x $KEY_COMMAND ]; then
 
 	# Ensure that $PATH is sanitised in sshd
 	env PATH=$PATH:/sbin/mekmitasdigoat \
-	    ${SSH} -F $OBJ/ssh_proxy somehost true
+		${SSH}  -F $OBJ/ssh_proxy somehost true
 	if [ $? -ne 0 ]; then
 		fail "connect failed"
 	fi

@@ -6,7 +6,7 @@ tid="hostkey agent"
 rm -f $OBJ/agent-key.* $OBJ/ssh_proxy.orig $OBJ/known_hosts.orig
 
 trace "start agent"
-eval `${SSHAGENT} ${EXTRA_AGENT_ARGS} -s` > /dev/null
+eval $(${SSHAGENT} ${EXTRA_AGENT_ARGS} -s) > /dev/null
 r=$?
 [ $r -ne 0 ] && fatal "could not start ssh-agent: exit code $r"
 
@@ -14,13 +14,13 @@ grep -vi 'hostkey' $OBJ/sshd_proxy > $OBJ/sshd_proxy.orig
 echo "HostKeyAgent $SSH_AUTH_SOCK" >> $OBJ/sshd_proxy.orig
 
 trace "load hostkeys"
-for k in $SSH_KEYTYPES ; do
+for k in $SSH_KEYTYPES; do
 	${SSHKEYGEN} -qt $k -f $OBJ/agent-key.$k -N '' || fatal "ssh-keygen $k"
 	(
 		printf 'localhost-with-alias,127.0.0.1,::1 '
 		cat $OBJ/agent-key.$k.pub
 	) >> $OBJ/known_hosts.orig
-	${SSHADD} $OBJ/agent-key.$k >/dev/null 2>&1 || \
+	${SSHADD} $OBJ/agent-key.$k > /dev/null 2>&1 ||
 		fatal "couldn't load key $OBJ/agent-key.$k"
 	echo "Hostkey $OBJ/agent-key.${k}" >> $OBJ/sshd_proxy.orig
 	# Remove private key so the server can't use it.
@@ -31,14 +31,14 @@ cp $OBJ/known_hosts.orig $OBJ/known_hosts
 unset SSH_AUTH_SOCK
 
 for ps in yes; do
-	for k in $SSH_KEYTYPES ; do
+	for k in $SSH_KEYTYPES; do
 		verbose "key type $k privsep=$ps"
 		cp $OBJ/sshd_proxy.orig $OBJ/sshd_proxy
 		echo "UsePrivilegeSeparation $ps" >> $OBJ/sshd_proxy
 		echo "HostKeyAlgorithms $k" >> $OBJ/sshd_proxy
 		opts="-oHostKeyAlgorithms=$k -F $OBJ/ssh_proxy"
 		cp $OBJ/known_hosts.orig $OBJ/known_hosts
-		SSH_CONNECTION=`${SSH} $opts host 'echo $SSH_CONNECTION'`
+		SSH_CONNECTION=$(${SSH} $opts host 'echo $SSH_CONNECTION')
 		if [ $? -ne 0 ]; then
 			fail "privsep=$ps failed"
 		fi
@@ -50,4 +50,3 @@ done
 
 trace "kill agent"
 ${SSHAGENT} -k > /dev/null
-

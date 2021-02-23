@@ -7,7 +7,10 @@ tid="stderr data after eof"
 rm -f ${DATA} ${COPY}
 cp /dev/null ${DATA}
 for i in 1 2 3 4 5 6; do
-	(date;echo $i) | md5 >> ${DATA}
+	(
+		date
+		echo    $i
+	)            | md5 >> ${DATA}
 done
 
 ${SSH} -F $OBJ/ssh_proxy otherhost \
@@ -19,6 +22,6 @@ if [ $r -ne 0 ]; then
 fi
 egrep 'Disconnecting: Received extended_data after EOF' ${COPY} &&
 	fail "ext data received after eof"
-cmp ${DATA} ${COPY}	|| fail "stderr corrupt"
+cmp ${DATA} ${COPY} || fail "stderr corrupt"
 
 rm -f ${DATA} ${COPY}

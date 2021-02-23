@@ -1,11 +1,12 @@
 #!/usr/bin/env sh
 #
 # fixciphers - remove unsupported ciphers from man pages.
-# Usage: fixpaths /path/to/sed cipher1 [cipher2] <infile >outfile 
+# Usage: fixpaths /path/to/sed cipher1 [cipher2] <infile >outfile
 #
 # Author: Darren Tucker (dtucker at zip com.au).  Placed in the public domain.
 
-die() {
+die()
+{
 	printf '%s\n' "${*}"
 	exit 1
 }

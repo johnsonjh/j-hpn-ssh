@@ -16,7 +16,7 @@ CTL=${SSH_REGRESS_TMP}/ctl-sock
 for j in 0 1 2; do
 	for i in 0 1 2; do
 		a=$base$j$i
-		b=`expr $a + 50`
+		b=$(expr $a + 50)
 		c=$last
 		# fwd chain: $a -> $b -> $c
 		fwd="$fwd -L$a:127.0.0.1:$b -R$b:127.0.0.1:$c"
@@ -31,32 +31,32 @@ ${SSH} -S $CTL -N -M -F $OBJ/ssh_config -f $fwd somehost
 trace "transfer over forwarded channels and check result"
 ${SSH} -F $OBJ/ssh_config -p$last -o 'ConnectionAttempts=4' \
 	somehost cat ${DATA} > ${COPY}
-test -s ${COPY}		|| fail "failed copy of ${DATA}"
-cmp ${DATA} ${COPY}	|| fail "corrupted copy of ${DATA}"
+test -s ${COPY}  || fail "failed copy of ${DATA}"
+cmp ${DATA} ${COPY} || fail "corrupted copy of ${DATA}"
 
-${SSH} -F $OBJ/ssh_config -S $CTL -O exit somehost 2>/dev/null
+${SSH} -F $OBJ/ssh_config -S $CTL -O exit somehost 2> /dev/null
 
 for d in L R; do
 	trace "exit on -$d forward failure"
 
 	# this one should succeed
-	${SSH}  -F $OBJ/ssh_config \
-	    -$d ${base}01:127.0.0.1:$PORT \
-	    -$d ${base}02:127.0.0.1:$PORT \
-	    -$d ${base}03:127.0.0.1:$PORT \
-	    -$d ${base}04:127.0.0.1:$PORT \
-	    -oExitOnForwardFailure=yes somehost true
+	${SSH} -F $OBJ/ssh_config \
+		-$d  ${base}01:127.0.0.1:$PORT \
+		-$d  ${base}02:127.0.0.1:$PORT \
+		-$d  ${base}03:127.0.0.1:$PORT \
+		-$d  ${base}04:127.0.0.1:$PORT \
+		-oExitOnForwardFailure=yes  somehost true
 	if [ $? != 0 ]; then
 		fatal "connection failed, should not"
 	else
 		# this one should fail
 		${SSH} -q -F $OBJ/ssh_config \
-		    -$d ${base}01:127.0.0.1:$PORT \
-		    -$d ${base}02:127.0.0.1:$PORT \
-		    -$d ${base}03:127.0.0.1:$PORT \
-		    -$d ${base}01:localhost:$PORT \
-		    -$d ${base}04:127.0.0.1:$PORT \
-		    -oExitOnForwardFailure=yes somehost true
+			-$d  ${base}01:127.0.0.1:$PORT \
+			-$d  ${base}02:127.0.0.1:$PORT \
+			-$d  ${base}03:127.0.0.1:$PORT \
+			-$d  ${base}01:localhost:$PORT \
+			-$d  ${base}04:127.0.0.1:$PORT \
+			-oExitOnForwardFailure=yes  somehost true
 		r=$?
 		if [ $r != 255 ]; then
 			fail "connection not termintated, but should ($r)"
@@ -70,30 +70,30 @@ ${SSH} -F $OBJ/ssh_config -oClearAllForwardings=yes somehost true
 trace "clear local forward"
 rm -f $CTL
 ${SSH} -S $CTL -N -M -f -F $OBJ/ssh_config -L ${base}01:127.0.0.1:$PORT \
-    -oClearAllForwardings=yes somehost
+	-oClearAllForwardings=yes  somehost
 if [ $? != 0 ]; then
 	fail "connection failed with cleared local forwarding"
 else
 	# this one should fail
 	${SSH} -F $OBJ/ssh_config -p ${base}01 somehost true \
-	     >>$TEST_REGRESS_LOGFILE 2>&1 && \
+		>> $TEST_REGRESS_LOGFILE  2>&1 &&
 		fail "local forwarding not cleared"
 fi
-${SSH} -F $OBJ/ssh_config -S $CTL -O exit somehost 2>/dev/null
+${SSH} -F $OBJ/ssh_config -S $CTL -O exit somehost 2> /dev/null
 
 trace "clear remote forward"
 rm -f $CTL
 ${SSH} -S $CTL -N -M -f -F $OBJ/ssh_config -R ${base}01:127.0.0.1:$PORT \
-    -oClearAllForwardings=yes somehost
+	-oClearAllForwardings=yes  somehost
 if [ $? != 0 ]; then
 	fail "connection failed with cleared remote forwarding"
 else
 	# this one should fail
 	${SSH} -F $OBJ/ssh_config -p ${base}01 somehost true \
-	     >>$TEST_REGRESS_LOGFILE 2>&1 && \
+		>> $TEST_REGRESS_LOGFILE  2>&1 &&
 		fail "remote forwarding not cleared"
 fi
-${SSH} -F $OBJ/ssh_config -S $CTL -O exit somehost 2>/dev/null
+${SSH} -F $OBJ/ssh_config -S $CTL -O exit somehost 2> /dev/null
 
 trace "stdio forwarding"
 cmd="${SSH} -F $OBJ/ssh_config"
@@ -112,10 +112,10 @@ ${SSH} -S $CTL -N -M -F $OBJ/ssh_config -f somehost
 trace "config file: transfer over forwarded channels and check result"
 ${SSH} -F $OBJ/ssh_config -p${base}02 -o 'ConnectionAttempts=4' \
 	somehost cat ${DATA} > ${COPY}
-test -s ${COPY}		|| fail "failed copy of ${DATA}"
-cmp ${DATA} ${COPY}	|| fail "corrupted copy of ${DATA}"
+test -s ${COPY}  || fail "failed copy of ${DATA}"
+cmp ${DATA} ${COPY} || fail "corrupted copy of ${DATA}"
 
-${SSH} -F $OBJ/ssh_config -S $CTL -O exit somehost 2>/dev/null
+${SSH} -F $OBJ/ssh_config -S $CTL -O exit somehost 2> /dev/null
 
 trace "transfer over chained unix domain socket forwards and check result"
 rm -f $OBJ/unix-[123].fwd
@@ -126,11 +126,10 @@ ${SSH} -S $CTL.2 -N -M -f -F $OBJ/ssh_config -R[$OBJ/unix-2.fwd]:[$OBJ/unix-3.fw
 ${SSH} -S $CTL.3 -N -M -f -F $OBJ/ssh_config -L[$OBJ/unix-3.fwd]:127.0.0.1:$PORT somehost
 ${SSH} -F $OBJ/ssh_config -p${base}01 -o 'ConnectionAttempts=4' \
 	somehost cat ${DATA} > ${COPY}
-test -s ${COPY}			|| fail "failed copy ${DATA}"
-cmp ${DATA} ${COPY}		|| fail "corrupted copy of ${DATA}"
+test -s ${COPY}   || fail "failed copy ${DATA}"
+cmp ${DATA} ${COPY}  || fail "corrupted copy of ${DATA}"
 
-${SSH} -F $OBJ/ssh_config -S $CTL -O exit somehost 2>/dev/null
-${SSH} -F $OBJ/ssh_config -S $CTL.1 -O exit somehost 2>/dev/null
-${SSH} -F $OBJ/ssh_config -S $CTL.2 -O exit somehost 2>/dev/null
-${SSH} -F $OBJ/ssh_config -S $CTL.3 -O exit somehost 2>/dev/null
-
+${SSH} -F $OBJ/ssh_config -S $CTL -O exit somehost 2> /dev/null
+${SSH} -F $OBJ/ssh_config -S $CTL.1 -O exit somehost 2> /dev/null
+${SSH} -F $OBJ/ssh_config -S $CTL.2 -O exit somehost 2> /dev/null
+${SSH} -F $OBJ/ssh_config -S $CTL.3 -O exit somehost 2> /dev/null

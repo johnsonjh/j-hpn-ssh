@@ -27,19 +27,19 @@ VERSIONS="
 # 2.0.10 2.0.12 2.0.13 don't like the test setup
 
 # setup authorized keys
-SRC=`dirname ${SCRIPT}`
+SRC=$(dirname ${SCRIPT})
 cp ${SRC}/dsa_ssh2.prv ${OBJ}/id.com
 chmod 600 ${OBJ}/id.com
-${SSHKEYGEN} -i -f ${OBJ}/id.com	> $OBJ/id.openssh
+${SSHKEYGEN} -i -f ${OBJ}/id.com > $OBJ/id.openssh
 chmod 600 ${OBJ}/id.openssh
-${SSHKEYGEN} -y -f ${OBJ}/id.openssh	> $OBJ/authorized_keys_$USER
-${SSHKEYGEN} -e -f ${OBJ}/id.openssh	> $OBJ/id.com.pub
+${SSHKEYGEN} -y -f ${OBJ}/id.openssh > $OBJ/authorized_keys_$USER
+${SSHKEYGEN} -e -f ${OBJ}/id.openssh > $OBJ/id.com.pub
 echo IdKey ${OBJ}/id.com > ${OBJ}/id.list
 
 # we need a DSA host key
 t=dsa
 rm -f                             ${OBJ}/$t ${OBJ}/$t.pub
-${SSHKEYGEN} -q -N '' -t $t -f	  ${OBJ}/$t
+${SSHKEYGEN} -q -N '' -t $t -f   ${OBJ}/$t
 $SUDO cp $OBJ/$t $OBJ/host.$t
 echo HostKey $OBJ/host.$t >> $OBJ/sshd_config
 
@@ -76,40 +76,40 @@ for v in ${VERSIONS}; do
 	verbose "ssh2 ${v}"
 	key=ssh-dss
 	skipcat=0
-        case $v in
-        2.1.*|2.3.0)
-                skipcat=1
-                ;;
-        3.0.*)
-                key=ssh-rsa
-                ;;
-        esac
+	case $v in
+		2.1.* |   2.3.0)
+			skipcat=1
+			;;
+		3.0.*)
+			key=ssh-rsa
+			;;
+	esac
 	cp ${HK}.$key.pub ${HK}.pub
 
 	# check exit status
 	${ssh2} -q -F ${OBJ}/ssh2_config somehost exit 42
 	r=$?
-        if [ $r -ne 42 ]; then
-                fail "ssh2 ${v} exit code test failed (got $r, expected 42)"
-        fi
+	if      [ $r -ne 42 ]; then
+		fail             "ssh2 ${v} exit code test failed (got $r, expected 42)"
+	fi
 
 	# data transfer
 	rm -f ${COPY}
 	${ssh2} -F ${OBJ}/ssh2_config somehost cat ${DATA} > ${COPY}
-        if [ $? -ne 0 ]; then
-                fail "ssh2 ${v} cat test (receive) failed"
-        fi
-	cmp ${DATA} ${COPY}	|| fail "ssh2 ${v} cat test (receive) data mismatch"
+	if      [ $? -ne 0 ]; then
+		fail             "ssh2 ${v} cat test (receive) failed"
+	fi
+	cmp ${DATA} ${COPY} || fail "ssh2 ${v} cat test (receive) data mismatch"
 
 	# data transfer, again
 	if [ $skipcat -eq 0 ]; then
 		rm -f ${COPY}
-		cat ${DATA} | \
+		cat ${DATA} |
 			${ssh2} -F ${OBJ}/ssh2_config host "cat > ${COPY}"
 		if [ $? -ne 0 ]; then
 			fail "ssh2 ${v} cat test (send) failed"
 		fi
-		cmp ${DATA} ${COPY}	|| \
+		cmp ${DATA} ${COPY} ||
 			fail "ssh2 ${v} cat test (send) data mismatch"
 	fi
 
@@ -118,13 +118,13 @@ for v in ${VERSIONS}; do
 	${ssh2} -F ${OBJ}/ssh2_config somehost \
 		exec sh -c \'"exec > /dev/null; sleep 1; echo bla 1>&2; exit 0"\' \
 		2> /dev/null
-        if [ $? -ne 0 ]; then
-                fail "ssh2 ${v} stderr test failed"
-        fi
+	if      [ $? -ne 0 ]; then
+		fail             "ssh2 ${v} stderr test failed"
+	fi
 done
 
 rm -rf ${OBJ}/${USER}
 for i in ssh2_config random_seed dsa.pub dsa host.dsa \
-    id.list id.com id.com.pub id.openssh; do
+	id.list  id.com id.com.pub id.openssh; do
 	rm -f ${OBJ}/$i
 done

@@ -7,40 +7,40 @@ rm -f $OBJ/user_ca_key* $OBJ/user_key*
 rm -f $OBJ/cert_user_key*
 
 # Create a CA key
-${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_ca_key1 ||\
+${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_ca_key1 ||
 	fatal "ssh-keygen failed"
-${SSHKEYGEN} -q -N '' -t ed25519  -f $OBJ/user_ca_key2 ||\
+${SSHKEYGEN} -q -N '' -t ed25519  -f $OBJ/user_ca_key2 ||
 	fatal "ssh-keygen failed"
 
 # Make some keys and certificates.
-${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_key1 || \
+${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_key1 ||
 	fatal "ssh-keygen failed"
-${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_key2 || \
+${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_key2 ||
 	fatal "ssh-keygen failed"
-${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_key3 || \
+${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_key3 ||
 	fatal "ssh-keygen failed"
-${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_key4 || \
+${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_key4 ||
 	fatal "ssh-keygen failed"
-${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_key5 || \
+${SSHKEYGEN} -q -N '' -t ed25519 -f $OBJ/user_key5 ||
 	fatal "ssh-keygen failed"
 
 # Move the certificate to a different address to better control
 # when it is offered.
 ${SSHKEYGEN} -q -s $OBJ/user_ca_key1 -I "regress user key for $USER" \
 	-z $$ -n ${USER} $OBJ/user_key1 ||
-		fatal "couldn't sign user_key1 with user_ca_key1"
+	fatal "couldn't sign user_key1 with user_ca_key1"
 mv $OBJ/user_key1-cert.pub $OBJ/cert_user_key1_1.pub
 ${SSHKEYGEN} -q -s $OBJ/user_ca_key2 -I "regress user key for $USER" \
 	-z $$ -n ${USER} $OBJ/user_key1 ||
-		fatal "couldn't sign user_key1 with user_ca_key2"
+	fatal "couldn't sign user_key1 with user_ca_key2"
 mv $OBJ/user_key1-cert.pub $OBJ/cert_user_key1_2.pub
 ${SSHKEYGEN} -q -s $OBJ/user_ca_key1 -I "regress user key for $USER" \
 	-z $$ -n ${USER} $OBJ/user_key3 ||
-		fatal "couldn't sign user_key3 with user_ca_key1"
+	fatal "couldn't sign user_key3 with user_ca_key1"
 rm $OBJ/user_key3.pub # to test use of private key w/o public half.
 ${SSHKEYGEN} -q -s $OBJ/user_ca_key1 -I "regress user key for $USER" \
 	-z $$ -n ${USER} $OBJ/user_key4 ||
-		fatal "couldn't sign user_key4 with user_ca_key1"
+	fatal "couldn't sign user_key4 with user_ca_key1"
 rm $OBJ/user_key4 $OBJ/user_key4.pub # to test no matching pub/private key case.
 
 trace 'try with identity files'
@@ -54,17 +54,17 @@ cat $OBJ/ssh_proxy | grep -v IdentityFile > $OBJ/no_identity_config
 # XXX: verify that certificate used was what we expect. Needs exposure of
 # keys via environment variable or similar.
 
-	# Key with no .pub should work - finding the equivalent *-cert.pub.
+# Key with no .pub should work - finding the equivalent *-cert.pub.
 verbose "identity cert with no plain public file"
 ${SSH} -F $OBJ/no_identity_config -oIdentitiesOnly=yes \
-    -i $OBJ/user_key3 somehost exit 52
+	-i  $OBJ/user_key3 somehost exit 52
 [ $? -ne 52 ] && fail "ssh failed"
 
 # CertificateFile matching private key with no .pub file should work.
 verbose "CertificateFile with no plain public file"
 ${SSH} -F $OBJ/no_identity_config -oIdentitiesOnly=yes \
-    -oCertificateFile=$OBJ/user_key3-cert.pub \
-    -i $OBJ/user_key3 somehost exit 52
+	-oCertificateFile=$OBJ/user_key3-cert.pub \
+	-i  $OBJ/user_key3 somehost exit 52
 [ $? -ne 52 ] && fail "ssh failed"
 
 # Just keys should fail
@@ -120,7 +120,7 @@ if [ $? -ne 2 ]; then
 fi
 
 trace "start agent"
-eval `${SSHAGENT} ${EXTRA_AGENT_ARGS} -s` > /dev/null
+eval $(${SSHAGENT} ${EXTRA_AGENT_ARGS} -s) > /dev/null
 r=$?
 if [ $r -ne 0 ]; then
 	fatal "could not start ssh-agent: exit code $r"

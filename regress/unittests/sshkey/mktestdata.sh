@@ -3,20 +3,21 @@
 
 PW=mekmitasdigoat
 
-rsa_params() {
+rsa_params()
+{
 	_in="$1"
 	_outbase="$2"
 	set -e
-	openssl rsa -noout -text -in $_in | \
-	    awk '/^modulus:$/,/^publicExponent:/' | \
-	    grep -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.n
-	openssl rsa -noout -text -in $_in | \
-	    awk '/^prime1:$/,/^prime2:/' | \
-	    grep -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.p
-	openssl rsa -noout -text -in $_in | \
-	    awk '/^prime2:$/,/^exponent1:/' | \
-	    grep -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.q
-	for x in n p q ; do
+	openssl rsa -noout -text -in $_in |
+		awk  '/^modulus:$/,/^publicExponent:/' |
+		grep  -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.n
+	openssl rsa -noout -text -in $_in |
+		awk  '/^prime1:$/,/^prime2:/' |
+		grep  -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.p
+	openssl rsa -noout -text -in $_in |
+		awk  '/^prime2:$/,/^exponent1:/' |
+		grep  -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.q
+	for x in n p q; do
 		echo "" >> ${_outbase}.$x
 		echo ============ ${_outbase}.$x
 		cat ${_outbase}.$x
@@ -24,20 +25,21 @@ rsa_params() {
 	done
 }
 
-dsa_params() {
+dsa_params()
+{
 	_in="$1"
 	_outbase="$2"
 	set -e
-	openssl dsa -noout -text -in $_in | \
-	    awk '/^priv:$/,/^pub:/' | \
-	    grep -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.priv
-	openssl dsa -noout -text -in $_in | \
-	    awk '/^pub:/,/^P:/' | #\
-	    grep -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.pub
-	openssl dsa -noout -text -in $_in | \
-	    awk '/^G:/,0' | \
-	    grep -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.g
-	for x in priv pub g ; do
+	openssl dsa -noout -text -in $_in |
+		awk  '/^priv:$/,/^pub:/' |
+		grep  -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.priv
+	openssl dsa -noout -text -in $_in |
+		awk  '/^pub:/,/^P:/' | #\
+		grep  -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.pub
+	openssl dsa -noout -text -in $_in |
+		awk  '/^G:/,0' |
+		grep  -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.g
+	for x in priv pub g; do
 		echo "" >> ${_outbase}.$x
 		echo ============ ${_outbase}.$x
 		cat ${_outbase}.$x
@@ -45,20 +47,21 @@ dsa_params() {
 	done
 }
 
-ecdsa_params() {
+ecdsa_params()
+{
 	_in="$1"
 	_outbase="$2"
 	set -e
-	openssl ec -noout -text -in $_in | \
-	    awk '/^priv:$/,/^pub:/' | \
-	    grep -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.priv
-	openssl ec -noout -text -in $_in | \
-	    awk '/^pub:/,/^ASN1 OID:/' | #\
-	    grep -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.pub
-	openssl ec -noout -text -in $_in | \
-	    grep "ASN1 OID:" | \
-	    sed 's/.*: //;s/ *$//' | tr -d '\n' > ${_outbase}.curve
-	for x in priv pub curve ; do
+	openssl ec -noout -text -in $_in |
+		awk  '/^priv:$/,/^pub:/' |
+		grep  -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.priv
+	openssl ec -noout -text -in $_in |
+		awk  '/^pub:/,/^ASN1 OID:/' | #\
+		grep  -v '^[a-zA-Z]' | tr -d ' \n:' > ${_outbase}.pub
+	openssl ec -noout -text -in $_in |
+		grep  "ASN1 OID:" |
+		sed  's/.*: //;s/ *$//' | tr -d '\n' > ${_outbase}.curve
+	for x in priv pub curve; do
 		echo "" >> ${_outbase}.$x
 		echo ============ ${_outbase}.$x
 		cat ${_outbase}.$x
@@ -70,9 +73,9 @@ set -ex
 
 cd testdata
 
-if [ -f ../../../misc/sk-dummy/sk-dummy.so ] ; then
+if [ -f ../../../misc/sk-dummy/sk-dummy.so ]; then
 	SK_DUMMY=../../../misc/sk-dummy/sk-dummy.so
-elif [ -f ../../../misc/sk-dummy/obj/sk-dummy.so ] ; then
+elif [ -f ../../../misc/sk-dummy/obj/sk-dummy.so ]; then
 	SK_DUMMY=../../../misc/sk-dummy/obj/sk-dummy.so
 else
 	echo "Can't find sk-dummy.so" 1>&2
@@ -91,19 +94,18 @@ ssh-keygen -t dsa -b 1024 -C "DSA test key #1" -N "" -f dsa_1 -m PEM
 ssh-keygen -t ecdsa -b 256 -C "ECDSA test key #1" -N "" -f ecdsa_1 -m PEM
 ssh-keygen -t ed25519 -C "ED25519 test key #1" -N "" -f ed25519_1
 ssh-keygen -w "$SK_DUMMY" -t ecdsa-sk -C "ECDSA-SK test key #1" \
-    -N "" -f ecdsa_sk1
+	-N  "" -f ecdsa_sk1
 ssh-keygen -w "$SK_DUMMY" -t ed25519-sk -C "ED25519-SK test key #1" \
-    -N "" -f ed25519_sk1
-
+	-N  "" -f ed25519_sk1
 
 ssh-keygen -t rsa -b 2048 -C "RSA test key #2" -N "" -f rsa_2 -m PEM
 ssh-keygen -t dsa -b 1024 -C "DSA test key #2" -N "" -f dsa_2 -m PEM
 ssh-keygen -t ecdsa -b 521 -C "ECDSA test key #2" -N "" -f ecdsa_2 -m PEM
 ssh-keygen -t ed25519 -C "ED25519 test key #2" -N "" -f ed25519_2
 ssh-keygen -w "$SK_DUMMY" -t ecdsa-sk -C "ECDSA-SK test key #2" \
-    -N "" -f ecdsa_sk2
+	-N  "" -f ecdsa_sk2
 ssh-keygen -w "$SK_DUMMY" -t ed25519-sk -C "ED25519-SK test key #2" \
-    -N "" -f ed25519_sk2
+	-N  "" -f ed25519_sk2
 
 cp rsa_1 rsa_n
 cp dsa_1 dsa_n
@@ -142,24 +144,23 @@ ecdsa_params ecdsa_2 ecdsa_2.param
 # XXX ed25519, *sk params
 
 ssh-keygen -s rsa_2 -I hugo -n user1,user2 \
-    -Oforce-command=/bin/ls -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
-    -V 19990101:20110101 -z 1 rsa_1.pub
+	-Oforce-command=/bin/ls  -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
+	-V  19990101:20110101 -z 1 rsa_1.pub
 ssh-keygen -s rsa_2 -I hugo -n user1,user2 \
-    -Oforce-command=/bin/ls -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
-    -V 19990101:20110101 -z 2 dsa_1.pub
+	-Oforce-command=/bin/ls  -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
+	-V  19990101:20110101 -z 2 dsa_1.pub
 ssh-keygen -s rsa_2 -I hugo -n user1,user2 \
-    -Oforce-command=/bin/ls -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
-    -V 19990101:20110101 -z 3 ecdsa_1.pub
+	-Oforce-command=/bin/ls  -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
+	-V  19990101:20110101 -z 3 ecdsa_1.pub
 ssh-keygen -s rsa_2 -I hugo -n user1,user2 \
-    -Oforce-command=/bin/ls -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
-    -V 19990101:20110101 -z 4 ed25519_1.pub
+	-Oforce-command=/bin/ls  -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
+	-V  19990101:20110101 -z 4 ed25519_1.pub
 ssh-keygen -s rsa_2 -I hugo -n user1,user2 \
-    -Oforce-command=/bin/ls -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
-    -V 19990101:20110101 -z 4 ecdsa_sk1.pub
+	-Oforce-command=/bin/ls  -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
+	-V  19990101:20110101 -z 4 ecdsa_sk1.pub
 ssh-keygen -s rsa_2 -I hugo -n user1,user2 \
-    -Oforce-command=/bin/ls -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
-    -V 19990101:20110101 -z 4 ed25519_sk1.pub
-
+	-Oforce-command=/bin/ls  -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
+	-V  19990101:20110101 -z 4 ed25519_sk1.pub
 
 # Make a few RSA variant signature too.
 cp rsa_1 rsa_1_sha1
@@ -167,24 +168,24 @@ cp rsa_1 rsa_1_sha512
 cp rsa_1.pub rsa_1_sha1.pub
 cp rsa_1.pub rsa_1_sha512.pub
 ssh-keygen -s rsa_2 -I hugo -n user1,user2 -t ssh-rsa \
-    -Oforce-command=/bin/ls -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
-    -V 19990101:20110101 -z 1 rsa_1_sha1.pub
+	-Oforce-command=/bin/ls  -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
+	-V  19990101:20110101 -z 1 rsa_1_sha1.pub
 ssh-keygen -s rsa_2 -I hugo -n user1,user2 -t rsa-sha2-512 \
-    -Oforce-command=/bin/ls -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
-    -V 19990101:20110101 -z 1 rsa_1_sha512.pub
+	-Oforce-command=/bin/ls  -Ono-port-forwarding -Osource-address=10.0.0.0/8 \
+	-V  19990101:20110101 -z 1 rsa_1_sha512.pub
 
 ssh-keygen -s ed25519_1 -I julius -n host1,host2 -h \
-    -V 19990101:20110101 -z 5 rsa_1.pub
+	-V  19990101:20110101 -z 5 rsa_1.pub
 ssh-keygen -s ed25519_1 -I julius -n host1,host2 -h \
-    -V 19990101:20110101 -z 6 dsa_1.pub
+	-V  19990101:20110101 -z 6 dsa_1.pub
 ssh-keygen -s ecdsa_1 -I julius -n host1,host2 -h \
-    -V 19990101:20110101 -z 7 ecdsa_1.pub
+	-V  19990101:20110101 -z 7 ecdsa_1.pub
 ssh-keygen -s ed25519_1 -I julius -n host1,host2 -h \
-    -V 19990101:20110101 -z 8 ed25519_1.pub
+	-V  19990101:20110101 -z 8 ed25519_1.pub
 ssh-keygen -s ecdsa_1 -I julius -n host1,host2 -h \
-    -V 19990101:20110101 -z 7 ecdsa_sk1.pub
+	-V  19990101:20110101 -z 7 ecdsa_sk1.pub
 ssh-keygen -s ed25519_1 -I julius -n host1,host2 -h \
-    -V 19990101:20110101 -z 8 ed25519_sk1.pub
+	-V  19990101:20110101 -z 8 ed25519_sk1.pub
 
 ssh-keygen -lf rsa_1 | awk '{print $2}' > rsa_1.fp
 ssh-keygen -lf dsa_1 | awk '{print $2}' > dsa_1.fp

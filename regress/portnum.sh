@@ -3,17 +3,19 @@
 
 tid="port number parsing"
 
-badport() {
+badport()
+{
 	port=$1
 	verbose "$tid: invalid port $port"
-	if ${SSH} -F $OBJ/ssh_proxy -p $port somehost true 2>/dev/null ; then
+	if ${SSH} -F $OBJ/ssh_proxy -p $port somehost true 2> /dev/null; then
 		fail "$tid accepted invalid port $port"
 	fi
 }
-goodport() {
+goodport()
+{
 	port=$1
 	verbose "$tid: valid port $port"
-	if ${SSH} -F $OBJ/ssh_proxy -p $port somehost true 2>/dev/null ; then
+	if ${SSH} -F $OBJ/ssh_proxy -p $port somehost true 2> /dev/null; then
 		:
 	else
 		fail "$tid rejected valid port $port"
@@ -31,4 +33,3 @@ goodport 22
 goodport 2222
 goodport 22222
 goodport 65535
-

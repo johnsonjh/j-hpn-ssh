@@ -7,7 +7,7 @@ SSHD_ORIG=$SSHD
 SSHD_COPY=$OBJ/sshd
 
 # Start a sshd and then delete it
-start_sshd_copy ()
+start_sshd_copy()
 {
 	# NB. prefer ln to cp here. On some OSX 19.4 configurations,
 	# djm has seen failure after fork() when the executable image
@@ -19,15 +19,15 @@ start_sshd_copy ()
 }
 
 # Do basic copy tests
-copy_tests ()
+copy_tests()
 {
 	rm -f ${COPY}
 	${SSH} -nq -F $OBJ/ssh_config somehost \
-	    cat ${DATA} > ${COPY}
+		cat  ${DATA} > ${COPY}
 	if [ $? -ne 0 ]; then
 		fail "ssh cat $DATA failed"
 	fi
-	cmp ${DATA} ${COPY}		|| fail "corrupted copy"
+	cmp ${DATA} ${COPY} || fail "corrupted copy"
 	rm -f ${COPY}
 }
 
@@ -46,12 +46,12 @@ cp $OBJ/sshd_config.orig $OBJ/sshd_config
 # cygwin can't fork a deleted binary
 if [ "$os" != "cygwin" ]; then
 
-verbose "test reexec fallback"
+	verbose "test reexec fallback"
 
-start_sshd_copy
-rm -f $SSHD_COPY
+	start_sshd_copy
+	rm -f $SSHD_COPY
 
-copy_tests
+	copy_tests
 
-stop_sshd
+	stop_sshd
 fi

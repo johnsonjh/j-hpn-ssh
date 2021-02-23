@@ -20,4 +20,3 @@ if [ $? -ne 0 ]; then
 fi
 
 mv ${KEYS}.bak ${KEYS}
-

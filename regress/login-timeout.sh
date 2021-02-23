@@ -10,7 +10,10 @@ echo "LoginGraceTime 10s" >> $OBJ/sshd_config
 echo "MaxStartups 1" >> $OBJ/sshd_config
 start_sshd
 
-(echo SSH-2.0-fake; sleep 60) | telnet 127.0.0.1 ${PORT} >/dev/null 2>&1 &
+(
+	echo SSH-2.0-fake
+	sleep                  60
+)                             | telnet 127.0.0.1 ${PORT} > /dev/null 2>&1 &
 sleep 15
 ${SSH} -F $OBJ/ssh_config somehost true
 if [ $? -ne 0 ]; then

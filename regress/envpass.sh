@@ -37,7 +37,7 @@ fi
 trace "pass single env, accept single env"
 verbose "test $tid: pass single env, accept single env"
 _XXX_TEST=blah ${SSH} -oSendEnv="_XXX_TEST" -F $OBJ/ssh_proxy_envpass \
-    otherhost sh << 'EOF'
+	otherhost  sh << 'EOF'
 	test X"$_XXX_TEST" = X"blah"
 EOF
 r=$?
@@ -48,7 +48,7 @@ fi
 trace "pass multiple env, accept multiple env"
 verbose "test $tid: pass multiple env, accept multiple env"
 _XXX_TEST_A=1 _XXX_TEST_B=2 ${SSH} -oSendEnv="_XXX_TEST_*" \
-    -F $OBJ/ssh_proxy_envpass otherhost \
+	-F  $OBJ/ssh_proxy_envpass otherhost \
 	sh << 'EOF'
 	test X"$_XXX_TEST_A" = X"1" -a X"$_XXX_TEST_B" = X"2"
 EOF

@@ -3,10 +3,10 @@
 
 tid="protocol version mismatch"
 
-mismatch ()
+mismatch()
 {
 	client=$2
-	banner=`echo ${client} | ${SSHD} -i -f ${OBJ}/sshd_proxy`
+	banner=$(echo ${client} | ${SSHD} -i -f ${OBJ}/sshd_proxy)
 	r=$?
 	trace "sshd prints ${banner}"
 	if [ $r -ne 255 ]; then
@@ -14,4 +14,4 @@ mismatch ()
 	fi
 }
 
-mismatch	SSH-1.5-HALLO
+mismatch SSH-1.5-HALLO

@@ -17,9 +17,10 @@
 
 tid="pkcs11 tests with soft token"
 
-try_token_libs() {
-	for _lib in "$@" ; do
-		if test -f "$_lib" ; then
+try_token_libs()
+{
+	for _lib in "$@"; do
+		if test -f "$_lib"; then
 			verbose "Using token library $_lib"
 			TEST_SSH_PKCS11="$_lib"
 			return
@@ -70,7 +71,8 @@ unset DISPLAY
 sed -i 's/.*BatchMode.*//g' $OBJ/ssh_proxy
 
 # start command w/o tty, so ssh accepts pin from stdin (from agent-pkcs11.sh)
-notty() {
+notty()
+{
 	perl -e 'use POSIX; POSIX::setsid();
 	    if (fork) { wait; exit($? >> 8); } else { exec(@ARGV) }' "$@"
 }
@@ -81,18 +83,18 @@ ID2="04"
 RSA=${DIR}/RSA
 EC=${DIR}/EC
 openssl genpkey -algorithm rsa > $RSA
-openssl pkcs8 -nocrypt -in $RSA |\
-    softhsm2-util --slot "$slot" --label "SSH RSA Key $ID1" --id $ID1 \
-	--pin "$TEST_SSH_PIN" --import /dev/stdin
+openssl pkcs8 -nocrypt -in $RSA |
+	softhsm2-util  --slot "$slot" --label "SSH RSA Key $ID1" --id $ID1 \
+		--pin "$TEST_SSH_PIN" --import /dev/stdin
 openssl genpkey \
-    -genparam \
-    -algorithm ec \
-    -pkeyopt ec_paramgen_curve:prime256v1 |\
-    openssl genpkey \
-    -paramfile /dev/stdin > $EC
-openssl pkcs8 -nocrypt -in $EC |\
-    softhsm2-util --slot "$slot" --label "SSH ECDSA Key $ID2" --id $ID2 \
-	--pin "$TEST_SSH_PIN" --import /dev/stdin
+	-genparam \
+	-algorithm  ec \
+	-pkeyopt  ec_paramgen_curve:prime256v1 |
+	openssl  genpkey \
+		-paramfile /dev/stdin > $EC
+openssl pkcs8 -nocrypt -in $EC |
+	softhsm2-util  --slot "$slot" --label "SSH ECDSA Key $ID2" --id $ID2 \
+		--pin "$TEST_SSH_PIN" --import /dev/stdin
 
 trace "List the keys in the ssh-keygen with PKCS#11 URIs"
 ${SSHKEYGEN} -D ${TEST_SSH_PKCS11} > $OBJ/token_keys
@@ -109,7 +111,7 @@ grep "ECDSA" $OBJ/token_keys > $OBJ/authorized_keys_$USER
 
 trace "Simple connect with ssh (without PKCS#11 URI)"
 echo ${TEST_SSH_PIN} | notty ${SSH} -I ${TEST_SSH_PKCS11} \
-    -F $OBJ/ssh_proxy somehost exit 5
+	-F  $OBJ/ssh_proxy somehost exit 5
 r=$?
 if [ $r -ne 5 ]; then
 	fail "FAIL: ssh connect with pkcs11 failed (exit code $r)"
@@ -118,7 +120,7 @@ fi
 trace "Connect with PKCS#11 URI"
 trace "  (ECDSA key should succeed)"
 echo ${TEST_SSH_PIN} | notty ${SSH} -F $OBJ/ssh_proxy \
-    -i "pkcs11:id=%${ID2}?module-path=${TEST_SSH_PKCS11}" somehost exit 5
+	-i  "pkcs11:id=%${ID2}?module-path=${TEST_SSH_PKCS11}" somehost exit 5
 r=$?
 if [ $r -ne 5 ]; then
 	fail "FAIL: ssh connect with PKCS#11 URI failed (exit code $r)"
@@ -126,7 +128,7 @@ fi
 
 trace "  (RSA key should fail)"
 echo ${TEST_SSH_PIN} | notty ${SSH} -F $OBJ/ssh_proxy \
-     -i "pkcs11:id=%${ID1}?module-path=${TEST_SSH_PKCS11}" somehost exit 5
+	-i   "pkcs11:id=%${ID1}?module-path=${TEST_SSH_PKCS11}" somehost exit 5
 r=$?
 if [ $r -eq 5 ]; then
 	fail "FAIL: ssh connect with PKCS#11 URI succeeded (should fail)"
@@ -135,7 +137,7 @@ fi
 trace "Connect with PKCS#11 URI including PIN should not prompt"
 trace "  (ECDSA key should succeed)"
 ${SSH} -F $OBJ/ssh_proxy -i \
-    "pkcs11:id=%${ID2}?module-path=${TEST_SSH_PKCS11}&pin-value=${TEST_SSH_PIN}" somehost exit 5
+	"pkcs11:id=%${ID2}?module-path=${TEST_SSH_PKCS11}&pin-value=${TEST_SSH_PIN}"  somehost exit 5
 r=$?
 if [ $r -ne 5 ]; then
 	fail "FAIL: ssh connect with PKCS#11 URI failed (exit code $r)"
@@ -143,7 +145,7 @@ fi
 
 trace "  (RSA key should fail)"
 ${SSH} -F $OBJ/ssh_proxy -i \
-    "pkcs11:id=%${ID1}?module-path=${TEST_SSH_PKCS11}&pin-value=${TEST_SSH_PIN}" somehost exit 5
+	"pkcs11:id=%${ID1}?module-path=${TEST_SSH_PKCS11}&pin-value=${TEST_SSH_PIN}"  somehost exit 5
 r=$?
 if [ $r -eq 5 ]; then
 	fail "FAIL: ssh connect with PKCS#11 URI succeeded (should fail)"
@@ -152,7 +154,7 @@ fi
 trace "Connect with various filtering options in PKCS#11 URI"
 trace "  (by object label, ECDSA should succeed)"
 echo ${TEST_SSH_PIN} | notty ${SSH} -F $OBJ/ssh_proxy \
-    -i "pkcs11:object=SSH%20ECDSA%20Key%2004?module-path=${TEST_SSH_PKCS11}" somehost exit 5
+	-i  "pkcs11:object=SSH%20ECDSA%20Key%2004?module-path=${TEST_SSH_PKCS11}" somehost exit 5
 r=$?
 if [ $r -ne 5 ]; then
 	fail "FAIL: ssh connect with PKCS#11 URI failed (exit code $r)"
@@ -160,7 +162,7 @@ fi
 
 trace "  (by object label, RSA key should fail)"
 echo ${TEST_SSH_PIN} | notty ${SSH} -F $OBJ/ssh_proxy \
-     -i "pkcs11:object=SSH%20RSA%20Key%2002?module-path=${TEST_SSH_PKCS11}" somehost exit 5
+	-i   "pkcs11:object=SSH%20RSA%20Key%2002?module-path=${TEST_SSH_PKCS11}" somehost exit 5
 r=$?
 if [ $r -eq 5 ]; then
 	fail "FAIL: ssh connect with PKCS#11 URI succeeded (should fail)"
@@ -168,7 +170,7 @@ fi
 
 trace "  (by token label, ECDSA key should succeed)"
 echo ${TEST_SSH_PIN} | notty ${SSH} -F $OBJ/ssh_proxy \
-    -i "pkcs11:id=%${ID2};token=token-slot-0?module-path=${TEST_SSH_PKCS11}" somehost exit 5
+	-i  "pkcs11:id=%${ID2};token=token-slot-0?module-path=${TEST_SSH_PKCS11}" somehost exit 5
 r=$?
 if [ $r -ne 5 ]; then
 	fail "FAIL: ssh connect with PKCS#11 URI failed (exit code $r)"
@@ -176,18 +178,15 @@ fi
 
 trace "  (by wrong token label, should fail)"
 echo ${TEST_SSH_PIN} | notty ${SSH} -F $OBJ/ssh_proxy \
-     -i "pkcs11:token=token-slot-99?module-path=${TEST_SSH_PKCS11}" somehost exit 5
+	-i   "pkcs11:token=token-slot-99?module-path=${TEST_SSH_PKCS11}" somehost exit 5
 r=$?
 if [ $r -eq 5 ]; then
 	fail "FAIL: ssh connect with PKCS#11 URI succeeded (should fail)"
 fi
 
-
-
-
 trace "Test PKCS#11 URI specification in configuration files"
 echo "IdentityFile \"pkcs11:id=%${ID2}?module-path=${TEST_SSH_PKCS11}\"" \
-    >> $OBJ/ssh_proxy
+	>> $OBJ/ssh_proxy
 trace "  (ECDSA key should succeed)"
 echo ${TEST_SSH_PIN} | notty ${SSH} -F $OBJ/ssh_proxy somehost exit 5
 r=$?
@@ -208,39 +207,37 @@ sed -i -e "/IdentityFile/d" $OBJ/ssh_proxy
 
 trace "Test PKCS#11 URI specification in configuration files with bogus spaces"
 echo "IdentityFile \"    pkcs11:?module-path=${TEST_SSH_PKCS11}    \"" \
-    >> $OBJ/ssh_proxy
+	>> $OBJ/ssh_proxy
 echo ${TEST_SSH_PIN} | notty ${SSH} -F $OBJ/ssh_proxy somehost exit 5
 r=$?
 if [ $r -ne 5 ]; then
 	fail "FAIL: ssh connect with PKCS#11 URI with bogus spaces in config failed" \
-	    "(exit code $r)"
+		"(exit code $r)"
 fi
 sed -i -e "/IdentityFile/d" $OBJ/ssh_proxy
-
 
 trace "Combination of PKCS11Provider and PKCS11URI on commandline"
 trace "  (RSA key should succeed)"
 echo ${TEST_SSH_PIN} | notty ${SSH} -F $OBJ/ssh_proxy \
-    -i "pkcs11:id=%${ID1}" -I ${TEST_SSH_PKCS11} somehost exit 5
+	-i  "pkcs11:id=%${ID1}" -I ${TEST_SSH_PKCS11} somehost exit 5
 r=$?
 if [ $r -ne 5 ]; then
 	fail "FAIL: ssh connect with PKCS#11 URI and provider combination" \
-	    "failed (exit code $r)"
+		"failed (exit code $r)"
 fi
 
 trace "Regress: Missing provider in PKCS11URI option"
 ${SSH} -F $OBJ/ssh_proxy \
-    -o IdentityFile=\"pkcs11:token=segfault\" somehost exit 5
+	-o  IdentityFile=\"pkcs11:token=segfault\" somehost exit 5
 r=$?
 if [ $r -eq 139 ]; then
 	fail "FAIL: ssh connect with missing provider_id from configuration option" \
-	    "crashed (exit code $r)"
+		"crashed (exit code $r)"
 fi
-
 
 trace "SSH Agent can work with PKCS#11 URI"
 trace "start the agent"
-eval `${SSHAGENT} -s` >  /dev/null
+eval $(${SSHAGENT} -s) > /dev/null
 
 r=$?
 if [ $r -ne 0 ]; then
@@ -248,7 +245,7 @@ if [ $r -ne 0 ]; then
 else
 	trace "add whole provider to agent"
 	echo ${TEST_SSH_PIN} | notty ${SSHADD} \
-	    "pkcs11:?module-path=${TEST_SSH_PKCS11}" #> /dev/null 2>&1
+		"pkcs11:?module-path=${TEST_SSH_PKCS11}"  #> /dev/null 2>&1
 	r=$?
 	if [ $r -ne 0 ]; then
 		fail "FAIL: ssh-add failed with whole provider: exit code $r"
@@ -277,7 +274,7 @@ else
 
 	trace "add only RSA key to the agent"
 	echo ${TEST_SSH_PIN} | notty ${SSHADD} \
-	    "pkcs11:id=%${ID1}?module-path=${TEST_SSH_PKCS11}" > /dev/null 2>&1
+		"pkcs11:id=%${ID1}?module-path=${TEST_SSH_PKCS11}"  > /dev/null 2>&1
 	r=$?
 	if [ $r -ne 0 ]; then
 		fail "FAIL ssh-add failed with RSA key: exit code $r"
@@ -292,7 +289,7 @@ else
 
 	trace " remove RSA pkcs11 key"
 	${SSHADD} -d "pkcs11:id=%${ID1}?module-path=${TEST_SSH_PKCS11}" \
-	    > /dev/null 2>&1
+		> /dev/null  2>&1
 	r=$?
 	if [ $r -ne 0 ]; then
 		fail "FAIL: ssh-add -d failed with RSA key: exit code $r"
@@ -300,7 +297,7 @@ else
 
 	trace "add only ECDSA key to the agent"
 	echo ${TEST_SSH_PIN} | notty ${SSHADD} \
-	    "pkcs11:id=%${ID2}?module-path=${TEST_SSH_PKCS11}" > /dev/null 2>&1
+		"pkcs11:id=%${ID2}?module-path=${TEST_SSH_PKCS11}"  > /dev/null 2>&1
 	r=$?
 	if [ $r -ne 0 ]; then
 		fail "FAIL: ssh-add failed with second key: exit code $r"
@@ -315,7 +312,7 @@ else
 
 	trace "add also the RSA key to the agent"
 	echo ${TEST_SSH_PIN} | notty ${SSHADD} \
-	    "pkcs11:id=%${ID1}?module-path=${TEST_SSH_PKCS11}" > /dev/null 2>&1
+		"pkcs11:id=%${ID1}?module-path=${TEST_SSH_PKCS11}"  > /dev/null 2>&1
 	r=$?
 	if [ $r -ne 0 ]; then
 		fail "FAIL: ssh-add failed with first key: exit code $r"
@@ -323,7 +320,7 @@ else
 
 	trace " remove ECDSA pkcs11 key"
 	${SSHADD} -d "pkcs11:id=%${ID2}?module-path=${TEST_SSH_PKCS11}" \
-	    > /dev/null 2>&1
+		> /dev/null  2>&1
 	r=$?
 	if [ $r -ne 0 ]; then
 		fail "ssh-add -d failed with ECDSA key: exit code $r"
@@ -331,7 +328,7 @@ else
 
 	trace " remove already-removed pkcs11 key should fail"
 	${SSHADD} -d "pkcs11:id=%${ID2}?module-path=${TEST_SSH_PKCS11}" \
-	    > /dev/null 2>&1
+		> /dev/null  2>&1
 	r=$?
 	if [ $r -eq 0 ]; then
 		fail "FAIL: ssh-add -d passed with non-existing key (should fail)"
