@@ -507,7 +507,7 @@ if [ "x$PROJECT" = "x" ]; then
 else
 	$ECHO  "Using PROJECT environment variable override: $PROJECT"
 fi
-$ECHO "Preparing the $PROJECT build system...please wait"
+$ECHO "Preparing the $PROJECT build system... please wait."
 $ECHO
 
 ########################
@@ -1153,7 +1153,7 @@ libtoolize_needed()
 reconfigure_manually=no
 if [ "x$HAVE_AUTORECONF" = "xyes" ]; then
 	$ECHO
-	$ECHO  $ECHO_N "Automatically preparing build ... $ECHO_C"
+	$ECHO  $ECHO_N "Automatically preparing the build ... $ECHO_C"
 
 	$VERBOSE_ECHO  "$AUTORECONF $SEARCH_DIRS $AUTORECONF_OPTIONS"
 	autoreconf_output="$($AUTORECONF $SEARCH_DIRS $AUTORECONF_OPTIONS 2>&1)"
@@ -1540,7 +1540,7 @@ if [ "x$config" = "x" ]; then
 fi
 
 # summarize
-$ECHO "done"
+$ECHO "complete."
 $ECHO
 if test "x$config" = "x" -o ! -f "$config"; then
 	$ECHO  "WARNING: The $PROJECT build system should now be prepared but there"
