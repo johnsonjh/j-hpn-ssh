@@ -19,198 +19,199 @@
 #include <termios.h>
 
 #ifdef WITH_OPENSSL
-# include <openssl/bn.h>
-# ifdef OPENSSL_HAS_ECC
-#  include <openssl/ec.h>
-# else /* OPENSSL_HAS_ECC */
-#  define EC_KEY	void
-#  define EC_GROUP	void
-#  define EC_POINT	void
-# endif /* OPENSSL_HAS_ECC */
-#else /* WITH_OPENSSL */
-# define BIGNUM		void
-# define EC_KEY		void
-# define EC_GROUP	void
-# define EC_POINT	void
+#include <openssl/bn.h>
+#ifdef OPENSSL_HAS_ECC
+#include <openssl/ec.h>
+#else /* OPENSSL_HAS_ECC */
+#define EC_KEY void
+#define EC_GROUP void
+#define EC_POINT void
+#endif /* OPENSSL_HAS_ECC */
+#else  /* WITH_OPENSSL */
+#define BIGNUM void
+#define EC_KEY void
+#define EC_GROUP void
+#define EC_POINT void
 #endif /* WITH_OPENSSL */
 
-#include <signal.h>
 #include "openbsd-compat/sys-queue.h"
+#include <signal.h>
 
 struct kex;
 struct sshkey;
 struct sshbuf;
-struct session_state;	/* private session data */
+struct session_state; /* private session data */
 
-#include "dispatch.h"	/* typedef, DISPATCH_MAX */
+#include "dispatch.h" /* typedef, DISPATCH_MAX */
 
 struct key_entry {
-    TAILQ_ENTRY(key_entry) next;
-    struct sshkey *key;
+  TAILQ_ENTRY(key_entry) next;
+  struct sshkey *key;
 };
 
 struct ssh {
-    /* Session state */
-    struct session_state *state;
+  /* Session state */
+  struct session_state *state;
 
-    /* Key exchange */
-    struct kex *kex;
+  /* Key exchange */
+  struct kex *kex;
 
-    /* cached local and remote ip addresses and ports */
-    char *remote_ipaddr;
-    int remote_port;
-    char *local_ipaddr;
-    int local_port;
+  /* cached local and remote ip addresses and ports */
+  char *remote_ipaddr;
+  int remote_port;
+  char *local_ipaddr;
+  int local_port;
 
-    /* Optional preamble for log messages (e.g. username) */
-    char *log_preamble;
+  /* Optional preamble for log messages (e.g. username) */
+  char *log_preamble;
 
-    /* Dispatcher table */
-    dispatch_fn *dispatch[DISPATCH_MAX];
-    /* number of packets to ignore in the dispatcher */
-    int dispatch_skip_packets;
+  /* Dispatcher table */
+  dispatch_fn *dispatch[DISPATCH_MAX];
+  /* number of packets to ignore in the dispatcher */
+  int dispatch_skip_packets;
 
-    /* datafellows */
-    int compat;
+  /* datafellows */
+  int compat;
 
-    /* Lists for private and public keys */
-    TAILQ_HEAD(, key_entry) private_keys;
-    TAILQ_HEAD(, key_entry) public_keys;
+  /* Lists for private and public keys */
+  TAILQ_HEAD(, key_entry) private_keys;
+  TAILQ_HEAD(, key_entry) public_keys;
 
-    /* APP data */
-    void *app_data;
+  /* APP data */
+  void *app_data;
 };
-void record_bytes(struct session_state*, u_char, size_t, int);
-typedef int (ssh_packet_hook_fn)(struct ssh *, struct sshbuf *,
-                                 u_char *, void *);
+void record_bytes(struct session_state *, u_char, size_t, int);
+typedef int(ssh_packet_hook_fn)(struct ssh *, struct sshbuf *, u_char *,
+                                void *);
 
 struct ssh *ssh_alloc_session_state(void);
 struct ssh *ssh_packet_set_connection(struct ssh *, int, int);
-void     ssh_packet_set_timeout(struct ssh *, int, int);
-int	 ssh_packet_stop_discard(struct ssh *);
-int	 ssh_packet_connection_af(struct ssh *);
-void     ssh_packet_set_nonblocking(struct ssh *);
-int      ssh_packet_get_connection_in(struct ssh *);
-int      ssh_packet_get_connection_out(struct ssh *);
-void     ssh_packet_close(struct ssh *);
-void	 ssh_packet_set_encryption_key(struct ssh *, const u_char *, u_int, int);
-void	 ssh_packet_set_input_hook(struct ssh *, ssh_packet_hook_fn *, void *);
+void ssh_packet_set_timeout(struct ssh *, int, int);
+int ssh_packet_stop_discard(struct ssh *);
+int ssh_packet_connection_af(struct ssh *);
+void ssh_packet_set_nonblocking(struct ssh *);
+int ssh_packet_get_connection_in(struct ssh *);
+int ssh_packet_get_connection_out(struct ssh *);
+void ssh_packet_close(struct ssh *);
+void ssh_packet_set_encryption_key(struct ssh *, const u_char *, u_int, int);
+void ssh_packet_set_input_hook(struct ssh *, ssh_packet_hook_fn *, void *);
 
-int	 ssh_packet_is_rekeying(struct ssh *);
-void     ssh_packet_set_protocol_flags(struct ssh *, u_int);
-u_int	 ssh_packet_get_protocol_flags(struct ssh *);
-int      ssh_packet_start_compression(struct ssh *, int);
-void	 ssh_packet_set_tos(struct ssh *, int);
-void     ssh_packet_set_interactive(struct ssh *, int, int, int);
-int      ssh_packet_is_interactive(struct ssh *);
-void     ssh_packet_set_server(struct ssh *);
-void     ssh_packet_set_authenticated(struct ssh *);
-void     ssh_packet_set_mux(struct ssh *);
-int	 ssh_packet_get_mux(struct ssh *);
-int	 ssh_packet_set_log_preamble(struct ssh *, const char *, ...)
-__attribute__((format(printf, 2, 3)));
+int ssh_packet_is_rekeying(struct ssh *);
+void ssh_packet_set_protocol_flags(struct ssh *, u_int);
+u_int ssh_packet_get_protocol_flags(struct ssh *);
+int ssh_packet_start_compression(struct ssh *, int);
+void ssh_packet_set_tos(struct ssh *, int);
+void ssh_packet_set_interactive(struct ssh *, int, int, int);
+int ssh_packet_is_interactive(struct ssh *);
+void ssh_packet_set_server(struct ssh *);
+void ssh_packet_set_authenticated(struct ssh *);
+void ssh_packet_set_mux(struct ssh *);
+int ssh_packet_get_mux(struct ssh *);
+int ssh_packet_set_log_preamble(struct ssh *, const char *, ...)
+    __attribute__((format(printf, 2, 3)));
 
-int	 ssh_packet_log_type(u_char);
+int ssh_packet_log_type(u_char);
 
-int	 ssh_packet_send1(struct ssh *);
-int	 ssh_packet_send2_wrapped(struct ssh *);
-int	 ssh_packet_send2(struct ssh *);
+int ssh_packet_send1(struct ssh *);
+int ssh_packet_send2_wrapped(struct ssh *);
+int ssh_packet_send2(struct ssh *);
 
-int      ssh_packet_read(struct ssh *);
-int	 ssh_packet_read_expect(struct ssh *, u_int type);
-int      ssh_packet_read_poll(struct ssh *);
+int ssh_packet_read(struct ssh *);
+int ssh_packet_read_expect(struct ssh *, u_int type);
+int ssh_packet_read_poll(struct ssh *);
 int ssh_packet_read_poll1(struct ssh *, u_char *);
 int ssh_packet_read_poll2(struct ssh *, u_char *, u_int32_t *seqnr_p);
-int	 ssh_packet_process_incoming(struct ssh *, const char *buf, u_int len);
-int      ssh_packet_read_seqnr(struct ssh *, u_char *, u_int32_t *seqnr_p);
-int      ssh_packet_read_poll_seqnr(struct ssh *, u_char *, u_int32_t *seqnr_p);
+int ssh_packet_process_incoming(struct ssh *, const char *buf, u_int len);
+int ssh_packet_read_seqnr(struct ssh *, u_char *, u_int32_t *seqnr_p);
+int ssh_packet_read_poll_seqnr(struct ssh *, u_char *, u_int32_t *seqnr_p);
 
 const void *ssh_packet_get_string_ptr(struct ssh *, u_int *length_ptr);
-void     ssh_packet_disconnect(struct ssh *, const char *fmt, ...)
-__attribute__((format(printf, 2, 3)))
-__attribute__((noreturn));
-void     ssh_packet_send_debug(struct ssh *, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+void ssh_packet_disconnect(struct ssh *, const char *fmt, ...)
+    __attribute__((format(printf, 2, 3))) __attribute__((noreturn));
+void ssh_packet_send_debug(struct ssh *, const char *fmt, ...)
+    __attribute__((format(printf, 2, 3)));
 
-int	 ssh_set_newkeys(struct ssh *, int mode);
-void	 ssh_packet_get_bytes(struct ssh *, u_int64_t *, u_int64_t *);
+int ssh_set_newkeys(struct ssh *, int mode);
+void ssh_packet_get_bytes(struct ssh *, u_int64_t *, u_int64_t *);
 
-int	 ssh_packet_write_poll(struct ssh *);
-int	 ssh_packet_write_wait(struct ssh *);
-int      ssh_packet_have_data_to_write(struct ssh *);
-int      ssh_packet_not_very_much_data_to_write(struct ssh *);
+int ssh_packet_write_poll(struct ssh *);
+int ssh_packet_write_wait(struct ssh *);
+int ssh_packet_have_data_to_write(struct ssh *);
+int ssh_packet_not_very_much_data_to_write(struct ssh *);
 
-int	 ssh_packet_connection_is_on_socket(struct ssh *);
-int	 ssh_packet_remaining(struct ssh *);
-void	 ssh_packet_send_ignore(struct ssh *, int);
+int ssh_packet_connection_is_on_socket(struct ssh *);
+int ssh_packet_remaining(struct ssh *);
+void ssh_packet_send_ignore(struct ssh *, int);
 
-void	 tty_make_modes(int, struct termios *);
-void	 tty_parse_modes(int, int *);
+void tty_make_modes(int, struct termios *);
+void tty_parse_modes(int, int *);
 
-void	 ssh_packet_set_alive_timeouts(struct ssh *, int);
-int	 ssh_packet_inc_alive_timeouts(struct ssh *);
-int	 ssh_packet_set_maxsize(struct ssh *, u_int);
-u_int	 ssh_packet_get_maxsize(struct ssh *);
+void ssh_packet_set_alive_timeouts(struct ssh *, int);
+int ssh_packet_inc_alive_timeouts(struct ssh *);
+int ssh_packet_set_maxsize(struct ssh *, u_int);
+u_int ssh_packet_get_maxsize(struct ssh *);
 
-int	 ssh_packet_get_state(struct ssh *, struct sshbuf *);
-int	 ssh_packet_set_state(struct ssh *, struct sshbuf *);
+int ssh_packet_get_state(struct ssh *, struct sshbuf *);
+int ssh_packet_set_state(struct ssh *, struct sshbuf *);
 
 const char *ssh_remote_ipaddr(struct ssh *);
-int	 ssh_remote_port(struct ssh *);
+int ssh_remote_port(struct ssh *);
 const char *ssh_local_ipaddr(struct ssh *);
-int	 ssh_local_port(struct ssh *);
+int ssh_local_port(struct ssh *);
 
-void	 ssh_packet_set_rekey_limits(struct ssh *, u_int64_t, u_int32_t);
-time_t	 ssh_packet_get_rekey_timeout(struct ssh *);
+void ssh_packet_set_rekey_limits(struct ssh *, u_int64_t, u_int32_t);
+time_t ssh_packet_get_rekey_timeout(struct ssh *);
 
-void	*ssh_packet_get_input(struct ssh *);
-void	*ssh_packet_get_output(struct ssh *);
+void *ssh_packet_get_input(struct ssh *);
+void *ssh_packet_get_output(struct ssh *);
 
 /* new API */
-int	sshpkt_start(struct ssh *ssh, u_char type);
-int	sshpkt_send(struct ssh *ssh);
-int     sshpkt_disconnect(struct ssh *, const char *fmt, ...)
-__attribute__((format(printf, 2, 3)));
-int	sshpkt_add_padding(struct ssh *, u_char);
-void	sshpkt_fatal(struct ssh *ssh, const char *tag, int r);
+int sshpkt_start(struct ssh *ssh, u_char type);
+int sshpkt_send(struct ssh *ssh);
+int sshpkt_disconnect(struct ssh *, const char *fmt, ...)
+    __attribute__((format(printf, 2, 3)));
+int sshpkt_add_padding(struct ssh *, u_char);
+void sshpkt_fatal(struct ssh *ssh, const char *tag, int r);
 
-int	sshpkt_put(struct ssh *ssh, const void *v, size_t len);
-int	sshpkt_putb(struct ssh *ssh, const struct sshbuf *b);
-int	sshpkt_put_u8(struct ssh *ssh, u_char val);
-int	sshpkt_put_u32(struct ssh *ssh, u_int32_t val);
-int	sshpkt_put_u64(struct ssh *ssh, u_int64_t val);
-int	sshpkt_put_string(struct ssh *ssh, const void *v, size_t len);
-int	sshpkt_put_cstring(struct ssh *ssh, const void *v);
-int	sshpkt_put_stringb(struct ssh *ssh, const struct sshbuf *v);
-int	sshpkt_put_ec(struct ssh *ssh, const EC_POINT *v, const EC_GROUP *g);
-int	sshpkt_put_bignum1(struct ssh *ssh, const BIGNUM *v);
-int	sshpkt_put_bignum2(struct ssh *ssh, const BIGNUM *v);
+int sshpkt_put(struct ssh *ssh, const void *v, size_t len);
+int sshpkt_putb(struct ssh *ssh, const struct sshbuf *b);
+int sshpkt_put_u8(struct ssh *ssh, u_char val);
+int sshpkt_put_u32(struct ssh *ssh, u_int32_t val);
+int sshpkt_put_u64(struct ssh *ssh, u_int64_t val);
+int sshpkt_put_string(struct ssh *ssh, const void *v, size_t len);
+int sshpkt_put_cstring(struct ssh *ssh, const void *v);
+int sshpkt_put_stringb(struct ssh *ssh, const struct sshbuf *v);
+int sshpkt_put_ec(struct ssh *ssh, const EC_POINT *v, const EC_GROUP *g);
+int sshpkt_put_bignum1(struct ssh *ssh, const BIGNUM *v);
+int sshpkt_put_bignum2(struct ssh *ssh, const BIGNUM *v);
 
-int	sshpkt_get(struct ssh *ssh, void *valp, size_t len);
-int	sshpkt_get_u8(struct ssh *ssh, u_char *valp);
-int	sshpkt_get_u32(struct ssh *ssh, u_int32_t *valp);
-int	sshpkt_get_u64(struct ssh *ssh, u_int64_t *valp);
-int	sshpkt_get_string(struct ssh *ssh, u_char **valp, size_t *lenp);
-int	sshpkt_get_string_direct(struct ssh *ssh, const u_char **valp, size_t *lenp);
-int	sshpkt_get_cstring(struct ssh *ssh, char **valp, size_t *lenp);
-int	sshpkt_get_ec(struct ssh *ssh, EC_POINT *v, const EC_GROUP *g);
-int	sshpkt_get_bignum1(struct ssh *ssh, BIGNUM *v);
-int	sshpkt_get_bignum2(struct ssh *ssh, BIGNUM *v);
-int	sshpkt_get_end(struct ssh *ssh);
-const u_char	*sshpkt_ptr(struct ssh *, size_t *lenp);
+int sshpkt_get(struct ssh *ssh, void *valp, size_t len);
+int sshpkt_get_u8(struct ssh *ssh, u_char *valp);
+int sshpkt_get_u32(struct ssh *ssh, u_int32_t *valp);
+int sshpkt_get_u64(struct ssh *ssh, u_int64_t *valp);
+int sshpkt_get_string(struct ssh *ssh, u_char **valp, size_t *lenp);
+int sshpkt_get_string_direct(struct ssh *ssh, const u_char **valp,
+                             size_t *lenp);
+int sshpkt_get_cstring(struct ssh *ssh, char **valp, size_t *lenp);
+int sshpkt_get_ec(struct ssh *ssh, EC_POINT *v, const EC_GROUP *g);
+int sshpkt_get_bignum1(struct ssh *ssh, BIGNUM *v);
+int sshpkt_get_bignum2(struct ssh *ssh, BIGNUM *v);
+int sshpkt_get_end(struct ssh *ssh);
+const u_char *sshpkt_ptr(struct ssh *, size_t *lenp);
 
 /* OLD API */
 extern struct ssh *active_state;
 #include "opacket.h"
 
 #if !defined(WITH_OPENSSL)
-# undef BIGNUM
-# undef EC_KEY
-# undef EC_GROUP
-# undef EC_POINT
+#undef BIGNUM
+#undef EC_KEY
+#undef EC_GROUP
+#undef EC_POINT
 #elif !defined(OPENSSL_HAS_ECC)
-# undef EC_KEY
-# undef EC_GROUP
-# undef EC_POINT
+#undef EC_KEY
+#undef EC_GROUP
+#undef EC_POINT
 #endif
 
-#endif				/* PACKET_H */
+#endif /* PACKET_H */
