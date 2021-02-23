@@ -45,44 +45,44 @@ struct session_state;	/* private session data */
 #include "dispatch.h"	/* typedef, DISPATCH_MAX */
 
 struct key_entry {
-	TAILQ_ENTRY(key_entry) next;
-	struct sshkey *key;
+    TAILQ_ENTRY(key_entry) next;
+    struct sshkey *key;
 };
 
 struct ssh {
-	/* Session state */
-	struct session_state *state;
+    /* Session state */
+    struct session_state *state;
 
-	/* Key exchange */
-	struct kex *kex;
+    /* Key exchange */
+    struct kex *kex;
 
-	/* cached local and remote ip addresses and ports */
-	char *remote_ipaddr;
-	int remote_port;
-	char *local_ipaddr;
-	int local_port;
+    /* cached local and remote ip addresses and ports */
+    char *remote_ipaddr;
+    int remote_port;
+    char *local_ipaddr;
+    int local_port;
 
-	/* Optional preamble for log messages (e.g. username) */
-	char *log_preamble;
+    /* Optional preamble for log messages (e.g. username) */
+    char *log_preamble;
 
-	/* Dispatcher table */
-	dispatch_fn *dispatch[DISPATCH_MAX];
-	/* number of packets to ignore in the dispatcher */
-	int dispatch_skip_packets;
+    /* Dispatcher table */
+    dispatch_fn *dispatch[DISPATCH_MAX];
+    /* number of packets to ignore in the dispatcher */
+    int dispatch_skip_packets;
 
-	/* datafellows */
-	int compat;
+    /* datafellows */
+    int compat;
 
-	/* Lists for private and public keys */
-	TAILQ_HEAD(, key_entry) private_keys;
-	TAILQ_HEAD(, key_entry) public_keys;
+    /* Lists for private and public keys */
+    TAILQ_HEAD(, key_entry) private_keys;
+    TAILQ_HEAD(, key_entry) public_keys;
 
-	/* APP data */
-	void *app_data;
+    /* APP data */
+    void *app_data;
 };
 void record_bytes(struct session_state*, u_char, size_t, int);
 typedef int (ssh_packet_hook_fn)(struct ssh *, struct sshbuf *,
-    u_char *, void *);
+                                 u_char *, void *);
 
 struct ssh *ssh_alloc_session_state(void);
 struct ssh *ssh_packet_set_connection(struct ssh *, int, int);
@@ -108,7 +108,7 @@ void     ssh_packet_set_authenticated(struct ssh *);
 void     ssh_packet_set_mux(struct ssh *);
 int	 ssh_packet_get_mux(struct ssh *);
 int	 ssh_packet_set_log_preamble(struct ssh *, const char *, ...)
-    __attribute__((format(printf, 2, 3)));
+__attribute__((format(printf, 2, 3)));
 
 int	 ssh_packet_log_type(u_char);
 
@@ -127,8 +127,8 @@ int      ssh_packet_read_poll_seqnr(struct ssh *, u_char *, u_int32_t *seqnr_p);
 
 const void *ssh_packet_get_string_ptr(struct ssh *, u_int *length_ptr);
 void     ssh_packet_disconnect(struct ssh *, const char *fmt, ...)
-	__attribute__((format(printf, 2, 3)))
-	__attribute__((noreturn));
+__attribute__((format(printf, 2, 3)))
+__attribute__((noreturn));
 void     ssh_packet_send_debug(struct ssh *, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 
 int	 ssh_set_newkeys(struct ssh *, int mode);
@@ -169,7 +169,7 @@ void	*ssh_packet_get_output(struct ssh *);
 int	sshpkt_start(struct ssh *ssh, u_char type);
 int	sshpkt_send(struct ssh *ssh);
 int     sshpkt_disconnect(struct ssh *, const char *fmt, ...)
-	    __attribute__((format(printf, 2, 3)));
+__attribute__((format(printf, 2, 3)));
 int	sshpkt_add_padding(struct ssh *, u_char);
 void	sshpkt_fatal(struct ssh *ssh, const char *tag, int r);
 

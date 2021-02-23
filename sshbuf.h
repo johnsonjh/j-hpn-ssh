@@ -38,16 +38,16 @@
  * one day.
  */
 struct sshbuf {
-	u_char *d;		/* Data */
-	const u_char *cd;	/* Const data */
-	size_t off;		/* First available byte is buf->d + buf->off */
-	size_t size;		/* Last byte is buf->d + buf->size - 1 */
-	size_t max_size;	/* Maximum size of buffer */
-	size_t alloc;		/* Total bytes allocated to buf->d */
-	int readonly;		/* Refers to external, const data */
-	int dont_free;		/* Kludge to support sshbuf_init */
-	u_int refcount;		/* Tracks self and number of child buffers */
-	struct sshbuf *parent;	/* If child, pointer to parent */
+    u_char *d;		/* Data */
+    const u_char *cd;	/* Const data */
+    size_t off;		/* First available byte is buf->d + buf->off */
+    size_t size;		/* Last byte is buf->d + buf->size - 1 */
+    size_t max_size;	/* Maximum size of buffer */
+    size_t alloc;		/* Total bytes allocated to buf->d */
+    int readonly;		/* Refers to external, const data */
+    int dont_free;		/* Kludge to support sshbuf_init */
+    u_int refcount;		/* Tracks self and number of child buffers */
+    struct sshbuf *parent;	/* If child, pointer to parent */
 };
 
 #ifndef SSHBUF_NO_DEPREACTED
@@ -175,7 +175,7 @@ int	sshbuf_putb(struct sshbuf *buf, const struct sshbuf *v);
 
 /* Append using a printf(3) format */
 int	sshbuf_putf(struct sshbuf *buf, const char *fmt, ...)
-	    __attribute__((format(printf, 2, 3)));
+__attribute__((format(printf, 2, 3)));
 int	sshbuf_putfv(struct sshbuf *buf, const char *fmt, va_list ap);
 
 /* Functions to extract or store big-endian words of various sizes */
@@ -206,14 +206,14 @@ int	sshbuf_put_stringb(struct sshbuf *buf, const struct sshbuf *v);
  * next sshbuf-modifying function call. Caller does not free.
  */
 int	sshbuf_get_string_direct(struct sshbuf *buf, const u_char **valp,
-	    size_t *lenp);
+                             size_t *lenp);
 
 /* Skip past a string */
 #define sshbuf_skip_string(buf) sshbuf_get_string_direct(buf, NULL, NULL)
 
 /* Another variant: "peeks" into the buffer without modifying it */
 int	sshbuf_peek_string_direct(const struct sshbuf *buf, const u_char **valp,
-	    size_t *lenp);
+                              size_t *lenp);
 
 /*
  * Functions to extract or store SSH wire encoded bignums and elliptic
@@ -221,7 +221,7 @@ int	sshbuf_peek_string_direct(const struct sshbuf *buf, const u_char **valp,
  */
 int	sshbuf_put_bignum2_bytes(struct sshbuf *buf, const void *v, size_t len);
 int	sshbuf_get_bignum2_bytes_direct(struct sshbuf *buf,
-	    const u_char **valp, size_t *lenp);
+                                    const u_char **valp, size_t *lenp);
 #ifdef WITH_OPENSSL
 int	sshbuf_get_bignum2(struct sshbuf *buf, BIGNUM *v);
 int	sshbuf_get_bignum1(struct sshbuf *buf, BIGNUM *v);
