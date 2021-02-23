@@ -16,7 +16,7 @@
 **HPN-SSH** is a series of modifications to _OpenSSH_, the predominant
 implementation of the _SSH_ protocol. It was originally developed to address
 performance issues when using _SSH_ on high speed long distance networks (also
-known as _Long Fat Networks_ or _LFN's_). 
+known as _Long Fat Networks_ or _LFN's_).
 
 By taking advantage of automatically optimized receive buffers, **HPN-SSH** can improve performance dramatically on these paths. Other advances include optionally disabling encryption after authentication to transport non-sensitive bulk data, modifying the AES-CTR cipher to use multiple CPU cores, more detailed connection logging, and peak throughput value calculations shown in the _SCP_ progress bar.
 
@@ -57,7 +57,7 @@ for full details.
 _SCP_ and the underlying _SSH-2_ protocol implementation in _OpenSSH_ is network
 performance limited by statically defined internal flow control buffers. These
 buffers often end up acting as a bottleneck for network throughput of _SCP_,
-especially on long and high bandwith network links. 
+especially on long and high bandwith network links.
 
 Modifications to the SSH code to
 allow these buffers to be defined at run-time eliminates the bottleneck.
@@ -112,4 +112,3 @@ buffer.
 ## Upstream **HPN-SSH** Homepage
 
 - <https://www.psc.edu/research/networking/hpn-ssh/>
-
