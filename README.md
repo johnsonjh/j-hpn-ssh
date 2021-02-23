@@ -1,79 +1,75 @@
-# Portable OpenSSH
+# **HPN-SSH** - **High Performance SSH**
 
-[![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/openssh.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:openssh)
+## What is **HPN-SSH**?
 
-OpenSSH is a complete implementation of the SSH protocol (version 2) for secure remote login, command execution and file transfer. It includes a client ``ssh`` and server ``sshd``, file transfer utilities ``scp`` and ``sftp`` as well as tools for key generation (``ssh-keygen``), run-time key storage (``ssh-agent``) and a number of supporting programs.
+**HPN-SSH** is a series of modifications to *OpenSSH*, the predominant implementation of the *SSH* protocol. It was originally developed to address performance issues when using *SSH* on high speed long distance networks (also known as *Long Fat Networks* or *LFN's*). By taking advantage of automatically optimized receive buffers, **HPN-SSH** can improve performance dramatically on these paths. Other advances include optionally disabling encryption after authentication to transport non-sensitive bulk data, modifying the AES-CTR cipher to use multiple CPU cores, more detailed connection logging, and peak throughput value calculations shown in the *SCP* progress bar.
 
-This is a port of OpenBSD's [OpenSSH](https://openssh.com) to most Unix-like operating systems, including Linux, OS X and Cygwin. Portable OpenSSH polyfills OpenBSD APIs that are not available elsewhere, adds sshd sandboxing for more operating systems and includes support for OS-native authentication and auditing (e.g. using PAM).
 
-## Documentation
+## **HPN-SSH** Fork Information
 
-The official documentation for OpenSSH are the man pages for each tool:
+This is an experimental development fork. It currently incorporates changes from IBM and Red Hat's SSH distribtions, as well as adjustments to the congestion control and buffering algorithms.
 
-* [ssh(1)](https://man.openbsd.org/ssh.1)
-* [sshd(8)](https://man.openbsd.org/sshd.8)
-* [ssh-keygen(1)](https://man.openbsd.org/ssh-keygen.1)
-* [ssh-agent(1)](https://man.openbsd.org/ssh-agent.1)
-* [scp(1)](https://man.openbsd.org/scp.1)
-* [sftp(1)](https://man.openbsd.org/sftp.1)
-* [ssh-keyscan(8)](https://man.openbsd.org/ssh-keyscan.8)
-* [sftp-server(8)](https://man.openbsd.org/sftp-server.8)
 
-## Stable Releases
+## Fork Future Plans
 
-Stable release tarballs are available from a number of [download mirrors](https://www.openssh.com/portable.html#downloads). We recommend the use of a stable release for most users. Please read the [release notes](https://www.openssh.com/releasenotes.html) for details of recent changes and potential incompatibilities.
+Current plans include the tuning and assembly-level optimization of existing code, as well as the addition of new cryptographic functionality, including post-quantum algorithms, enhanced hashing and key exchange mechanisms, and new key systems, such as SHAKE, SHA-3, BLAKE-3, Schnorrkel/Ristretto-Sr25519, Ristretto255/Curve25519-Dalek, X448-Goldilocks, E-5321, Kyber, SIDH, Dilithium, SPHINCS-SHAKE256, SPHINCS+, etc.
 
-## Building Portable OpenSSH
 
-### Dependencies
+## Security Information
 
-Portable OpenSSH is built using autoconf and make. It requires a working C compiler, standard library and headers, and [zlib](https://www.zlib.net/). ``libcrypto`` from either [LibreSSL](https://www.libressl.org/) or [OpenSSL](https://www.openssl.org) may also be used, but OpenSSH may be built without it supporting a subset of crypto algorithms.
+This software may contain bugs, including critical security vulnerabilties, despite the authors best efforts.
 
-FIDO security token support need [libfido2](https://github.com/Yubico/libfido2) and its dependencies. Also, certain platforms and build-time options may require additional dependencies, see README.platform for details.
 
-### Building a release
+## Warranty
 
-Releases include a pre-built copy of the ``configure`` script and may be built using:
+BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIESPROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHERPROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+        
 
-```
-tar zxvf openssh-X.YpZ.tar.gz
-cd openssh
-./configure # [options]
-make && make tests
-```
+## Licensing
 
-See the [Build-time Customisation](#build-time-customisation) section below for configure options. If you plan on installing OpenSSH to your system, then you will usually want to specify destination paths.
- 
-### Building from git
+See the [LICENSE](https://github.com/johnsonjh/hpn-ssh/blob/master/LICENCE) file for full details.
 
-If building from git, you'll need [autoconf](https://www.gnu.org/software/autoconf/) installed to build the ``configure`` script. The following commands will check out and build portable OpenSSH from git:
 
-```
-git clone https://github.com/openssh/openssh-portable # or https://anongit.mindrot.org/openssh.git
-cd openssh-portable
-autoreconf
-./configure
-make && make tests
-```
+## Operational Details
 
-### Build-time Customisation
+*SCP* and the underlying *SSH-2* protocol implementation in *OpenSSH* is network performance limited by statically defined internal flow control buffers. These buffers often end up acting as a bottleneck for network throughput of *SCP*, especially on long and high bandwith network links. Modifying the SSH code to allow the buffers to be defined at run time eliminates this bottleneck. **HPN-SSH** is fully interoperable with other SSH servers and clients. In addition, **HPN-SSH** clients will be able to download faster, even from non **HPN-SSH** servers, and **HPN-SSH** servers will be able to receive uploads faster, even from non **HPN-SSH** clients, as long as the host receiving the data has a properly tuned TCP/IP stack.
 
-There are many build-time customisation options available. All Autoconf destination path flags (e.g. ``--prefix``) are supported (and are usually required if you want to install OpenSSH).
+The amount of improvement any specific user will see is dependent on a number of factors. Transfer rates cannot exceed the capacity of the network, nor the throughput of I/O subsystems, including the disk and memory speed. The improvement will also be highly influenced by the capacity of the processor to handle encryption (and decryption).
 
-For a full list of available flags, run ``configure --help`` but a few of the more frequently-used ones are described below. Some of these flags will require additional libraries and/or headers be installed.
 
-Flag | Meaning
---- | ---
-``--with-pam`` | Enable [PAM](https://en.wikipedia.org/wiki/Pluggable_authentication_module) support. [OpenPAM](https://www.openpam.org/), [Linux PAM](http://www.linux-pam.org/) and Solaris PAM are supported.
-``--with-libedit`` | Enable [libedit](https://www.thrysoee.dk/editline/) support for sftp.
-``--with-kerberos5`` | Enable Kerberos/GSSAPI support. Both [Heimdal](https://www.h5l.org/) and [MIT](https://web.mit.edu/kerberos/) Kerberos implementations are supported.
-``--with-selinux`` | Enable [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux) support.
-``--with-security-key-builtin`` | Include built-in support for U2F/FIDO2 security keys. This requires [libfido2](https://github.com/Yubico/libfido2) be installed.
+## Performance Gap
 
-## Development
+With most high-bandwidth connections, there is a performance gap between what *SSH* is capable of, and what the network link has the capacity to do. This gap, in most situations, is the direct cause of undersized receive buffers in *SSH*'s congestion control mechanism.
 
-Portable OpenSSH development is discussed on the [openssh-unix-dev mailing list](https://lists.mindrot.org/mailman/listinfo/openssh-unix-dev) ([archive mirror](https://marc.info/?l=openssh-unix-dev)). Bugs and feature requests are tracked on our [Bugzilla](https://bugzilla.mindrot.org/).
 
-## Reporting bugs
+## Normal *SSH* *SCP* vs. **HPN-SSH** *SCP* Performance
 
-_Non-security_ bugs may be reported to the developers via [Bugzilla](https://bugzilla.mindrot.org/) or via the mailing list above. Security bugs should be reported to [openssh@openssh.com](mailto:openssh.openssh.com).
+**HPN-SSH** offers _significantly_ enhanced *SCP* throughput performance. Increasing the size of the *SSH* channel receive buffers has been shown to improve *SCP* throughput by as much as **1,000%**.
+
+
+## Possible bug with `buffer_append_space` in **HPN-SSH**
+
+If you are experiencing disconnects due to a failure in `buffer_append_space`, you should try using `-oHPNBufferSize=16384` to restrict the growth of this buffer.
+
+
+## Upstream **HPN-SSH* Future Plans
+
+- Automatic resumption of failed transfers
+- AES-NI hardware acceleration for the AES-CTR cipher
+- Parallelization of the ChaCha-20 cipher
+- Inline network telemetry
+- Pipelined HMAC generation
+- Enhanced distribution packaging
+
+
+## Original Authors
+
+- Chris Rapier
+- Michael Stevens
+- Benjamin Bennett
+- Mike Tasota
+
+
+## Upstream Homepage
+
+- https://www.psc.edu/research/networking/hpn-ssh/
