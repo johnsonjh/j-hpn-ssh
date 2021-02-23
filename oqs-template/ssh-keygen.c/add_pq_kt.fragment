@@ -3,4 +3,3 @@
 		{ "{{ variant['name']|lower|replace('_','') }}", "{{ variant['name'] }}", _PATH_HOST_{{ variant['name'] }}_KEY_FILE },
     {%- endfor %}
 {%- endfor %}
-

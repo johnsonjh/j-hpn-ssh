@@ -4,4 +4,3 @@
 {%- for kem in config['kems'] %}
     KEX_PQ_METHOD_{{ kem['family'] }}{% if not loop.last -%}{{ " " }}\{%- endif -%}
 {%- endfor %}
-

@@ -7,4 +7,3 @@
 			return {{ variant['oqs_meth'] }};
     {%- endfor -%}
 {%- endfor %}
-

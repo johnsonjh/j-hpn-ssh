@@ -6,4 +6,3 @@
 	case KEY_{{ variant['name'] }}{% if not (outer_loop_last and loop.last) %}: \{% endif %}
     {%- endfor -%}
 {% endfor %}
-

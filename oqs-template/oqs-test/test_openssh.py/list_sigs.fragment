@@ -9,4 +9,3 @@
             'ssh-{{ classical_alg['name'] }}-{{ variant['name']|lower|replace('_','') }}',
             {%- endfor -%}
     {%- endfor %} {%- endfor %}
-

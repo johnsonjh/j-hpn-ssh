@@ -4,4 +4,3 @@
                  _PATH_HOST_{{ variant['name'] }}_KEY_FILE, rr_hostname);
     {%- endfor %}
 {%- endfor %}
-

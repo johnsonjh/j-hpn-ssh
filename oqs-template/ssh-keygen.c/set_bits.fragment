@@ -20,4 +20,3 @@
 		case KEY_P521_{{ pq_alg['name'] }}:
 {%- endfor %}
 			*bitsp = 521;
-

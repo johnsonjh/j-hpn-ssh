@@ -8,4 +8,3 @@
     {%- endfor -%}
 {%- endfor %}
 #define NUM_KEYTYPES {{ count.val }}
-

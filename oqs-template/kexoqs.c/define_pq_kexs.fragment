@@ -6,4 +6,3 @@
     {%- endfor %}
 #endif /* HAVE_{{ kem['family'] }} */
 {%- endfor %}
-

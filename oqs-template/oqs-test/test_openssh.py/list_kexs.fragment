@@ -5,4 +5,3 @@
     # hybrid kex
     {% for kem in config['kems'] %}{% for variant in kem['variants'] %}'ecdh-nistp384-{{ variant['name']|lower|replace('_','-') }}-sha384@openquantumsafe.org',
     {%- endfor %}{% endfor %}
-

@@ -25,4 +25,3 @@
 {%- endfor %}
 #endif /* OPENSSL_HAS_ECC */
 #endif /* WITH_OPENSSL */
-

@@ -8,4 +8,3 @@
 #define KEX_HYBRID_METHOD_{{ kem['family'] }} ""
 #endif /* HAVE_{{ kem['family'] }} */
 {%- endfor %}
-

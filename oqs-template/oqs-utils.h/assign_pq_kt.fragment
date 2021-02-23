@@ -6,4 +6,3 @@
     {%- endfor -%}
 {% endfor %}
 				IS_HYBRID(type))
-

@@ -19,4 +19,3 @@
 {%- set last_classical_alg = last_variant['mix_with']|last -%}
 #define KT_MIN KT_DSA
 #define KT_MAX KT_{{ last_classical_alg.name|upper }}_{{ last_variant['name'] }}
-
