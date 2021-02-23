@@ -9,7 +9,7 @@
 
 set -exo pipefail
 
-PREFIX=${PREFIX:-"`pwd`/oqs"}
+PREFIX=${PREFIX:-"$(pwd)/oqs"}
 
 cd oqs-scripts/tmp/liboqs
 rm -rf build

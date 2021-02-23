@@ -20,7 +20,7 @@ rm -f "$PREFIX"/client_log.txt
 rm -f "$PREFIX"/ssh_server/authorized_keys
 touch "$PREFIX"/ssh_server/authorized_keys
 chmod 600 "$PREFIX"/ssh_server/authorized_keys
-cat "$PREFIX"/ssh_client/*.pub >> "$PREFIX"/ssh_server/authorized_keys
+cat "$PREFIX"/ssh_client/*.pub >>"$PREFIX"/ssh_server/authorized_keys
 
 "$PREFIX"/sbin/sshd -q -p "$PORT" -d \
   -f "$PREFIX/sshd_config" \
@@ -30,16 +30,16 @@ cat "$PREFIX"/ssh_client/*.pub >> "$PREFIX"/ssh_server/authorized_keys
   -o "PubkeyAcceptedKeyTypes=$SIGALG" \
   -o "StrictModes=no" \
   -h "$PREFIX/ssh_server/id_$SIGALG" \
-  >> "$PREFIX"/server_log.txt 2>&1 &
+  >>"$PREFIX"/server_log.txt 2>&1 &
 
 if [[ "${SIGALG}" =~ "rainbowi" ]]; then
-    sleep 10
+  sleep 10
 elif [[ "${SIGALG}" =~ "rainbowiii" ]]; then
-    sleep 20
+  sleep 20
 elif [[ "${SIGALG}" =~ "rainbowv" ]]; then
-    sleep 60
+  sleep 60
 else
-    sleep 2
+  sleep 2
 fi
 
 SERVER_PID=$!
@@ -54,7 +54,7 @@ SERVER_PID=$!
   -o StrictHostKeyChecking=no \
   -i "$PREFIX/ssh_client/id_$SIGALG" \
   "exit" \
-  >> "$PREFIX"/client_log.txt 2>&1
+  >>"$PREFIX"/client_log.txt 2>&1
 
 kill -9 "$SERVER_PID"
 
