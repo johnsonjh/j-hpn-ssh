@@ -4048,6 +4048,8 @@ static int
 channel_request_rforward_cancel_tcpip(struct ssh *ssh,
     const char *host, u_short port)
 {
+	if(ssh == NULL)
+		return;
 	struct ssh_channels *sc = ssh->chanctxt;
 	struct permission_set *pset = &sc->local_perms;
 	int r;
