@@ -93,7 +93,8 @@ LTESTS= 	connect \
 		allow-deny-users \
 		authinfo \
 		sshsig \
-		keygen-comment
+		keygen-comment \
+		knownhosts-command
 
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
@@ -123,9 +124,9 @@ CLEANFILES=	*.core actual agent-key.* authorized_keys_${USERNAME} \
 		rsa_ssh2_crnl.prv scp-ssh-wrapper.exe \
 		scp-ssh-wrapper.scp setuid-allowed sftp-server.log \
 		sftp-server.sh sftp.log ssh-log-wrapper.sh ssh.log \
-		ssh-rsa_oldfmt ssh-rsa_oldfmt.pub \
+		ssh-rsa_oldfmt ssh-rsa_oldfmt.pub knownhosts_command \
 		ssh_config ssh_config.* ssh_proxy ssh_proxy_bak \
-		ssh_proxy_envpass sshd.log sshd_config sshd_config_minimal \
+		ssh_proxy_* sshd.log sshd_config sshd_config_* \
 		sshd_config.* sshd_proxy sshd_proxy.* sshd_proxy_bak \
 		sshd_proxy_orig t10.out t10.out.pub t12.out t12.out.pub \
 		t2.out t3.out t6.out1 t6.out2 t7.out t7.out.pub \
