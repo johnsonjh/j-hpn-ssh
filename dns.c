@@ -210,6 +210,7 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 {
 	u_int counter;
 	int result;
+	unsigned int rrset_flags = 0;
 	struct rrsetinfo *fingerprints = NULL;
 
 	u_int8_t hostkey_algorithm;
@@ -234,8 +235,19 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 		return -1;
 	}
 
+	/*
+	 * Original getrrsetbyname function, found on OpenBSD for example,
+	 * doesn't accept any flag and prerequisite for obtaining AD bit in
+	 * DNS response is set by "options edns0" in resolv.conf.
+	 *
+	 * Our version is more clever and use RRSET_FORCE_EDNS0 flag.
+	 */
+#ifndef HAVE_GETRRSETBYNAME
+	rrset_flags |= RRSET_FORCE_EDNS0;
+#endif
 	result = getrrsetbyname(hostname, DNS_RDATACLASS_IN,
-	    DNS_RDATATYPE_SSHFP, 0, &fingerprints);
+	    DNS_RDATATYPE_SSHFP, rrset_flags, &fingerprints);
+
 	if (result) {
 		verbose("DNS lookup error: %s", dns_result_totext(result));
 		return -1;

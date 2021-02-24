@@ -65,6 +65,9 @@
 #ifndef T_RRSIG
 #define T_RRSIG 46
 #endif
+#ifndef RRSET_FORCE_EDNS0
+# define RRSET_FORCE_EDNS0	0x0001
+#endif
 
 /*
  * Flags for getrrsetbyname()
