@@ -152,6 +152,9 @@ ssh_free(struct ssh *ssh)
 {
 	struct key_entry *k;
 
+	if (ssh == NULL)
+		return;
+
 	/*
 	 * we've only created the public keys variants in case we
 	 * are a acting as a server.
