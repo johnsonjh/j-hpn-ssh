@@ -194,6 +194,7 @@ kex_dh_dec(struct kex *kex, const struct sshbuf *dh_blob,
 	*shared_secretp = buf;
 	buf = NULL;
  out:
+	BN_free(dh_pub);
 	DH_free(kex->dh);
 	kex->dh = NULL;
 	sshbuf_free(buf);
