@@ -193,6 +193,7 @@ static struct {
 	{ "fallbacktorsh", oDeprecated },
 	{ "globalknownhostsfile2", oDeprecated },
 	{ "rhostsauthentication", oDeprecated },
+	{ "useblacklistedkeys", oDeprecated },
 	{ "userknownhostsfile2", oDeprecated },
 	{ "useroaming", oDeprecated },
 	{ "usersh", oDeprecated },
