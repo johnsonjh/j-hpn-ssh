@@ -425,7 +425,6 @@ or
 .It Cm CheckHostIP
 If set to
 .Cm yes
-(the default),
 .Xr ssh 1
 will additionally check the host IP address in the
 .Pa known_hosts
@@ -436,7 +435,8 @@ and will add addresses of destination hosts to
 in the process, regardless of the setting of
 .Cm StrictHostKeyChecking .
 If the option is set to
-.Cm no ,
+.Cm no
+(the default),
 the check will not be executed.
 .It Cm Ciphers
 Specifies the ciphers allowed and their order of preference.
