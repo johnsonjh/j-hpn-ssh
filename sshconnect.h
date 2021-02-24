@@ -30,6 +30,20 @@ struct Sensitive {
 	int		nkeys;
 };
 
+struct ssh_conn_info {
+	char *conn_hash_hex;
+	char *shorthost;
+	char *uidstr;
+	char *keyalias;
+	char *thishost;
+	char *host_arg;
+	char *portstr;
+	char *remhost;
+	char *remuser;
+	char *homedir;
+	char *locuser;
+};
+
 struct addrinfo;
 struct ssh;
 
