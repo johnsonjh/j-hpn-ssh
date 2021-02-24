@@ -816,6 +816,10 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 	host_status = check_key_in_hostkeys(host_hostkeys, host_key,
 	    &host_found);
 
+	/* If no host files were specified, then don't try to touch them */
+	if (!readonly && num_user_hostfiles == 0)
+		readonly = RDONLY;
+
 	/*
 	 * Also perform check for the ip address, skip the check if we are
 	 * localhost, looking for a certificate, or the hostname was an ip
