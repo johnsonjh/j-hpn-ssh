@@ -541,7 +541,7 @@ kex_send_kexinit(struct ssh *ssh)
 	int r;
 
 	if (kex == NULL) {
-		error("%s: no hex", __func__);
+		error("%s: no kex", __func__);
 		return SSH_ERR_INTERNAL_ERROR;
 	}
 	if (kex->flags & KEX_INIT_SENT)
@@ -583,7 +583,7 @@ kex_input_kexinit(int type, u_int32_t seq, struct ssh *ssh)
 
 	debug("SSH2_MSG_KEXINIT received");
 	if (kex == NULL) {
-		error("%s: no hex", __func__);
+		error("%s: no kex", __func__);
 		return SSH_ERR_INTERNAL_ERROR;
 	}
 	ssh_dispatch_set(ssh, SSH2_MSG_KEXINIT, NULL);
