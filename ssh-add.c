@@ -92,7 +92,7 @@ static char *default_files[] = {
 static int fingerprint_hash = SSH_FP_HASH_DEFAULT;
 
 /* Default lifetime (0 == forever) */
-static long lifetime = 0;
+static int lifetime = 0;
 
 /* User has to confirm key use */
 static int confirm = 0;
@@ -400,7 +400,7 @@ add_file(int agent_fd, const char *filename, int key_only, int qflag,
 			    filename, comment);
 			if (lifetime != 0) {
 				fprintf(stderr,
-				    "Lifetime set to %ld seconds\n", lifetime);
+				    "Lifetime set to %d seconds\n", lifetime);
 			}
 			if (confirm != 0) {
 				fprintf(stderr, "The user must confirm "
@@ -456,7 +456,7 @@ add_file(int agent_fd, const char *filename, int key_only, int qflag,
 		fprintf(stderr, "Certificate added: %s (%s)\n", certpath,
 		    private->cert->key_id);
 		if (lifetime != 0) {
-			fprintf(stderr, "Lifetime set to %ld seconds\n",
+			fprintf(stderr, "Lifetime set to %d seconds\n",
 			    lifetime);
 		}
 		if (confirm != 0) {
@@ -640,7 +640,7 @@ load_resident_keys(int agent_fd, const char *skprovider, int qflag)
 			    sshkey_type(keys[i]), fp);
 			if (lifetime != 0) {
 				fprintf(stderr,
-				    "Lifetime set to %ld seconds\n", lifetime);
+				    "Lifetime set to %d seconds\n", lifetime);
 			}
 			if (confirm != 0) {
 				fprintf(stderr, "The user must confirm "

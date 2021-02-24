@@ -175,6 +175,9 @@ typedef struct {
 	int	max_startups_begin;
 	int	max_startups_rate;
 	int	max_startups;
+	int	per_source_max_startups;
+	int	per_source_masklen_ipv4;
+	int	per_source_masklen_ipv6;
 	int	max_authtries;
 	int	max_sessions;
 	char   *banner;			/* SSH-2 banner message */

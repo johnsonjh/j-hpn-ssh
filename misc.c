@@ -489,7 +489,7 @@ a2tun(const char *s, int *remote)
  *
  * Return -1 if time string is invalid.
  */
-long
+int
 convtime(const char *s)
 {
 	long total, secs, multiplier;
@@ -506,7 +506,7 @@ convtime(const char *s)
 	while (*p) {
 		secs = strtol(p, &endp, 10);
 		if (p == endp ||
-		    (errno == ERANGE && (secs == LONG_MIN || secs == LONG_MAX)) ||
+		    (errno == ERANGE && (secs == INT_MIN || secs == INT_MAX)) ||
 		    secs < 0)
 			return -1;
 
@@ -537,10 +537,10 @@ convtime(const char *s)
 		default:
 			return -1;
 		}
-		if (secs >= LONG_MAX / multiplier)
+		if (secs >= INT_MAX / multiplier)
 			return -1;
 		secs *= multiplier;
-		if  (total >= LONG_MAX - secs)
+		if  (total >= INT_MAX - secs)
 			return -1;
 		total += secs;
 		if (total < 0)

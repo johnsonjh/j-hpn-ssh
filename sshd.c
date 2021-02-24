@@ -128,6 +128,7 @@
 #include "version.h"
 #include "ssherr.h"
 #include "sk-api.h"
+#include "srclimit.h"
 
 #ifdef LIBWRAP
 #include <tcpd.h>
@@ -940,7 +941,7 @@ should_drop_connection(int startups)
  * while in that state.
  */
 static int
-drop_connection(int sock, int startups)
+drop_connection(int sock, int startups, int notify_pipe)
 {
 	char *laddr, *raddr;
 	const char msg[] = "Exceeded MaxStartups\r\n";
@@ -950,7 +951,8 @@ drop_connection(int sock, int startups)
 	time_t now;
 
 	now = monotime();
-	if (!should_drop_connection(startups)) {
+	if (!should_drop_connection(startups) &&
+	    srclimit_check_allow(sock, notify_pipe) == 1) {
 		if (last_drop != 0 &&
 		    startups < options.max_startups_begin - 1) {
 			/* XXX maybe need better hysteresis here */
@@ -1218,6 +1220,10 @@ server_listen(void)
 {
 	u_int i;
 
+	/* Initialise per-source limit tracking. */
+	srclimit_init(options.max_startups, options.per_source_max_startups,
+	    options.per_source_masklen_ipv4, options.per_source_masklen_ipv6);
+
 	for (i = 0; i < options.num_listen_addrs; i++) {
 		listen_on_addrs(&options.listen_addrs[i]);
 		freeaddrinfo(options.listen_addrs[i].addrs);
@@ -1325,6 +1331,7 @@ server_accept_loop(struct ssh *ssh, int *sock_in, int *sock_out, int *newsock, i
 			case 0:
 				/* child exited or completed auth */
 				close(startup_pipes[i]);
+				srclimit_done(startup_pipes[i]);
 				startup_pipes[i] = -1;
 				startups--;
 				if (startup_flags[i])
@@ -1355,9 +1362,12 @@ server_accept_loop(struct ssh *ssh, int *sock_in, int *sock_out, int *newsock, i
 				continue;
 			}
 			if (unset_nonblock(*newsock) == -1 ||
-			    drop_connection(*newsock, startups) ||
-			    pipe(startup_p) == -1) {
+			    pipe(startup_p) == -1)
+				continue;
+			if (drop_connection(*newsock, startups, startup_p[0])) {
 				close(*newsock);
+				close(startup_p[0]);
+				close(startup_p[1]);
 				continue;
 			}
 

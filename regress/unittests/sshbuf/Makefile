@@ -15,7 +15,7 @@ SRCS+=test_sshbuf_fixed.c
 # From usr.bin/ssh
 SRCS+=sshbuf-getput-basic.c sshbuf-getput-crypto.c sshbuf-misc.c sshbuf.c
 SRCS+=sshbuf-io.c atomicio.c misc.c xmalloc.c log.c fatal.c ssherr.c cleanup.c
-SRCS+=match.c addrmatch.c
+SRCS+=match.c addr.c addrmatch.c
 
 run-regress-${PROG}: ${PROG}
 	env ${TEST_ENV} ./${PROG} ${UNITTEST_ARGS}

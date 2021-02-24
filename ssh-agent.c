@@ -164,7 +164,7 @@ u_char lock_salt[LOCK_SALT_SIZE];
 extern char *__progname;
 
 /* Default lifetime in seconds (0 == forever) */
-static long lifetime = 0;
+static int lifetime = 0;
 
 static int fingerprint_hash = SSH_FP_HASH_DEFAULT;
 

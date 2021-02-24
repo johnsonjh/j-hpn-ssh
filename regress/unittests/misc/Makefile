@@ -12,6 +12,7 @@ SRCS+= log.c
 SRCS+= xmalloc.c
 SRCS+= misc.c
 SRCS+= match.c
+SRCS+= addr.c
 SRCS+= addrmatch.c
 
 # From usr.bin/ssh/sshd/Makefile
