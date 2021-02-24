@@ -34,7 +34,7 @@
 /*
  * OpenSSL version numbers: MNNFFPPS: major minor fix patch status
  * We match major, minor, fix and status (not patch) for <1.0.0.
- * After that, we acceptable compatible fix versions (so we
+ * After that, we accept compatible fix and status versions (so we
  * allow 1.0.1 to work with 1.0.0). Going backwards is only allowed
  * within a patch series.
  */
@@ -55,10 +55,10 @@ ssh_compatible_openssl(long headerver, long libver)
 	}
 
 	/*
-	 * For versions >= 1.0.0, major,minor,status must match and library
+	 * For versions >= 1.0.0, major,minor must match and library
 	 * fix version must be equal to or newer than the header.
 	 */
-	mask = 0xfff0000fL; /* major,minor,status */
+	mask = 0xfff00000L; /* major,minor */
 	hfix = (headerver & 0x000ff000) >> 12;
 	lfix = (libver & 0x000ff000) >> 12;
 	if ( (headerver & mask) == (libver & mask) && lfix >= hfix)
