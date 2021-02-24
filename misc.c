@@ -243,10 +243,10 @@ waitfd(int fd, int *timeoutp, short events)
 	struct timeval t_start;
 	int oerrno, r;
 
-	monotime_tv(&t_start);
 	pfd.fd = fd;
 	pfd.events = events;
 	for (; *timeoutp >= 0;) {
+		monotime_tv(&t_start);
 		r = poll(&pfd, 1, *timeoutp);
 		oerrno = errno;
 		ms_subtract_diff(&t_start, timeoutp);
@@ -537,10 +537,10 @@ convtime(const char *s)
 		default:
 			return -1;
 		}
-		if (secs >= INT_MAX / multiplier)
+		if (secs > INT_MAX / multiplier)
 			return -1;
 		secs *= multiplier;
-		if  (total >= INT_MAX - secs)
+		if  (total > INT_MAX - secs)
 			return -1;
 		total += secs;
 		if (total < 0)

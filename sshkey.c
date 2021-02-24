@@ -3243,7 +3243,7 @@ sshkey_cert_check_authority(const struct sshkey *k,
 size_t
 sshkey_format_cert_validity(const struct sshkey_cert *cert, char *s, size_t l)
 {
-	char from[32], to[32], ret[64];
+	char from[32], to[32], ret[128];
 	time_t tt;
 	struct tm *tm;
 

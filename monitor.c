@@ -1245,7 +1245,7 @@ mm_answer_keyallowed(struct ssh *ssh, int sock, struct sshbuf *m)
 			if (auth2_key_already_used(authctxt, key))
 				break;
 			if (!key_base_type_match(auth_method, key,
-			    options.pubkey_key_types))
+			    options.pubkey_accepted_algos))
 				break;
 			allowed = user_key_allowed(ssh, authctxt->pw, key,
 			    pubkey_auth_attempt, &opts);

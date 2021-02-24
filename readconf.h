@@ -170,7 +170,7 @@ typedef struct {
 	int	 update_hostkeys; /* one of SSH_UPDATE_HOSTKEYS_* */
 
 	char   *hostbased_key_types;
-	char   *pubkey_key_types;
+	char   *pubkey_accepted_algos;
 
 	char   *jump_user;
 	char   *jump_host;

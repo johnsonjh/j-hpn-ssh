@@ -152,7 +152,7 @@ userauth_pubkey(struct ssh *ssh)
 		goto done;
 	}
 	if (match_pattern_list(pkalg, options.pubkey_key_types, 0) != 1) {
-		logit("%s: key type %s not in PubkeyAcceptedKeyTypes",
+		logit("%s: key type %s not in PubkeyAcceptedKeyAlgorithms",
 		    __func__, sshkey_ssh_name(key));
 		goto done;
 	}
