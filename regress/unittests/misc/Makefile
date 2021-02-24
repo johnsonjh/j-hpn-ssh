@@ -11,6 +11,8 @@ SRCS+= ssherr.c
 SRCS+= log.c
 SRCS+= xmalloc.c
 SRCS+= misc.c
+SRCS+= match.c
+SRCS+= addrmatch.c
 
 # From usr.bin/ssh/sshd/Makefile
 SRCS+= atomicio.c cleanup.c fatal.c
