@@ -907,6 +907,12 @@ the user's home directory becomes accessible.
 This file should be writable only by the user, and need not be
 readable by anyone else.
 .Pp
+.It Pa /etc/hosts.allow
+.It Pa /etc/hosts.deny
+Access controls that should be enforced by tcp-wrappers are defined here.
+Further details are described in
+.Xr hosts_access 5 .
+.Pp
 .It Pa /etc/hosts.equiv
 This file is for host-based authentication (see
 .Xr ssh 1 ) .
@@ -1011,6 +1017,7 @@ IPv6 address can be used everywhere where IPv4 address. In all entries must be t
 .Xr ssh-keygen 1 ,
 .Xr ssh-keyscan 1 ,
 .Xr chroot 2 ,
+.Xr hosts_access 5 ,
 .Xr moduli 5 ,
 .Xr sshd_config 5 ,
 .Xr inetd 8 ,
