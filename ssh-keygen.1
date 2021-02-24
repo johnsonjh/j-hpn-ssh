@@ -202,9 +202,7 @@ key in
 .Pa ~/.ssh/id_ed25519_sk
 or
 .Pa ~/.ssh/id_rsa .
-Additionally, the system administrator may use this to generate host keys,
-as seen in
-.Pa /etc/rc .
+Additionally, the system administrator may use this to generate host keys.
 .Pp
 Normally this program generates the key and asks for a file in which
 to store the private key.
@@ -269,9 +267,7 @@ If
 .Fl f
 has also been specified, its argument is used as a prefix to the
 default path for the resulting host key files.
-This is used by
-.Pa /etc/rc
-to generate new host keys.
+This is used by system administration scripts to generate new host keys.
 .It Fl a Ar rounds
 When saving a private key, this option specifies the number of KDF
 (key derivation function) rounds used.
@@ -804,7 +800,7 @@ option.
 Valid generator values are 2, 3, and 5.
 .Pp
 Screened DH groups may be installed in
-.Pa /etc/moduli .
+.Pa /etc/ssh/moduli .
 It is important that this file contains moduli of a range of bit lengths and
 that both ends of a connection share common moduli.
 .Pp
@@ -1185,7 +1181,7 @@ on all machines
 where the user wishes to log in using public key authentication.
 There is no need to keep the contents of this file secret.
 .Pp
-.It Pa /etc/moduli
+.It Pa /etc/ssh/moduli
 Contains Diffie-Hellman groups used for DH-GEX.
 The file format is described in
 .Xr moduli 5 .
