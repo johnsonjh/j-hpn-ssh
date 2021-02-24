@@ -3102,9 +3102,9 @@ usage(void)
 	    "usage: ssh-keygen [-q] [-a rounds] [-b bits] [-C comment] [-f output_keyfile]\n"
 	    "                  [-m format] [-N new_passphrase] [-O option]\n"
 	    "                  [-t dsa | ecdsa | ecdsa-sk | ed25519 | ed25519-sk | rsa]\n"
-	    "                  [-w provider]\n"
+	    "                  [-w provider] [-Z cipher]\n"
 	    "       ssh-keygen -p [-a rounds] [-f keyfile] [-m format] [-N new_passphrase]\n"
-	    "                   [-P old_passphrase]\n"
+	    "                   [-P old_passphrase] [-Z cipher]\n"
 	    "       ssh-keygen -i [-f input_keyfile] [-m key_format]\n"
 	    "       ssh-keygen -e [-f input_keyfile] [-m key_format]\n"
 	    "       ssh-keygen -y [-f input_keyfile]\n"
@@ -3293,6 +3293,9 @@ main(int argc, char **argv)
 			break;
 		case 'Z':
 			openssh_format_cipher = optarg;
+			if (cipher_by_name(openssh_format_cipher) == NULL)
+				fatal("Invalid OpenSSH-format cipher '%s'",
+				    openssh_format_cipher);
 			break;
 		case 'C':
 			identity_comment = optarg;
