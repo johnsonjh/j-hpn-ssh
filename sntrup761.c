@@ -12,20 +12,9 @@
 
 #include <string.h>
 #include "crypto_api.h"
+#include "int32_minmax.inc"
 
 #define CRYPTO_NAMESPACE(s) s
-
-/* from supercop-20201130/crypto_sort/int32/portable4/int32_minmax.inc */
-#define int32_MINMAX(a,b) \
-do { \
-  int32 ab = b ^ a; \
-  int32 c = b - a; \
-  c ^= ab & (c ^ b); \
-  c >>= 31; \
-  c &= ab; \
-  a ^= c; \
-  b ^= c; \
-} while(0)
 
 /* from supercop-20201130/crypto_sort/int32/portable4/sort.c */
 #define int32 crypto_int32
@@ -103,6 +92,8 @@ static void crypto_sort_uint32(void *array,long long n)
   for (j = 0;j < n;++j) x[j] ^= 0x80000000;
 }
 
+#undef int32
+
 /* from supercop-20201130/crypto_kem/sntrup761/ref/uint64.h */
 #ifndef UINT64_H
 #define UINT64_H
@@ -169,7 +160,6 @@ typedef int16_t int16;
 #define int32_divmod_uint14 CRYPTO_NAMESPACE(int32_divmod_uint14)
 
 
-typedef int32_t int32;
 
 /*
 assuming 1 <= m < 16384:

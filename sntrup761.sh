@@ -21,7 +21,6 @@ FILES="
 	supercop-20201130/crypto_kem/sntrup761/ref/kem.c
 "
 SORT_I32="
-	supercop-20201130/crypto_sort/int32/portable4/int32_minmax.inc
 	supercop-20201130/crypto_sort/int32/portable4/sort.c
 "
 SORT_U32="supercop-20201130/crypto_sort/uint32/useint32/sort.c"
@@ -39,6 +38,7 @@ echo ' */'
 echo
 echo '#include <string.h>'
 echo '#include "crypto_api.h"'
+echo '#include "int32_minmax.inc"'
 echo
 echo '#define CRYPTO_NAMESPACE(s) s'
 echo
@@ -60,6 +60,7 @@ for i in $FILES; do
 	   -v '#include' $i | \
 	   sed -e "s/crypto_kem_/crypto_kem_sntrup761_/g" \
 		-e "s/^extern void /static void /" \
-		-e "s/^void /static void /"
+		-e "s/^void /static void /" \
+		-e "/^typedef int32_t int32;$/d"
 	echo
 done
