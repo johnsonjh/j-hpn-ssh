@@ -206,6 +206,21 @@ socket and stores its pathname in this variable.
 It is accessible only to the current user,
 but is easily abused by root or another instance of the same user.
 .El
+.Pp
+In Debian,
+.Nm
+is installed with the set-group-id bit set, to prevent
+.Xr ptrace 2
+attacks retrieving private key material.
+This has the side-effect of causing the run-time linker to remove certain
+environment variables which might have security implications for set-id
+programs, including
+.Ev LD_PRELOAD ,
+.Ev LD_LIBRARY_PATH ,
+and
+.Ev TMPDIR .
+If you need to set any of these environment variables, you will need to do
+so in the program executed by ssh-agent.
 .Sh FILES
 .Bl -tag -width Ds
 .It Pa $TMPDIR/ssh-XXXXXXXXXX/agent.<ppid>
