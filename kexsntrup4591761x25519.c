@@ -195,7 +195,7 @@ kex_kem_sntrup4591761x25519_dec(struct kex *kex,
 	if ((r = ssh_digest_buffer(kex->hash_alg, buf, hash, sizeof(hash))) != 0)
 		goto out;
 #ifdef DEBUG_KEXECDH
-	dump_digest("client kem key:", kem_key, sizeof(kem_key));
+	dump_digest("client kem key:", kem_key, crypto_kem_sntrup4591761_BYTES);
 	dump_digest("concatenation of KEM key and ECDH shared key:",
 	    sshbuf_ptr(buf), sshbuf_len(buf));
 #endif
