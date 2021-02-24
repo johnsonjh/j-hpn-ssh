@@ -201,8 +201,16 @@ do_local_cmd(arglist *a)
 
 	if (verbose_mode) {
 		fprintf(stderr, "Executing:");
-		for (i = 0; i < a->num; i++)
-			fmprintf(stderr, " %s", a->list[i]);
+		for (i = 0; i < a->num; i++) {
+			if (i == 0)
+				fmprintf(stderr, " %s", a->list[i]);
+			else
+				/*
+				 * TODO: misbehaves if a->list[i] contains a
+				 * single quote
+				 */
+				fmprintf(stderr, " '%s'", a->list[i]);
+		}
 		fprintf(stderr, "\n");
 	}
 	if ((pid = fork()) == -1)
