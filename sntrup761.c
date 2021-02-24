@@ -10,6 +10,8 @@
 
 #include "includes.h"
 
+#ifdef USE_SNTRUP761X25519
+
 #include <string.h>
 #include "crypto_api.h"
 #include "int32_minmax.inc"
@@ -1351,4 +1353,4 @@ int crypto_kem_sntrup761_dec(unsigned char *k,const unsigned char *c,const unsig
   Decap(k,c,sk);
   return 0;
 }
-
+#endif /* USE_SNTRUP761X25519 */
