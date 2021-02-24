@@ -738,8 +738,14 @@ mm_answer_sign(struct ssh *ssh, int sock, struct sshbuf *m)
 	return (0);
 }
 
-/* Retrieves the password entry and also checks if the user is permitted */
+#define PUTPW(b, id) \
+	do { \
+		if ((r = sshbuf_put_string(b, \
+		    &pwent->id, sizeof(pwent->id))) != 0) \
+			fatal_fr(r, "assemble %s", #id); \
+	} while (0)
 
+/* Retrieves the password entry and also checks if the user is permitted */
 int
 mm_answer_pwnamallow(struct ssh *ssh, int sock, struct sshbuf *m)
 {
@@ -775,10 +781,18 @@ mm_answer_pwnamallow(struct ssh *ssh, int sock, struct sshbuf *m)
 	authctxt->pw = pwent;
 	authctxt->valid = 1;
 
-	/* XXX don't sent pwent to unpriv; send fake class/dir/shell too */
-	if ((r = sshbuf_put_u8(m, 1)) != 0 ||
-	    (r = sshbuf_put_string(m, pwent, sizeof(*pwent))) != 0 ||
-	    (r = sshbuf_put_cstring(m, pwent->pw_name)) != 0 ||
+	/* XXX send fake class/dir/shell, etc. */
+	if ((r = sshbuf_put_u8(m, 1)) != 0)
+		fatal_fr(r, "assemble ok");
+	PUTPW(m, pw_uid);
+	PUTPW(m, pw_gid);
+#ifdef HAVE_STRUCT_PASSWD_PW_CHANGE
+	PUTPW(m, pw_change);
+#endif
+#ifdef HAVE_STRUCT_PASSWD_PW_EXPIRE
+	PUTPW(m, pw_expire);
+#endif
+	if ((r = sshbuf_put_cstring(m, pwent->pw_name)) != 0 ||
 	    (r = sshbuf_put_cstring(m, "*")) != 0 ||
 #ifdef HAVE_STRUCT_PASSWD_PW_GECOS
 	    (r = sshbuf_put_cstring(m, pwent->pw_gecos)) != 0 ||

@@ -243,6 +243,15 @@ mm_sshkey_sign(struct ssh *ssh, struct sshkey *key, u_char **sigp, size_t *lenp,
 	return (0);
 }
 
+#define GETPW(b, id) \
+	do { \
+		if ((r = sshbuf_get_string_direct(b, &p, &len)) != 0) \
+			fatal_fr(r, "parse pw %s", #id); \
+		if (len != sizeof(pw->id)) \
+			fatal_fr(r, "bad length for %s", #id); \
+		memcpy(&pw->id, p, len); \
+	} while (0)
+
 struct passwd *
 mm_getpwnamallow(struct ssh *ssh, const char *username)
 {
@@ -276,12 +285,19 @@ mm_getpwnamallow(struct ssh *ssh, const char *username)
 
 	/* XXX don't like passing struct passwd like this */
 	pw = xcalloc(sizeof(*pw), 1);
-	if ((r = sshbuf_get_string_direct(m, &p, &len)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
-	if (len != sizeof(*pw))
-		fatal("%s: struct passwd size mismatch", __func__);
-	memcpy(pw, p, sizeof(*pw));
-
+//	if ((r = sshbuf_get_string_direct(m, &p, &len)) != 0)
+//		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+//	if (len != sizeof(*pw))
+//		fatal("%s: struct passwd size mismatch", __func__);
+//	memcpy(pw, p, sizeof(*pw));
+	GETPW(m, pw_uid);
+	GETPW(m, pw_gid);
+#ifdef HAVE_STRUCT_PASSWD_PW_CHANGE
+	GETPW(m, pw_change);
+#endif
+#ifdef HAVE_STRUCT_PASSWD_PW_EXPIRE
+	GETPW(m, pw_expire);
+#endif
 	if ((r = sshbuf_get_cstring(m, &pw->pw_name, NULL)) != 0 ||
 	    (r = sshbuf_get_cstring(m, &pw->pw_passwd, NULL)) != 0 ||
 #ifdef HAVE_STRUCT_PASSWD_PW_GECOS
