@@ -32,8 +32,8 @@ SRCS+=	kexgexs.c
 SRCS+=	kexc25519.c
 SRCS+=	smult_curve25519_ref.c
 SRCS+=	kexgen.c
-SRCS+=	kexsntrup4591761x25519.c
-SRCS+=	sntrup4591761.c
+SRCS+=	kexsntrup761x25519.c
+SRCS+=	sntrup761.c
 
 SRCS+=digest-openssl.c
 #SRCS+=digest-libc.c
