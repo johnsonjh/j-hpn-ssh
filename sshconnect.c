@@ -757,6 +757,7 @@ check_host_key(char *hostname, struct sockaddr *hostaddr, u_short port,
 	int r, want_cert = sshkey_is_cert(host_key), host_ip_differ = 0;
 	int hostkey_trusted = 0; /* Known or explicitly accepted by user */
 	struct hostkeys *host_hostkeys, *ip_hostkeys;
+	struct find_by_key_ctx ctx = {0, 0, 0, 0, 0};
 	u_int i;
 
 	/*
