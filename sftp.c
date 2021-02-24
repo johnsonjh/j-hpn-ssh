@@ -891,7 +891,10 @@ sglob_comp(const void *aa, const void *bb)
 		return (rmul * strcmp(ap, bp));
 	else if (sort_flag & LS_TIME_SORT) {
 #if defined(HAVE_STRUCT_STAT_ST_MTIM)
-		return (rmul * timespeccmp(&as->st_mtim, &bs->st_mtim, <));
+		if (timespeccmp(&as->st_mtim, &bs->st_mtim, ==))
+			return 0;
+		return timespeccmp(&as->st_mtim, &bs->st_mtim, <) ?
+		    rmul : -rmul;
 #elif defined(HAVE_STRUCT_STAT_ST_MTIME)
 		return (rmul * NCMP(as->st_mtime, bs->st_mtime));
 #else
