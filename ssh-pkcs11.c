@@ -46,6 +46,7 @@
 #include "misc.h"
 #include "sshkey.h"
 #include "ssh-pkcs11.h"
+#include "digest.h"
 #include "xmalloc.h"
 
 struct pkcs11_slotinfo {
@@ -1241,6 +1242,22 @@ have_rsa_key(const RSA *rsa)
 }
 #endif
 
+static void
+note_key(struct pkcs11_provider *p, CK_ULONG slotidx, const char *context,
+    struct sshkey *key)
+{
+	char *fp;
+
+	if ((fp = sshkey_fingerprint(key, SSH_FP_HASH_DEFAULT,
+	    SSH_FP_DEFAULT)) == NULL) {
+		error_f("sshkey_fingerprint failed");
+		return;
+	}
+	debug2("%s: provider %s slot %lu: %s %s", context, p->name,
+	    (u_long)slotidx, sshkey_type(key), fp);
+	free(fp);
+}
+
 /*
  * lookup certificates for token in slot identified by slotidx,
  * add 'wrapped' public keys to the 'keysp' array and increment nkeys.
@@ -1330,8 +1347,9 @@ pkcs11_fetch_certs(struct pkcs11_provider *p, CK_ULONG slotidx,
 			    ck_cert_type);
 			continue;
 		}
-
+		note_key(p, slotidx, __func__, key);
 		if (pkcs11_key_included(keysp, nkeys, key)) {
+			debug2_f("key already included");;
 			sshkey_free(key);
 		} else {
 			/* expand key array and add key */
@@ -1457,8 +1475,9 @@ pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx,
 			error("failed to fetch key");
 			continue;
 		}
-
+		note_key(p, slotidx, __func__, key);
 		if (pkcs11_key_included(keysp, nkeys, key)) {
+			debug2_f("key already included");;
 			sshkey_free(key);
 		} else {
 			/* expand key array and add key */
