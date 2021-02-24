@@ -358,6 +358,8 @@ main(int argc, char **argv)
 
 	gtk_init(&argc, &argv);
 
+	gtk_window_set_default_icon_from_file ("/usr/share/pixmaps/ssh-askpass-gnome.png", NULL);
+
 	if (argc > 1) {
 		message = g_strjoinv(" ", argv + 1);
 	} else {
