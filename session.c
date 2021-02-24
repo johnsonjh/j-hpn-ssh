@@ -1152,7 +1152,7 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 		for (n = 0 ; n < auth_opts->nenv; n++) {
 			ocp = xstrdup(auth_opts->env[n]);
 			cp = strchr(ocp, '=');
-			if (*cp == '=') {
+			if (cp != NULL) {
 				*cp = '\0';
 				/* Apply PermitUserEnvironment allowlist */
 				if (options.permit_user_env_allowlist == NULL ||
