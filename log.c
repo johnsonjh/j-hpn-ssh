@@ -61,7 +61,7 @@ static LogLevel log_level = SYSLOG_LEVEL_INFO;
 static int log_on_stderr = 1;
 static int log_stderr_fd = STDERR_FILENO;
 static int log_facility = LOG_AUTH;
-static char *argv0;
+static const char *argv0;
 static log_handler_fn *log_handler;
 static void *log_handler_ctx;
 
@@ -262,7 +262,8 @@ debug3(const char *fmt,...)
  */
 
 void
-log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
+log_init(const char *av0, LogLevel level, SyslogFacility facility,
+    int on_stderr)
 {
 	log_init_handler(av0, level, facility, on_stderr, 1);
 }
