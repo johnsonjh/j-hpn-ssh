@@ -1266,7 +1266,8 @@ main(int ac, char **av)
 	}
 
 	/* Fill configuration defaults. */
-	fill_default_options(&options);
+	if (fill_default_options(&options) != 0)
+		cleanup_exit(255);
 
 	if (options.user == NULL)
 		options.user = xstrdup(pw->pw_name);

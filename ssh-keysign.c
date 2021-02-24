@@ -207,7 +207,7 @@ main(int argc, char **argv)
 	initialize_options(&options);
 	(void)read_config_file(_PATH_HOST_CONFIG_FILE, pw, "", "",
 	    &options, 0, NULL);
-	fill_default_options(&options);
+	(void)fill_default_options(&options);
 	if (options.enable_ssh_keysign != 1)
 		fatal("ssh-keysign not enabled in %s",
 		    _PATH_HOST_CONFIG_FILE);
