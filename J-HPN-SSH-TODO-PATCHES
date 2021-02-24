@@ -20,3 +20,6 @@ openssh-8.4p1-ssh-copy-id.patch
 Debian:
 selinux-role.patch
 gssapi.patch
+
+Upstream openssh-portable:
+https://github.com/openssh/openssh-portable/commit/b4c7cd1185c5dc0593d47eafcc1a34fda569dd1d
