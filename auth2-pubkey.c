@@ -960,12 +960,12 @@ user_key_command_allowed2(struct ssh *ssh, struct passwd *user_pw,
 	/* Turn the command into an argument vector */
 	if (argv_split(options.authorized_keys_command, &ac, &av) != 0) {
 		error("AuthorizedKeysCommand \"%s\" contains invalid quotes",
-		    command);
+		    options.authorized_keys_command);
 		goto out;
 	}
 	if (ac == 0) {
 		error("AuthorizedKeysCommand \"%s\" yielded no arguments",
-		    command);
+		    options.authorized_keys_command);
 		goto out;
 	}
 	snprintf(uidstr, sizeof(uidstr), "%llu",
