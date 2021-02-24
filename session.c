@@ -1167,8 +1167,8 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 
 	/* read $HOME/.ssh/environment. */
 	if (options.permit_user_env) {
-		snprintf(buf, sizeof buf, "%.200s/.ssh/environment",
-		    pw->pw_dir);
+		snprintf(buf, sizeof buf, "%.200s/%s/environment",
+		    pw->pw_dir, _PATH_SSH_USER_DIR);
 		read_environment_file(&env, &envsize, buf,
 		    options.permit_user_env_allowlist);
 	}
