@@ -100,6 +100,7 @@ static struct {
 	LogLevel val;
 } log_levels[] =
 {
+	{ "SILENT",	SYSLOG_LEVEL_QUIET }, /* compatibility */
 	{ "QUIET",	SYSLOG_LEVEL_QUIET },
 	{ "FATAL",	SYSLOG_LEVEL_FATAL },
 	{ "ERROR",	SYSLOG_LEVEL_ERROR },

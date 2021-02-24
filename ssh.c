@@ -1383,7 +1383,7 @@ main(int ac, char **av)
 	/* Do not allocate a tty if stdin is not a tty. */
 	if ((!isatty(fileno(stdin)) || stdin_null_flag) &&
 	    options.request_tty != REQUEST_TTY_FORCE) {
-		if (tty_flag)
+		if (tty_flag && options.log_level != SYSLOG_LEVEL_QUIET)
 			logit("Pseudo-terminal will not be allocated because "
 			    "stdin is not a terminal.");
 		tty_flag = 0;
