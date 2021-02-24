@@ -1,0 +1,22 @@
+Patches to look at:
+
+Red Hat:
+openssh-6.6.1p1-selinux-contexts.patch
+openssh-6.6p1-ctr-cavstest.patch
+openssh-6.6p1-GSSAPIEnablek5users.patch
+openssh-6.6p1-kuserok.patch
+openssh-6.7p1-kdf-cavs.patch
+openssh-7.1p2-audit-race-condition.patch
+openssh-7.2p2-k5login_directory.patch
+openssh-7.3p1-x11-max-displays.patch
+openssh-7.6p1-cleanup-selinux.patch
+openssh-7.7p1-fips.patch
+openssh-7.7p1-gssapi-new-unique.patch
+openssh-8.0p1-crypto-policies.patch
+openssh-8.0p1-gssapi-keyex.patch
+openssh-8.4p1-debian-compat.patch
+openssh-8.4p1-ssh-copy-id.patch
+
+Debian:
+selinux-role.patch
+gssapi.patch
