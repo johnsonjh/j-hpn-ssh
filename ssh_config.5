@@ -275,9 +275,13 @@ If set to
 .Cm yes ,
 user interaction such as password prompts and host key confirmation requests
 will be disabled.
+In addition, the
+.Cm ServerAliveInterval
+option will be set to 300 seconds by default (Debian-specific).
 This option is useful in scripts and other batch jobs where no user
 is present to interact with
-.Xr ssh 1 .
+.Xr ssh 1 ,
+and where it is desirable to detect a broken network swiftly.
 The argument must be
 .Cm yes
 or
@@ -1585,7 +1589,14 @@ from the server,
 will send a message through the encrypted
 channel to request a response from the server.
 The default
-is 0, indicating that these messages will not be sent to the server.
+is 0, indicating that these messages will not be sent to the server,
+or 300 if the
+.Cm BatchMode
+option is set (Debian-specific).
+.Cm ProtocolKeepAlives
+and
+.Cm SetupTimeOut
+are Debian-specific compatibility aliases for this option.
 .It Cm SetEnv
 Directly specify one or more environment variables and their contents to
 be sent to the server.
@@ -1665,6 +1676,12 @@ Specifies whether the system should send TCP keepalive messages to the
 other side.
 If they are sent, death of the connection or crash of one
 of the machines will be properly noticed.
+This option only uses TCP keepalives (as opposed to using ssh level
+keepalives), so takes a long time to notice when the connection dies.
+As such, you probably want
+the
+.Cm ServerAliveInterval
+option as well.
 However, this means that
 connections will die if the route is down temporarily, and some people
 find it annoying.
