@@ -1126,9 +1126,9 @@ derive_key(struct ssh *ssh, int id, u_int need, u_char *hash, u_int hashlen,
 	if (r != 1) {
 		debug("EVP_KDF_derive(ctx, key, key_len) != 1");
 		actualsize=EVP_KDF_size(ctx);
-		fprintf(stderr, "\ndebug: r=%d, key_len=%d, actualsize=%d, key=%X\n\n", r, key_len, actualsize, &key);
+		//fprintf(stderr, "\ndebug: r=%d, key_len=%d, actualsize=%d, key=%X\n\n", r, key_len, actualsize, &key);
 		r = SSH_ERR_LIBCRYPTO_ERROR;
-		// XXX(jhj) goto out;
+		goto out;
 	}
 #ifdef DEBUG_KEX
 	fprintf(stderr, "key '%c'== ", id);
