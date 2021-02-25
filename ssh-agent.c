@@ -577,100 +577,115 @@ reaper(void)
 }
 
 static int
+parse_key_constraint_extension(struct sshbuf *m, char **sk_providerp)
+{
+	char *ext_name = NULL;
+	int r;
+
+	if ((r = sshbuf_get_cstring(m, &ext_name, NULL)) != 0) {
+		error_fr(r, "parse constraint extension");
+		goto out;
+	}
+	debug_f("constraint ext %s", ext_name);
+	if (strcmp(ext_name, "sk-provider@openssh.com") == 0) {
+		if (sk_providerp == NULL) {
+			error_f("%s not valid here", ext_name);
+			r = SSH_ERR_INVALID_FORMAT;
+			goto out;
+		}
+		if (*sk_providerp != NULL) {
+			error_f("%s already set", ext_name);
+			r = SSH_ERR_INVALID_FORMAT;
+			goto out;
+		}
+		if ((r = sshbuf_get_cstring(m, sk_providerp, NULL)) != 0) {
+			error_fr(r, "parse %s", ext_name);
+			goto out;
+		}
+	} else {
+		error_f("unsupported constraint \"%s\"", ext_name);
+		r = SSH_ERR_FEATURE_UNSUPPORTED;
+		goto out;
+	}
+	/* success */
+	r = 0;
+ out:
+	free(ext_name);
+	return r;
+}
+
+static int
 parse_key_constraints(struct sshbuf *m, struct sshkey *k, time_t *deathp,
 		u_int *secondsp, int *confirmp, char **sk_providerp)
 {
 	u_char ctype;
 	int r;
 	u_int seconds, maxsign = 0;
-	char *ext_name = NULL;
-	struct sshbuf *b = NULL;
 
 	while (sshbuf_len(m)) {
 		if ((r = sshbuf_get_u8(m, &ctype)) != 0) {
 			error("%s: buffer error: %s", __func__, ssh_err(r));
-			goto err;
+			goto out;
 		}
 		switch (ctype) {
 		case SSH_AGENT_CONSTRAIN_LIFETIME:
 			if (*deathp != 0) {
 				error_f("lifetime already set");
-				goto err;
+				r = SSH_ERR_INVALID_FORMAT;
+				goto out;
 			}
 			if ((r = sshbuf_get_u32(m, &seconds)) != 0) {
 				error_fr(r, "parse lifetime constraint");
-				goto err;
+				goto out;
 			}
-			death = monotime() + seconds;
+			death = monotime() + seconds; // XXX(jhj) ???
 			*deathp = monotime() + seconds;
 			*secondsp = seconds;
 			break;
 		case SSH_AGENT_CONSTRAIN_CONFIRM:
 			if (*confirmp != 0) {
 			    error_f("confirm already set");
-			    goto err;
+				r = SSH_ERR_INVALID_FORMAT;
+			    goto out;
 			}
 			*confirmp = 1;
 			break;
 		case SSH_AGENT_CONSTRAIN_MAXSIGN:
 			if (k == NULL) {
 			    error_f("maxsign not valid here");
-			    goto err;
+				r = SSH_ERR_INVALID_FORMAT;
+			    goto out;
 		}
 		if (maxsign != 0) {
 		    error_f("maxsign already set");
-		    goto err;
+			r = SSH_ERR_INVALID_FORMAT;
+		    goto out;
 		}
 		if ((r = sshbuf_get_u32(m, &maxsign)) != 0) {
 				error("%s: bad maxsign constraint: %s",
 				    __func__, ssh_err(r));
-				goto err;
+				goto out;
 			}
 			if ((r = sshkey_enable_maxsign(k, maxsign)) != 0) {
 				error("%s: cannot enable maxsign: %s",
 				    __func__, ssh_err(r));
-				goto err;
+				goto out;
 			}
 			break;
-		case SSH_AGENT_CONSTRAIN_EXTENSION:
-			if ((r = sshbuf_get_cstring(m, &ext_name, NULL)) != 0) {
-				error("%s: cannot parse extension: %s",
-				    __func__, ssh_err(r));
-				goto err;
-			}
-			debug("%s: constraint ext %s", __func__, ext_name);
-			if (strcmp(ext_name, "sk-provider@openssh.com") == 0) {
-				if (sk_providerp == NULL) {
-					error_f("%s not valid here", ext_name);
-					goto err;
-				}
-				if (*sk_providerp != NULL) {
-					error_f("%s already set", ext_name);
-					goto err;
-				}
-				if ((r = sshbuf_get_cstring(m,
-					sk_providerp, NULL)) != 0) {
-					error("%s: cannot parse %s: %s",
-					    __func__, ext_name, ssh_err(r));
-					goto err;
-				}
-			} else {
-				error("%s: unsupported constraint \"%s\"",
-				    __func__, ext_name);
-				goto err;
-			}
-			free(ext_name);
+		if ((r = parse_key_constraint_extension(m,
+				sk_providerp)) != 0)
+				goto out; /* error already logged */
 			break;
 		default:
 			error("%s: Unknown constraint %d", __func__, ctype);
- err:
-			free(ext_name);
-			sshbuf_free(b);
-			return -1;
+		r = SSH_ERR_FEATURE_UNSUPPORTED;
+		goto out;
 		}
 	}
 	/* success */
-	return 0;
+	r = 0;
+out:
+	return r;
 }
 
 static void

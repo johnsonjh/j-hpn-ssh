@@ -113,6 +113,10 @@ typedef struct {
 	struct Forward *remote_forwards;
 	int	clear_forwardings;
 
+	/* Restrict remote dynamic forwarding */
+	char  **permitted_remote_opens;
+	u_int	num_permitted_remote_opens;
+
 	/* stdio forwarding (-W) host and port */
 	char   *stdio_forward_host;
 	int	stdio_forward_port;

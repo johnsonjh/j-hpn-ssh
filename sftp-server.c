@@ -675,6 +675,7 @@ process_init(void)
 	    /* fsync extension */
 	    (r = sshbuf_put_cstring(msg, "fsync@openssh.com")) != 0 ||
 	    (r = sshbuf_put_cstring(msg, "1")) != 0 || /* version */
+	    /* lsetstat extension */
 	    (r = sshbuf_put_cstring(msg, "lsetstat@openssh.com")) != 0 ||
 	    (r = sshbuf_put_cstring(msg, "1")) != 0) /* version */
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));

@@ -613,10 +613,11 @@ if test "$REGRESS_INTEROP_CONCH" = "yes" ; then
 	${SSHKEYGEN} -p -N '' -m PEM -f $OBJ/ssh-rsa_oldfmt >/dev/null
 fi
 
-# If PuTTY is present and we are running a PuTTY test, prepare keys and
-# configuration
+# If PuTTY is present, new enough and we are running a PuTTY test, prepare
+# keys and configuration.
 REGRESS_INTEROP_PUTTY=no
-if test -x "$PUTTYGEN" -a -x "$PLINK" ; then
+if test -x "$PUTTYGEN" -a -x "$PLINK" &&
+    "$PUTTYGEN" --help 2>&1 | grep -- --new-passphrase >/dev/null; then
 	REGRESS_INTEROP_PUTTY=yes
 fi
 case "$SCRIPT" in
@@ -629,13 +630,13 @@ if test "$REGRESS_INTEROP_PUTTY" = "yes" ; then
 
 	# Add a PuTTY key to authorized_keys
 	rm -f ${OBJ}/putty.rsa2
-	if ! puttygen -t rsa -o ${OBJ}/putty.rsa2 \
+	if ! "$PUTTYGEN" -t rsa -o ${OBJ}/putty.rsa2 \
 	    --random-device=/dev/urandom \
 	    --new-passphrase /dev/null < /dev/null > /dev/null; then
-		echo "Your installed version of PuTTY is too old to support --new-passphrase; trying without (may require manual interaction) ..." >&2
-		puttygen -t rsa -o ${OBJ}/putty.rsa2 < /dev/null > /dev/null
+		echo "Your installed version of PuTTY is too old to support --new-passphrase, skipping test" >&2
+		exit 1
 	fi
-	puttygen -O public-openssh ${OBJ}/putty.rsa2 \
+	"$PUTTYGEN" -O public-openssh ${OBJ}/putty.rsa2 \
 	    >> $OBJ/authorized_keys_$USER
 
 	# Convert rsa2 host key to PuTTY format
@@ -659,8 +660,6 @@ if test "$REGRESS_INTEROP_PUTTY" = "yes" ; then
 
 	PUTTYDIR=${OBJ}/.putty
 	export PUTTYDIR
-
-	REGRESS_INTEROP_PUTTY=yes
 fi
 
 # create a proxy version of the client config

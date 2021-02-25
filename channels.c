@@ -4610,8 +4610,27 @@ rdynamic_connect_prepare(struct ssh *ssh, char *ctype, char *rname)
 static int
 rdynamic_connect_finish(struct ssh *ssh, Channel *c)
 {
+	struct ssh_channels *sc = ssh->chanctxt;
+	struct permission_set *pset = &sc->local_perms;
+	struct permission *perm;
 	struct channel_connect cctx;
+	u_int i, permit_adm = 1;
 	int sock;
+
+	if (pset->num_permitted_admin > 0) {
+		permit_adm = 0;
+		for (i = 0; i < pset->num_permitted_admin; i++) {
+			perm = &pset->permitted_admin[i];
+			if (open_match(perm, c->path, c->host_port)) {
+				permit_adm = 1;
+				break;
+			}
+		}
+	}
+	if (!permit_adm) {
+		debug_f("requested forward not permitted");
+		return -1;
+	}
 
 	memset(&cctx, 0, sizeof(cctx));
 	sock = connect_to_helper(ssh, c->path, c->host_port, SOCK_STREAM, NULL,

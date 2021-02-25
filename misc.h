@@ -187,6 +187,13 @@ int	opt_flag(const char *opt, int allow_negate, const char **optsp);
 char	*opt_dequote(const char **sp, const char **errstrp);
 int	opt_match(const char **opts, const char *term);
 
+/* readconf/servconf option lists */
+void	opt_array_append(const char *file, const int line,
+	    const char *directive, char ***array, u_int *lp, const char *s);
+void	opt_array_append2(const char *file, const int line,
+	    const char *directive, char ***array, int **iarray, u_int *lp,
+	    const char *s, int i);
+
 /* readpass.c */
 
 #define RP_ECHO			0x0001
@@ -208,4 +215,5 @@ void	notify_complete(struct notifier_ctx *);
 
 typedef void (*sshsig_t)(int);
 sshsig_t ssh_signal(int, sshsig_t);
+
 #endif /* _MISC_H */
