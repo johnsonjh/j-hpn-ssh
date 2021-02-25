@@ -47,7 +47,7 @@ Dilithium, SPHINCS-SHAKE256, SPHINCS+, etc.
 Experiments that are successful will be made available to the upstream
 **HPN-SSH** project. No GPL or similarly licensed code will be incorporated, and
 all newly added code will be licensed under the same terms and conditions of the
-current *OpenSSH-portable* and **HPN-SSH** distributions.
+current _OpenSSH-portable_ and **HPN-SSH** distributions.
 
 ## Security information
 
@@ -140,21 +140,21 @@ make clean; make distclean; autoreconf -vfi && export LD_LIBRARY_PATH=/opt/hpnss
 make && sudo make install
 ```
 
-- `/opt/hpnssl` contains the *latest stable* 1.1.1 LTS *OpenSSL* release.
+- `/opt/hpnssl` contains the _latest stable_ 1.1.1 LTS _OpenSSL_ release.
 
   - Build with defaults: `./config --prefix=/opt/hpnssl && make && sudo make install`.
 
     - This is due to some bugs/errors the **J-HPN-SSH** maintainer is working to
-      track down on Red Hat/Fedora systems. Also, on these systems, *Kerberos 5* and *TCP-Wrappers*
-      should not be enabled, as they are almost always linked to the system *OpenSSL* library.
-      Linking to multiple versions of *OpenSSL* this way is **not** a supported configuration.
-      
-	- *TCP-Wrappers* support has been deprecated as of *RHEL 8* and *Fedora 23*; the
-	  `tcp_wrappers-devel` package that provides the necessary headers is no longer
-	  made available; the standard Red Hat *SSH* does not include any support for
-	  *TCP-Wrappers*. If you want to enable *TCP-Wrappers* on these systems, you will
-	  need to compile and install *TCP-Wrappers* from source code, preferably, the
-	  most recently released Red Hat SRPM's, which were distributed with *RHEL 7*.
+      track down on Red Hat/Fedora systems. Also, on these systems, _Kerberos 5_ and _TCP-Wrappers_
+      should not be enabled, as they are almost always linked to the system _OpenSSL_ library.
+      Linking to multiple versions of _OpenSSL_ this way is **not** a supported configuration.
+
+  - _TCP-Wrappers_ support has been deprecated as of _RHEL 8_ and _Fedora 23_; the
+    `tcp_wrappers-devel` package that provides the necessary headers is no longer
+    made available; the standard Red Hat _SSH_ does not include any support for
+    _TCP-Wrappers_. If you want to enable _TCP-Wrappers_ on these systems, you will
+    need to compile and install _TCP-Wrappers_ from source code, preferably, the
+    most recently released Red Hat SRPM's, which were distributed with _RHEL 7_.
 
     - If you see any runtime errors such as
       `debug1: EVP_KDF_derive(ctx, key, key_len) != 1 [preauth]` or
@@ -162,9 +162,9 @@ make && sudo make install
       likely affected by this bug, and should build a separate OpenSSL library
       for **J-HPN-SSH** to use, as described above.
 
-- It is **highly recommend** to use the *ldns* libraries, as they provide well
-  tested, first-class *DNSSEC* support. Upstream and third-party patches for
-  supporting *DNSSEC* without *ldns* have been merged, however, this configuration
+- It is **highly recommend** to use the _ldns_ libraries, as they provide well
+  tested, first-class _DNSSEC_ support. Upstream and third-party patches for
+  supporting _DNSSEC_ without _ldns_ have been merged, however, this configuration
   is currently not well tested; feedback here would be appreciated.
 
 - **_Currently, SELinux support is known to be broken, but should be fixed
