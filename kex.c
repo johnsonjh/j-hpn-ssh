@@ -1111,7 +1111,7 @@ derive_key(struct ssh *ssh, int id, u_int need, u_char *hash, u_int hashlen,
 		goto out;
 	}
 	r = EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_SSHKDF_SESSION_ID,
-	    kex->session_id, kex->session_id_len);
+	    kex->session_id);
 	if (r != 1) {
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
@@ -1216,13 +1216,13 @@ kex_derive_keys(struct ssh *ssh, u_char *hash, u_int hashlen,
 	/* save initial hash as session id */
 	if ((kex->flags & KEX_INITIAL) != 0) {
 		if (sshbuf_len(kex->session_id) != 0) {
-			error_f("already have session ID at kex");
+			error("already have session ID at kex");
 			return SSH_ERR_INTERNAL_ERROR;
 		}
 		if ((r = sshbuf_put(kex->session_id, hash, hashlen)) != 0)
 			return r;
 	} else if (sshbuf_len(kex->session_id) == 0) {
-		error_f("no session ID in rekex");
+		error("no session ID in rekex");
 		return SSH_ERR_INTERNAL_ERROR;
 	}
 	for (i = 0; i < NKEYS; i++) {

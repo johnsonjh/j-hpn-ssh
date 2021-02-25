@@ -741,7 +741,7 @@ mm_answer_sign(struct ssh *ssh, int sock, struct sshbuf *m)
 	do { \
 		if ((r = sshbuf_put_string(b, \
 		    &pwent->id, sizeof(pwent->id))) != 0) \
-			fatal_fr(r, "assemble %s", #id); \
+			fatal(r, "assemble %s", #id); \
 	} while (0)
 
 /* Retrieves the password entry and also checks if the user is permitted */
@@ -782,7 +782,7 @@ mm_answer_pwnamallow(struct ssh *ssh, int sock, struct sshbuf *m)
 
 	/* XXX send fake class/dir/shell, etc. */
 	if ((r = sshbuf_put_u8(m, 1)) != 0)
-		fatal_fr(r, "assemble ok");
+		fatal(r, "assemble ok");
 	PUTPW(m, pw_uid);
 	PUTPW(m, pw_gid);
 #ifdef HAVE_STRUCT_PASSWD_PW_CHANGE
@@ -1233,7 +1233,7 @@ mm_answer_keyallowed(struct ssh *ssh, int sock, struct sshbuf *m)
 	if (key != NULL && authctxt->valid) {
 		/* These should not make it past the privsep child */
 		if (sshkey_type_plain(key->type) == KEY_RSA &&
-		    ssh->compat & SSH_BUG_RSASIGMD5) != 0)
+		    (ssh->compat & SSH_BUG_RSASIGMD5) != 0)
 			fatal("%s: passed a SSH_BUG_RSASIGMD5 key", __func__);
 
 		switch (type) {
@@ -1831,14 +1831,14 @@ monitor_apply_keystate(struct ssh *ssh, struct monitor *pmonitor)
 	sshbuf_free(child_state);
 	child_state = NULL;
 	if ((kex = ssh->kex) == NULL)
-		fatal_f("internal error: ssh->kex == NULL");
+		fatal("internal error: ssh->kex == NULL");
 	if (session_id2_len != sshbuf_len(ssh->kex->session_id)) {
-		fatal_f("incorrect session id length %zu (expected %u)",
+		fatal("incorrect session id length %zu (expected %u)",
 		    sshbuf_len(ssh->kex->session_id), session_id2_len);
 	}
 	if (memcmp(sshbuf_ptr(ssh->kex->session_id), session_id2,
 	    session_id2_len) != 0)
-		fatal_f("session ID mismatch");
+		fatal("session ID mismatch");
 	/* XXX set callbacks */
 #ifdef WITH_OPENSSL
 	kex->kex[KEX_DH_GRP1_SHA1] = kex_gen_server;

@@ -1250,7 +1250,7 @@ note_key(struct pkcs11_provider *p, CK_ULONG slotidx, const char *context,
 
 	if ((fp = sshkey_fingerprint(key, SSH_FP_HASH_DEFAULT,
 	    SSH_FP_DEFAULT)) == NULL) {
-		error_f("sshkey_fingerprint failed");
+		error("sshkey_fingerprint failed");
 		return;
 	}
 	debug2("%s: provider %s slot %lu: %s %s", context, p->name,
@@ -1349,7 +1349,7 @@ pkcs11_fetch_certs(struct pkcs11_provider *p, CK_ULONG slotidx,
 		}
 		note_key(p, slotidx, __func__, key);
 		if (pkcs11_key_included(keysp, nkeys, key)) {
-			debug2_f("key already included");;
+			debug2("key already included");;
 			sshkey_free(key);
 		} else {
 			/* expand key array and add key */
@@ -1477,7 +1477,7 @@ pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx,
 		}
 		note_key(p, slotidx, __func__, key);
 		if (pkcs11_key_included(keysp, nkeys, key)) {
-			debug2_f("key already included");;
+			debug2("key already included");;
 			sshkey_free(key);
 		} else {
 			/* expand key array and add key */

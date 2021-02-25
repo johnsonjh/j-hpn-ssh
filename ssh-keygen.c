@@ -1872,7 +1872,7 @@ do_ca_sign(struct passwd *pw, const char *ca_key_path, int prefer_agent,
 			}
 			r = sshkey_certify(public, ca, key_type_name,
 			    sk_provider, pin);
-			notify_complete(notifier);
+			//notify_complete(notifier, "User presence confirmed");
 			if (r != 0)
 				fatal("Couldn't certify key %s: %s",
 				    tmp, ssh_err(r));

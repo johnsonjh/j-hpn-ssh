@@ -246,9 +246,9 @@ mm_sshkey_sign(struct ssh *ssh, struct sshkey *key, u_char **sigp, size_t *lenp,
 #define GETPW(b, id) \
 	do { \
 		if ((r = sshbuf_get_string_direct(b, &p, &len)) != 0) \
-			fatal_fr(r, "parse pw %s", #id); \
+			fatal(r, "parse pw %s", #id); \
 		if (len != sizeof(pw->id)) \
-			fatal_fr(r, "bad length for %s", #id); \
+			fatal(r, "bad length for %s", #id); \
 		memcpy(&pw->id, p, len); \
 	} while (0)
 

@@ -732,7 +732,6 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 	int r, want_cert = sshkey_is_cert(host_key), host_ip_differ = 0;
 	int hostkey_trusted = 0; /* Known or explicitly accepted by user */
 	struct hostkeys *host_hostkeys, *ip_hostkeys;
-	struct find_by_key_ctx ctx = {0, 0, 0, 0, 0};
 	u_int i;
 
 	/*
@@ -833,7 +832,7 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
             */
            if (options.update_hostkeys != 0) {
                options.update_hostkeys = 0;
-               debug3_f("certificate host key in use; "
+               debug3("certificate host key in use; "
                    "disabling UpdateHostkeys");
            }
        }

@@ -940,7 +940,7 @@ process_config_line_depth(Options *options, struct passwd *pw, const char *host,
     int linenum, int *activep, int flags, int *want_final_pass, int depth)
 {
 	char *s, **charptr, *endofnumber, *keyword, *arg, *arg2, *p, ch;
-	char **cpptr, fwdarg[256];
+	char **cpptr, ***cppptr, fwdarg[512];
 	u_int i, *uintptr, uvalue, max_entries = 0;
 	int r, oactive, negated, opcode, *intptr, value, value2, cmdline = 0;
 	int remotefwd, dynamicfwd;
@@ -2335,7 +2335,7 @@ initialize_options(Options * options)
 	options->update_hostkeys = -1;
 	options->hostbased_accepted_algos = NULL;
 	options->pubkey_accepted_algos = NULL;
-	options->known_hosts_command = NULL;
+	//options->known_hosts_command = NULL;
 }
 
 /*
@@ -2580,7 +2580,7 @@ fill_default_options(Options * options)
 	do { \
 		if ((r = kex_assemble_names(&options->what, \
 			defaults, all)) != 0) { \
-			error_fr(r, "%s", #what); \
+			error(r, "%s", #what); \
 			goto fail; \
 		} \
 	} while (0)
@@ -2651,8 +2651,8 @@ free_options(Options *o)
 
 	free(o->forward_agent_sock_path);
 	free(o->xauth_location);
-	FREE_ARRAY(u_int, o->num_log_verbose, o->log_verbose);
-	free(o->log_verbose);
+	//FREE_ARRAY(u_int, o->num_log_verbose, o->log_verbose);
+	//free(o->log_verbose);
 	free(o->ciphers);
 	free(o->macs);
 	free(o->hostkeyalgorithms);

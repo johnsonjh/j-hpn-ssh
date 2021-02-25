@@ -1956,10 +1956,10 @@ ssh_init_forward_permissions(struct ssh *ssh, const char *what, char **opens,
 		ch = '\0';
 		addr = hpdelim2(&arg, &ch);
 		if (addr == NULL || ch == '/')
-			fatal_f("missing host in %s", what);
+			fatal("missing host in %s", what);
 		addr = cleanhostname(addr);
 		if (arg == NULL || ((port = permitopen_port(arg)) < 0))
-			fatal_f("bad port number in %s", what);
+			fatal("bad port number in %s", what);
 		/* Send it to channels layer */
 		channel_add_permission(ssh, FORWARD_ADM,
 		    where, addr, port);
@@ -2103,8 +2103,8 @@ ssh_session2_setup(struct ssh *ssh, int id, int success, void *arg)
 	    NULL, fileno(stdin), command, environ);
 }
 
-static void
-hpn_options_init(void)
+void
+hpn_options_init(struct ssh *ssh)
 {
 	/*
 	 * We need to check to see if what they want to do about buffer
@@ -2129,7 +2129,7 @@ hpn_options_init(void)
 	else
 		options.hpn_buffer_size = 6 * 1024 * 1024;
 
-	if (datafellows & SSH_BUG_LARGEWINDOW) {
+	if (ssh->compat & SSH_BUG_LARGEWINDOW) {
 		debug("HPN to Non-HPN connection");
 	} else {
 		debug("HPN to HPN connection");
@@ -2244,7 +2244,7 @@ ssh_session2(struct ssh *ssh, const struct ssh_conn_info *cinfo)
 	 * might open channels that use the hpn buffer sizes.  We can't send a
 	 * window of -1 (the default) to the server as it breaks things.
 	 */
-	hpn_options_init();
+	hpn_options_init(ssh);
 
 	/* XXX should be pre-session */
 	if (!options.control_persist)

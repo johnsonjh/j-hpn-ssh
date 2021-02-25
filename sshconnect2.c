@@ -1326,10 +1326,10 @@ identity_sign(struct identity *id, u_char **sigp, size_t *lenp,
 		debug("%s: sshkey_sign: %s", __func__, ssh_err(r));
 		if (pin == NULL && !retried && sshkey_is_sk(sign_key) &&
 			r == SSH_ERR_KEY_WRONG_PASSPHRASE) {
-				notify_complete(notifier, NULL);
+				//notify_complete(notifier, NULL);
 				notifier = NULL;
 				retried = 1;
-				goto retry_pin
+				goto retry_pin;
 			}
 		goto out;
 	}
@@ -1348,7 +1348,7 @@ identity_sign(struct identity *id, u_char **sigp, size_t *lenp,
 	free(prompt);
 	if (pin != NULL)
 		freezero(pin, strlen(pin));
-	notify_complete(notifier, r == 0 ? "User presence confirmed" : NULL);
+	//notify_complete(notifier, r == 0 ? "User presence confirmed" : NULL);
 	sshkey_free(prv);
 	return r;
 }
@@ -1458,11 +1458,11 @@ sign_and_send_pubkey(struct ssh *ssh, Identity *id)
 			fatal("%s: sshbuf_new failed", __func__);
 		if (ssh->compat & SSH_OLD_SESSIONID) {
 			if ((r = sshbuf_putb(b, ssh->kex->session_id)) != 0)
-				fatal_fr(r, "sshbuf_putb");
+				fatal(r, "sshbuf_putb");
 		} else {
 			if ((r = sshbuf_put_stringb(b,
 				ssh->kex->session_id)) != 0)
-				fatal_fr(r, "sshbuf_put_stringb");
+				fatal(r, "sshbuf_put_stringb");
 		}
 		skip = sshbuf_len(b);
 		if ((r = sshbuf_put_u8(b, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
@@ -1964,10 +1964,10 @@ input_userauth_info_req(int type, u_int32_t seq, struct ssh *ssh)
 	u_int num_prompts, i;
 	int r;
 
-	debug2_f("entering");
+	debug2("entering");
 
 	if (authctxt == NULL)
-		fatal_f("no authentication context");
+		fatal("no authentication context");
 
 	authctxt->info_req_seen = 1;
 
@@ -1992,7 +1992,7 @@ input_userauth_info_req(int type, u_int32_t seq, struct ssh *ssh)
 	    (r = sshpkt_put_u32(ssh, num_prompts)) != 0)
 		goto out;
 
-	debug2_f("num_prompts %d", num_prompts);
+	debug2("num_prompts %d", num_prompts);
 	for (i = 0; i < num_prompts; i++) {
 		if ((r = sshpkt_get_cstring(ssh, &prompt, NULL)) != 0 ||
 		    (r = sshpkt_get_u8(ssh, &echo)) != 0)
@@ -2000,7 +2000,7 @@ input_userauth_info_req(int type, u_int32_t seq, struct ssh *ssh)
 		if (asmprintf(&display_prompt, INT_MAX, NULL, "(%s@%s) %s",
 		    authctxt->server_user, options.host_key_alias ?
 		    options.host_key_alias : authctxt->host, prompt) == -1)
-			fatal_f("asmprintf failed");
+			fatal("asmprintf failed");
 		response = read_passphrase(display_prompt, echo ? RP_ECHO : 0);
 		if ((r = sshpkt_put_cstring(ssh, response)) != 0)
 			goto out;

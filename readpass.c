@@ -293,22 +293,22 @@ notify_start(int force_askpass, const char *fmt, ...)
 	return ret;
 }
 
-void
-notify_complete(struct notifier_ctx *ctx)
-{
-	int ret;
+//void
+//notify_complete(struct notifier_ctx *ctx)
+//{
+//	int ret;
 
-	if (ctx == NULL || ctx->pid <= 0) {
-		free(ctx);
-		return;
-	}
-	kill(ctx->pid, SIGTERM);
-	while ((ret = waitpid(ctx->pid, NULL, 0)) == -1) {
-		if (errno != EINTR)
-			break;
-	}
-	if (ret == -1)
-		fatal("%s: waitpid: %s", __func__, strerror(errno));
-	ssh_signal(SIGCHLD, ctx->osigchld);
-	free(ctx);
-}
+//	if (ctx == NULL || ctx->pid <= 0) {
+//		free(ctx);
+//		return;
+//	}
+//	kill(ctx->pid, SIGTERM);
+//	while ((ret = waitpid(ctx->pid, NULL, 0)) == -1) {
+//		if (errno != EINTR)
+//			break;
+//	}
+//	if (ret == -1)
+//		fatal("%s: waitpid: %s", __func__, strerror(errno));
+//	ssh_signal(SIGCHLD, ctx->osigchld);
+//	free(ctx);
+//}

@@ -55,7 +55,7 @@ do_send_and_receive(struct ssh *from, struct ssh *to,
 		if (type != 0)
 			return 0;
 		buf = ssh_output_ptr(from, &len);
-		debug_f("%zu%s", len, clobber ? " ignore" : "");
+		debug("%zu%s", len, clobber ? " ignore" : "");
 		if (len == 0)
 			return 0;
 		if ((r = ssh_output_consume(from, len)) != 0) {
@@ -98,20 +98,20 @@ run_kex(struct test_state *ts, struct ssh *client, struct ssh *server)
 	}
 	while (!server->kex->done || !client->kex->done) {
 		cn = sn = 0;
-		debug_f("S:");
+		debug("S:");
 		if ((r = do_send_and_receive(server, client,
 		    ts->smsgs, ts->cin != NULL, &sn)) != 0) {
 			debug_fr(r, "S->C");
 			break;
 		}
-		debug_f("C:");
+		debug("C:");
 		if ((r = do_send_and_receive(client, server,
 		    ts->cmsgs, ts->sin != NULL, &cn)) != 0) {
 			debug_fr(r, "C->S");
 			break;
 		}
 		if (cn == 0 && sn == 0) {
-			debug_f("kex stalled");
+			debug("kex stalled");
 			r = SSH_ERR_PROTOCOL_ERROR;
 			break;
 		}
@@ -136,7 +136,7 @@ store_key(struct shared_state *st, struct sshkey *pubkey,
 		    st->nkeys, privkey->type + 1, sizeof(*st->privkeys));
 		st->nkeys = privkey->type + 1;
 	}
-	debug_f("store %s at %d", sshkey_ssh_name(pubkey), pubkey->type);
+	debug("store %s at %d", sshkey_ssh_name(pubkey), pubkey->type);
 	st->pubkeys[pubkey->type] = pubkey;
 	st->privkeys[privkey->type] = privkey;
 }
@@ -196,13 +196,13 @@ do_kex_with_key(struct shared_state *st, struct test_state *ts,
 	privkey = get_privkey(st, keytype);
 	keyname = xstrdup(sshkey_ssh_name(privkey));
 	if (ts->cin != NULL) {
-		debug_f("%s %s clobber client %zu", kex, keyname,
+		debug("%s %s clobber client %zu", kex, keyname,
 		    sshbuf_len(ts->cin));
 	} else if (ts->sin != NULL) {
-		debug_f("%s %s clobber server %zu", kex, keyname,
+		debug("%s %s clobber server %zu", kex, keyname,
 		    sshbuf_len(ts->sin));
 	} else
-		debug_f("%s %s noclobber", kex, keyname);
+		debug("%s %s noclobber", kex, keyname);
 
 	for (i = 0; i < PROPOSAL_MAX; i++) {
 		ccp = proposal[i];
@@ -354,7 +354,7 @@ int main(void)
 			do_kex_with_key(st, ts, kextypes[j], keytypes[i]);
 			xasprintf(&path, "S2C-%s-%s",
 			    kextypes[j], sshkey_type(st->pubkeys[keytypes[i]]));
-			debug_f("%s", path);
+			debug("%s", path);
 			if ((f = fopen(path, "wb+")) == NULL)
 				abort();
 			if (fwrite(sshbuf_ptr(ts->smsgs), 1,
@@ -365,7 +365,7 @@ int main(void)
 			//sshbuf_dump(ts->smsgs, stderr);
 			xasprintf(&path, "C2S-%s-%s",
 			    kextypes[j], sshkey_type(st->pubkeys[keytypes[i]]));
-			debug_f("%s", path);
+			debug("%s", path);
 			if ((f = fopen(path, "wb+")) == NULL)
 				abort();
 			if (fwrite(sshbuf_ptr(ts->cmsgs), 1,
@@ -382,14 +382,14 @@ int main(void)
 	for (i = 0; keytypes[i] != -1; i++) {
 		xasprintf(&path, "%s.priv",
 		    sshkey_type(st->privkeys[keytypes[i]]));
-		debug_f("%s", path);
+		debug("%s", path);
 		if (sshkey_save_private(st->privkeys[keytypes[i]], path,
 		    "", "", SSHKEY_PRIVATE_OPENSSH, NULL, 0) != 0)
 			abort();
 		free(path);
 		xasprintf(&path, "%s.pub",
 		    sshkey_type(st->pubkeys[keytypes[i]]));
-		debug_f("%s", path);
+		debug("%s", path);
 		if (sshkey_save_public(st->pubkeys[keytypes[i]], path, "") != 0)
 			abort();
 		free(path);

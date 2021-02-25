@@ -150,7 +150,7 @@ userauth_pubkey(struct ssh *ssh)
 		logit("refusing previously-used %s key", sshkey_type(key));
 		goto done;
 	}
-	if (match_pattern_list(pkalg, options.pubkey_key_types, 0) != 1) {
+	if (match_pattern_list(pkalg, options.pubkey_accepted_algos, 0) != 1) {
 		logit("%s: key type %s not in PubkeyAcceptedKeyAlgorithms",
 		    __func__, sshkey_ssh_name(key));
 		goto done;
@@ -824,7 +824,7 @@ user_cert_trusted_ca(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 	}
 	if (use_authorized_principals && principals_opts == NULL)
 		fatal("%s: internal error: missing principals_opts", __func__);
-	if (sshkey_cert_check_authority(key, 0, 1, 0
+	if (sshkey_cert_check_authority(key, 0, 1, 0,
 	    use_authorized_principals ? NULL : pw->pw_name, &reason) != 0)
 		goto fail_reason;
 

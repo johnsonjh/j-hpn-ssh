@@ -1472,7 +1472,7 @@ process_extended_limits(u_int32_t id)
 		nfiles = rlim.rlim_cur - 5; /* stdio(3) + syslog + spare */
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal_f("sshbuf_new failed");
+		fatal("sshbuf_new failed");
 	if ((r = sshbuf_put_u8(msg, SSH2_FXP_EXTENDED_REPLY)) != 0 ||
 	    (r = sshbuf_put_u32(msg, id)) != 0 ||
 	    /* max-packet-length */
@@ -1483,7 +1483,7 @@ process_extended_limits(u_int32_t id)
 	    (r = sshbuf_put_u64(msg, SFTP_MAX_MSG_LENGTH - 1024)) != 0 ||
 	    /* max-open-handles */
 	    (r = sshbuf_put_u64(msg, nfiles)) != 0)
-		fatal_fr(r, "compose");
+		fatal(r, "compose");
 	send_msg(msg);
 	sshbuf_free(msg);
 }

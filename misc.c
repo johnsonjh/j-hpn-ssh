@@ -2481,17 +2481,17 @@ subprocess(const char *tag, const char *command,
 	if (child != NULL)
 		*child = NULL;
 
-	debug3_f("%s command \"%s\" running as %s (flags 0x%x)",
+	debug3("%s command \"%s\" running as %s (flags 0x%x)",
 	    tag, command, pw->pw_name, flags);
 
 	/* Check consistency */
 	if ((flags & SSH_SUBPROCESS_STDOUT_DISCARD) != 0 &&
 	    (flags & SSH_SUBPROCESS_STDOUT_CAPTURE) != 0) {
-		error_f("inconsistent flags");
+		error("inconsistent flags");
 		return 0;
 	}
 	if (((flags & SSH_SUBPROCESS_STDOUT_CAPTURE) == 0) != (child == NULL)) {
-		error_f("inconsistent flags/output");
+		error("inconsistent flags/output");
 		return 0;
 	}
 
@@ -2610,7 +2610,7 @@ subprocess(const char *tag, const char *command,
 		return 0;
 	}
 	/* Success */
-	debug3_f("%s pid %ld", tag, (long)pid);
+	debug3("%s pid %ld", tag, (long)pid);
 	if (child != NULL)
 		*child = f;
 	return pid;

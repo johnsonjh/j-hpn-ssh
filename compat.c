@@ -146,7 +146,7 @@ compat_banner(struct ssh *ssh, const char *version)
 	ssh->compat = 0;
 	for (i = 0; check[i].pat; i++) {
 		if (match_pattern_list(version, check[i].pat, 0) == 1) {
-			debug_f("match: %s pat %s compat 0x%08x",
+			debug("match: %s pat %s compat 0x%08x",
 			    version, check[i].pat, check[i].bugs);
 			/* Check to see if the remote side is OpenSSH and not HPN */
 			if (strstr(version, "OpenSSH") != NULL) {
@@ -162,7 +162,7 @@ compat_banner(struct ssh *ssh, const char *version)
 			return;
 		}
 	}
-	debug_f("no match: %s", version);
+	debug("no match: %s", version);
 }
 
 char *
@@ -194,7 +194,7 @@ compat_pkalg_proposal(struct ssh *ssh, char *pkalg_prop)
 }
 
 char *
-compat_kex_proposal(char *p)
+compat_kex_proposal(struct ssh *ssh, char *p)
 {
 	if ((ssh->compat & (SSH_BUG_CURVE25519PAD|SSH_OLD_DHGEX)) == 0)
 		return p;

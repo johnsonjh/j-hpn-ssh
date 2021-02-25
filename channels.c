@@ -4628,7 +4628,7 @@ rdynamic_connect_finish(struct ssh *ssh, Channel *c)
 		}
 	}
 	if (!permit_adm) {
-		debug_f("requested forward not permitted");
+		debug("requested forward not permitted");
 		return -1;
 	}
 
