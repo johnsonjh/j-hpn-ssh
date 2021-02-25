@@ -30,8 +30,8 @@ progress bar.
 
 **J-HPN-SSH** is an experimental development fork of **HPN-SSH**. It is not
 associated in any way with the upstream project. It currently incorporates
-select changes from the IBM, Red Hat, and Debian SSH distributions, various other
-patches to keep up to date with upstream _OpenSSH-portable_, and various
+select changes from the IBM, Red Hat, and Debian SSH distributions, various
+other patches to keep up to date with upstream _OpenSSH-portable_, and various
 adjustments to **HPN-SSH**'s buffer sizing and congestion control.
 
 ## **J-HPN-SSH** future plans
@@ -40,9 +40,9 @@ Besides staying up-to-date with _OpenSSH-portable_, currently, plans include
 additional tuning, including assembly-level optimization, of existing code, as
 well as the addition of new cryptographic functionality, likely to include new
 post-quantum algorithms, enhanced hashing and key exchange mechanisms, and new
-key systems, such as SHAKE, SHA-3, BLAKE-3, Schnorrkel/Ristretto-Sr25519, Intermac,
-Ristretto255/Curve25519-Dalek, X448-Goldilocks, E-5321, Kyber, SIDH, Dilithium,
-SPHINCS-SHAKE256, SPHINCS+, etc.
+key systems, such as SHAKE, SHA-3, BLAKE-3, Schnorrkel/Ristretto-Sr25519,
+Intermac, Ristretto255/Curve25519-Dalek, X448-Goldilocks, E-5321, Kyber, SIDH,
+Dilithium, SPHINCS-SHAKE256, SPHINCS+, etc.
 
 Experiments that are successful will be made available to the upstream
 **HPN-SSH** project. No GPL or similarly licensed code will be incorporated, and
