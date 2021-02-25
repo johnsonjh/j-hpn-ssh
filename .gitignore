@@ -75,6 +75,7 @@ ssh-keyscan
 ssh-keysign
 ssh-pkcs11-helper
 ssh-sk-helper
+ssh-keycat
 /stamp-h1
 *.su
 survey.sh

@@ -1,4 +1,5 @@
-Patches to look at:
+```
+Patches not currently merged; need to review for possible inclusion:
 
 Red Hat:
 openssh-6.6.1p1-selinux-contexts.patch
@@ -35,3 +36,4 @@ https://github.com/openssh/openssh-portable/commit/ac112ade990585c511048ed4edaf2
 https://github.com/openssh/openssh-portable/commit/8635e7df7e3a3fbb4a4f6cd5a7202883b2506087
 https://github.com/openssh/openssh-portable/commit/1b83185593a90a73860a503d753a95ca6d726c00
 https://github.com/openssh/openssh-portable/commit/bba229b6f3328171f5e3ae85de443002523c0452
+```
