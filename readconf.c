@@ -174,7 +174,7 @@ typedef enum {
 	oCanonicalDomains, oCanonicalizeHostname, oCanonicalizeMaxDots,
 	oCanonicalizeFallbackLocal, oCanonicalizePermittedCNAMEs,
 	oStreamLocalBindMask, oStreamLocalBindUnlink, oRevokedHostKeys,
-	oFingerprintHash, oUpdateHostkeys, oHostbasedKeyTypes,
+	oFingerprintHash, oUpdateHostkeys, oHostbasedAcceptedAlgorithms,
 	oPubkeyAcceptedAlgorithms, oCASignatureAlgorithms, oProxyJump,
 	oSecurityKeyProvider,
 	oProtocolKeepAlives, oSetupTimeOut,
@@ -315,7 +315,8 @@ static struct {
 	{ "revokedhostkeys", oRevokedHostKeys },
 	{ "fingerprinthash", oFingerprintHash },
 	{ "updatehostkeys", oUpdateHostkeys },
-	{ "hostbasedkeytypes", oHostbasedKeyTypes },
+	{ "hostbasedkeytypes", oHostbasedAcceptedAlgorithms }, /* obsolete */
+	{ "hostbasedalgorithms", oHostbasedAcceptedAlgorithms },
 	{ "pubkeyacceptedkeytypes", oPubkeyAcceptedAlgorithms }, /* obsolete */
 	{ "pubkeyacceptedalgorithms", oPubkeyAcceptedAlgorithms },
 	{ "ignoreunknown", oIgnoreUnknown },
@@ -1988,8 +1989,8 @@ parse_pubkey_algos:
 		multistate_ptr = multistate_yesnoask;
 		goto parse_multistate;
 
-	case oHostbasedKeyTypes:
-		charptr = &options->hostbased_key_types;
+	case oHostbasedAcceptedAlgorithms:
+		charptr = &options->hostbased_accepted_algos;
 		goto parse_pubkey_algos;
 
 	case oPubkeyAcceptedAlgorithms:
@@ -2282,7 +2283,7 @@ initialize_options(Options * options)
 	options->revoked_host_keys = NULL;
 	options->fingerprint_hash = -1;
 	options->update_hostkeys = -1;
-	options->hostbased_key_types = NULL;
+	options->hostbased_accepted_algos = NULL;
 	options->pubkey_accepted_algos = NULL;
 	options->known_hosts_command = NULL;
 }
@@ -2536,7 +2537,7 @@ fill_default_options(Options * options)
 	ASSEMBLE(ciphers, def_cipher, all_cipher);
 	ASSEMBLE(macs, def_mac, all_mac);
 	ASSEMBLE(kex_algorithms, def_kex, all_kex);
-	ASSEMBLE(hostbased_key_types, def_key, all_key);
+	ASSEMBLE(hostbased_accepted_algos, def_key, all_key);
 	ASSEMBLE(pubkey_accepted_algos, def_key, all_key);
 	ASSEMBLE(ca_sign_algorithms, def_sig, all_sig);
 #undef ASSEMBLE
@@ -2655,7 +2656,7 @@ free_options(Options *o)
 		free(o->permitted_cnames[i].target_list);
 	}
 	free(o->revoked_host_keys);
-	free(o->hostbased_key_types);
+	free(o->hostbased_accepted_algos);
 	free(o->pubkey_accepted_algos);
 	free(o->jump_user);
 	free(o->jump_host);
@@ -3182,7 +3183,7 @@ dump_client_config(Options *o, const char *host)
 	dump_cfg_string(oControlPath, o->control_path);
 	dump_cfg_string(oHostKeyAlgorithms, o->hostkeyalgorithms);
 	dump_cfg_string(oHostKeyAlias, o->host_key_alias);
-	dump_cfg_string(oHostbasedKeyTypes, o->hostbased_key_types);
+	dump_cfg_string(oHostbasedAcceptedAlgorithms, o->hostbased_accepted_algos);
 	dump_cfg_string(oIdentityAgent, o->identity_agent);
 	dump_cfg_string(oIgnoreUnknown, o->ignored_unknown);
 	dump_cfg_string(oKbdInteractiveDevices, o->kbd_interactive_devices);

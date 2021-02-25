@@ -175,11 +175,12 @@ static void
 close_socket(SocketEntry *e)
 {
 	close(e->fd);
-	e->fd = -1;
-	e->type = AUTH_UNUSED;
 	sshbuf_free(e->input);
 	sshbuf_free(e->output);
 	sshbuf_free(e->request);
+	memset(e, '\0', sizeof(*e));
+	e->fd = -1;
+	e->type = AUTH_UNUSED;
 }
 
 static void
@@ -215,15 +216,16 @@ lookup_identity(struct sshkey *key)
 
 /* Check confirmation of keysign request */
 static int
-confirm_key(Identity *id)
+confirm_key(Identity *id, const char *extra)
 {
 	char *p;
 	int ret = -1;
 
 	p = sshkey_fingerprint(id->key, fingerprint_hash, SSH_FP_DEFAULT);
 	if (p != NULL &&
-	    ask_permission("Allow use of key %s?\nKey fingerprint %s.",
-	    id->comment, p))
+	    ask_permission("Allow use of key %s?\nKey fingerprint %s.%s%s",
+	    id->comment, p,
+	    extra == NULL ? "" : "\n", extra == NULL ? "" : extra))
 		ret = 0;
 	free(p);
 
@@ -248,6 +250,8 @@ process_request_identities(SocketEntry *e)
 	Identity *id;
 	struct sshbuf *msg;
 	int r;
+
+	debug2_f("entering");
 
 	if ((msg = sshbuf_new()) == NULL)
 		fatal("%s: sshbuf_new failed", __func__);
@@ -294,67 +298,126 @@ agent_decode_alg(struct sshkey *key, u_int flags)
  * for the web.
  */
 static int
-check_websafe_message_contents(struct sshkey *key,
-    const u_char *msg, size_t len)
+parse_userauth_request(struct sshbuf *msg, const struct sshkey *expected_key,
+		char **userp, struct sshbuf **sess_idp)
 {
-	int matched = 0;
-	struct sshbuf *b;
-	u_char m, n;
-	char *cp1 = NULL, *cp2 = NULL;
+	struct sshbuf *b = NULL, *sess_id = NULL;
+	char *user = NULL, *service = NULL, *method = NULL, *pkalg = NULL;
 	int r;
+	u_char t, sig_follows;
 	struct sshkey *mkey = NULL;
 
-	if ((b = sshbuf_from(msg, len)) == NULL)
-		fatal("%s: sshbuf_new", __func__);
+	if (userp != NULL)
+		*userp = NULL;
+	if (sess_idp != NULL)
+		*sess_idp = NULL;
+	if ((b = sshbuf_fromb(msg)) == NULL)
+		fatal_f("sshbuf_fromb");
 
 	/* SSH userauth request */
-	if ((r = sshbuf_get_string_direct(b, NULL, NULL)) == 0 && /* sess_id */
-	    (r = sshbuf_get_u8(b, &m)) == 0 && /* SSH2_MSG_USERAUTH_REQUEST */
-	    (r = sshbuf_get_cstring(b, NULL, NULL)) == 0 && /* server user */
-	    (r = sshbuf_get_cstring(b, &cp1, NULL)) == 0 && /* service */
-	    (r = sshbuf_get_cstring(b, &cp2, NULL)) == 0 && /* method */
-	    (r = sshbuf_get_u8(b, &n)) == 0 && /* sig-follows */
-	    (r = sshbuf_get_cstring(b, NULL, NULL)) == 0 && /* alg */
-	    (r = sshkey_froms(b, &mkey)) == 0 && /* key */
-	    sshbuf_len(b) == 0) {
-		debug("%s: parsed userauth", __func__);
-		if (m == SSH2_MSG_USERAUTH_REQUEST && n == 1 &&
-		    strcmp(cp1, "ssh-connection") == 0 &&
-		    strcmp(cp2, "publickey") == 0 &&
-		    sshkey_equal(key, mkey)) {
-			debug("%s: well formed userauth", __func__);
-			matched = 1;
-		}
+	if ((r = sshbuf_froms(b, &sess_id)) != 0)
+		goto out;
+	if (sshbuf_len(sess_id) == 0) {
+		r = SSH_ERR_INVALID_FORMAT;
+		goto out;
 	}
-	free(cp1);
-	free(cp2);
+	if ((r = sshbuf_get_u8(b, &t)) != 0 || /* SSH2_MSG_USERAUTH_REQUEST */
+			(r = sshbuf_get_cstring(b, &user, NULL)) != 0 || /* server user */
+			(r = sshbuf_get_cstring(b, &service, NULL)) != 0 || /* service */
+			(r = sshbuf_get_cstring(b, &method, NULL)) != 0 || /* method */
+			(r = sshbuf_get_u8(b, &sig_follows)) != 0 || /* sig-follows */
+			(r = sshbuf_get_cstring(b, &pkalg, NULL)) != 0 || /* alg */
+			(r = sshkey_froms(b, &mkey)) != 0) /* key */
+		goto out;
+	if (t != SSH2_MSG_USERAUTH_REQUEST ||
+			sig_follows != 1 ||
+			strcmp(service, "ssh-connection") != 0 ||
+			!sshkey_equal(expected_key, mkey) ||
+			sshkey_type_from_name(pkalg) != expected_key->type) {
+		r = SSH_ERR_INVALID_FORMAT;
+		goto out;
+	}
+	if (strcmp(method, "publickey") != 0) {
+		r = SSH_ERR_INVALID_FORMAT;
+		goto out;
+	}
+	if (sshbuf_len(b) != 0) {
+		r = SSH_ERR_INVALID_FORMAT;
+		goto out;
+	}
+	/* success */
+	r = 0;
+	debug3_f("well formed userauth");
+	if (userp != NULL) {
+		*userp = user;
+		user = NULL;
+	}
+	if (sess_idp != NULL) {
+		*sess_idp = sess_id;
+		sess_id = NULL;
+	}
+	out:
+	sshbuf_free(b);
+	sshbuf_free(sess_id);
+	free(user);
+	free(service);
+	free(method);
+	free(pkalg);
 	sshkey_free(mkey);
+	return r;
+}
+
+/*
+ * Attempt to parse the contents of a buffer as a SSHSIG signature request.
+ * Note: does not modify buffer.
+ */
+static int
+parse_sshsig_request(struct sshbuf *msg)
+{
+   int r;
+   struct sshbuf *b;
+
+   if ((b = sshbuf_fromb(msg)) == NULL)
+       fatal_f("sshbuf_fromb");
+
+   if ((r = sshbuf_cmp(b, 0, "SSHSIG", 6)) != 0 ||
+       (r = sshbuf_consume(b, 6)) != 0 ||
+       (r = sshbuf_get_cstring(b, NULL, NULL)) != 0 || /* namespace */
+       (r = sshbuf_get_string_direct(b, NULL, NULL)) != 0 || /* reserved */
+       (r = sshbuf_get_cstring(b, NULL, NULL)) != 0 || /* hashalg */
+       (r = sshbuf_get_string_direct(b, NULL, NULL)) != 0) /* H(msg) */
+       goto out;
+   if (sshbuf_len(b) != 0) {
+       r = SSH_ERR_INVALID_FORMAT;
+       goto out;
+   }
+   /* success */
+   r = 0;
+ out:
 	sshbuf_free(b);
-	if (matched)
-		return 1;
+	return r;
+}
 
-	if ((b = sshbuf_from(msg, len)) == NULL)
-		fatal("%s: sshbuf_new", __func__);
-	cp1 = cp2 = NULL;
-	mkey = NULL;
+/*                                                                            
+ * This function inspects a message to be signed by a FIDO key that has a
+ * web-like application string (i.e. one that does not begin with "ssh:".
+ * It checks that the message is one of those expected for SSH operations
+ * (pubkey userauth, sshsig, CA key signing) to exclude signing challenges
+ * for the web.
+ */
+static int
+check_websafe_message_contents(struct sshkey *key, struct sshbuf *data)
+{
+   if (parse_userauth_request(data, key, NULL, NULL) == 0) {
+       debug_f("signed data matches public key userauth request");
+       return 1;
+   }
+   if (parse_sshsig_request(data) == 0) {
+       debug_f("signed data matches SSHSIG signature request");
+       return 1;
+   }
 
-	/* SSHSIG */
-	if ((r = sshbuf_cmp(b, 0, "SSHSIG", 6)) == 0 &&
-	    (r = sshbuf_consume(b, 6)) == 0 &&
-	    (r = sshbuf_get_cstring(b, NULL, NULL)) == 0 && /* namespace */
-	    (r = sshbuf_get_string_direct(b, NULL, NULL)) == 0 && /* reserved */
-	    (r = sshbuf_get_cstring(b, NULL, NULL)) == 0 && /* hashalg */
-	    (r = sshbuf_get_string_direct(b, NULL, NULL)) == 0 && /* H(msg) */
-	    sshbuf_len(b) == 0) {
-		debug("%s: parsed sshsig", __func__);
-		matched = 1;
-	}
-
-	sshbuf_free(b);
-	if (matched)
-		return 1;
-
-	/* XXX CA signature operation */
+   /* XXX check CA signature operation */
 
 	error("web-origin key attempting to sign non-SSH message");
 	return 0;
@@ -364,21 +427,22 @@ check_websafe_message_contents(struct sshkey *key,
 static void
 process_sign_request2(SocketEntry *e)
 {
-	const u_char *data;
 	u_char *signature = NULL;
-	size_t dlen, slen = 0;
+	size_t slen = 0;
 	u_int compat = 0, flags;
 	int r, ok = -1;
 	char *fp = NULL;
-	struct sshbuf *msg;
+	struct sshbuf *msg = NULL, *data = NULL;
 	struct sshkey *key = NULL;
 	struct identity *id;
 	struct notifier_ctx *notifier = NULL;
 
-	if ((msg = sshbuf_new()) == NULL)
+	debug_f("entering");
+
+	if ((msg = sshbuf_new()) == NULL || (data = sshbuf_new()) == NULL)
 		fatal("%s: sshbuf_new failed", __func__);
 	if ((r = sshkey_froms(e->request, &key)) != 0 ||
-	    (r = sshbuf_get_string_direct(e->request, &data, &dlen)) != 0 ||
+	    (r = sshbuf_get_stringb(e->request, data)) != 0 ||
 	    (r = sshbuf_get_u32(e->request, &flags)) != 0) {
 		error("%s: couldn't parse request: %s", __func__, ssh_err(r));
 		goto send;
@@ -388,13 +452,13 @@ process_sign_request2(SocketEntry *e)
 		verbose("%s: %s key not found", __func__, sshkey_type(key));
 		goto send;
 	}
-	if (id->confirm && confirm_key(id) != 0) {
+	if (id->confirm && confirm_key(id, NULL) != 0) {
 		verbose("%s: user refused key", __func__);
 		goto send;
 	}
 	if (sshkey_is_sk(id->key)) {
 		if (strncmp(id->key->sk_application, "ssh:", 4) != 0 &&
-		    !check_websafe_message_contents(key, data, dlen)) {
+		    !check_websafe_message_contents(key, data)) {
 			/* error already logged */
 			goto send;
 		}
@@ -409,7 +473,7 @@ process_sign_request2(SocketEntry *e)
 	}
 	/* XXX support PIN required FIDO keys */
 	if ((r = sshkey_sign(id->key, &signature, &slen,
-	    data, dlen, agent_decode_alg(key, flags),
+	    sshbuf_ptr(data), sshbuf_len(data), agent_decode_alg(key, flags),
 	    id->sk_provider, NULL, compat)) != 0) {
 		error("%s: sshkey_sign: %s", __func__, ssh_err(r));
 		goto send;
@@ -418,8 +482,7 @@ process_sign_request2(SocketEntry *e)
 	ok = 0;
  send:
 	notify_complete(notifier);
-	sshkey_free(key);
-	free(fp);
+
 	if (ok == 0) {
 		if ((r = sshbuf_put_u8(msg, SSH2_AGENT_SIGN_RESPONSE)) != 0 ||
 		    (r = sshbuf_put_string(msg, signature, slen)) != 0)
@@ -430,7 +493,10 @@ process_sign_request2(SocketEntry *e)
 	if ((r = sshbuf_put_stringb(e->output, msg)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
 
+	sshbuf_free(data);
 	sshbuf_free(msg);
+	sshkey_free(key);
+	free(fp);
 	free(signature);
 }
 
@@ -442,6 +508,7 @@ process_remove_identity(SocketEntry *e)
 	struct sshkey *key = NULL;
 	Identity *id;
 
+	debug2_f("entering");
 	if ((r = sshkey_froms(e->request, &key)) != 0) {
 		error("%s: get key: %s", __func__, ssh_err(r));
 		goto done;
@@ -468,6 +535,7 @@ process_remove_all_identities(SocketEntry *e)
 {
 	Identity *id;
 
+	debug2_f("entering");
 	/* Loop over all identities and clear the keys. */
 	for (id = TAILQ_FIRST(&idtab->idlist); id;
 	    id = TAILQ_FIRST(&idtab->idlist)) {
@@ -508,44 +576,52 @@ reaper(void)
 		return (deadline - now);
 }
 
-static void
-process_add_identity(SocketEntry *e)
+static int
+parse_key_constraints(struct sshbuf *m, struct sshkey *k, time_t *deathp,
+		u_int *secondsp, int *confirmp, char **sk_providerp)
 {
-	Identity *id;
-	int success = 0, confirm = 0;
-	u_int seconds = 0, maxsign;
-	char *fp, *comment = NULL, *ext_name = NULL, *sk_provider = NULL;
-	char canonical_provider[PATH_MAX];
-	time_t death = 0;
-	struct sshkey *k = NULL;
 	u_char ctype;
-	int r = SSH_ERR_INTERNAL_ERROR;
+	int r;
+	u_int seconds, maxsign = 0;
+	char *ext_name = NULL;
+	struct sshbuf *b = NULL;
 
-	if ((r = sshkey_private_deserialize(e->request, &k)) != 0 ||
-	    k == NULL ||
-	    (r = sshbuf_get_cstring(e->request, &comment, NULL)) != 0) {
-		error("%s: decode private key: %s", __func__, ssh_err(r));
-		goto err;
-	}
-	while (sshbuf_len(e->request)) {
-		if ((r = sshbuf_get_u8(e->request, &ctype)) != 0) {
+	while (sshbuf_len(m)) {
+		if ((r = sshbuf_get_u8(m, &ctype)) != 0) {
 			error("%s: buffer error: %s", __func__, ssh_err(r));
 			goto err;
 		}
 		switch (ctype) {
 		case SSH_AGENT_CONSTRAIN_LIFETIME:
-			if ((r = sshbuf_get_u32(e->request, &seconds)) != 0) {
-				error("%s: bad lifetime constraint: %s",
-				    __func__, ssh_err(r));
+			if (*deathp != 0) {
+				error_f("lifetime already set");
+				goto err;
+			}
+			if ((r = sshbuf_get_u32(m, &seconds)) != 0) {
+				error_fr(r, "parse lifetime constraint");
 				goto err;
 			}
 			death = monotime() + seconds;
+			*deathp = monotime() + seconds;
+			*secondsp = seconds;
 			break;
 		case SSH_AGENT_CONSTRAIN_CONFIRM:
-			confirm = 1;
+			if (*confirmp != 0) {
+			    error_f("confirm already set");
+			    goto err;
+			}
+			*confirmp = 1;
 			break;
 		case SSH_AGENT_CONSTRAIN_MAXSIGN:
-			if ((r = sshbuf_get_u32(e->request, &maxsign)) != 0) {
+			if (k == NULL) {
+			    error_f("maxsign not valid here");
+			    goto err;
+		}
+		if (maxsign != 0) {
+		    error_f("maxsign already set");
+		    goto err;
+		}
+		if ((r = sshbuf_get_u32(m, &maxsign)) != 0) {
 				error("%s: bad maxsign constraint: %s",
 				    __func__, ssh_err(r));
 				goto err;
@@ -557,20 +633,23 @@ process_add_identity(SocketEntry *e)
 			}
 			break;
 		case SSH_AGENT_CONSTRAIN_EXTENSION:
-			if ((r = sshbuf_get_cstring(e->request,
-			    &ext_name, NULL)) != 0) {
+			if ((r = sshbuf_get_cstring(m, &ext_name, NULL)) != 0) {
 				error("%s: cannot parse extension: %s",
 				    __func__, ssh_err(r));
 				goto err;
 			}
 			debug("%s: constraint ext %s", __func__, ext_name);
 			if (strcmp(ext_name, "sk-provider@openssh.com") == 0) {
-				if (sk_provider != NULL) {
-					error("%s already set", ext_name);
+				if (sk_providerp == NULL) {
+					error_f("%s not valid here", ext_name);
 					goto err;
 				}
-				if ((r = sshbuf_get_cstring(e->request,
-				    &sk_provider, NULL)) != 0) {
+				if (*sk_providerp != NULL) {
+					error_f("%s already set", ext_name);
+					goto err;
+				}
+				if ((r = sshbuf_get_cstring(m,
+					sk_providerp, NULL)) != 0) {
 					error("%s: cannot parse %s: %s",
 					    __func__, ext_name, ssh_err(r));
 					goto err;
@@ -585,20 +664,46 @@ process_add_identity(SocketEntry *e)
 		default:
 			error("%s: Unknown constraint %d", __func__, ctype);
  err:
-			free(sk_provider);
 			free(ext_name);
-			sshbuf_reset(e->request);
-			free(comment);
-			sshkey_free(k);
-			goto send;
+			sshbuf_free(b);
+			return -1;
 		}
 	}
+	/* success */
+	return 0;
+}
+
+static void
+process_add_identity(SocketEntry *e)
+{
+	Identity *id;
+	int success = 0, confirm = 0;
+	char *fp, *comment = NULL, *sk_provider = NULL;
+	char canonical_provider[PATH_MAX];
+	time_t death = 0;
+	u_int seconds = 0;
+	struct sshkey *k = NULL;
+	int r = SSH_ERR_INTERNAL_ERROR;
+
+	debug2_f("entering");
+	if ((r = sshkey_private_deserialize(e->request, &k)) != 0 ||
+	    k == NULL ||
+	    (r = sshbuf_get_cstring(e->request, &comment, NULL)) != 0) {
+		error_fr(r, "parse");
+		goto out;
+	}
+	if (parse_key_constraints(e->request, k, &death, &seconds, &confirm,
+	    &sk_provider) != 0) {
+		error_f("failed to parse constraints");
+		sshbuf_reset(e->request);
+		goto out;
+	}
+
 	if (sk_provider != NULL) {
 		if (!sshkey_is_sk(k)) {
 			error("Cannot add provider: %s is not an "
 			    "authenticator-hosted key", sshkey_type(k));
-			free(sk_provider);
-			goto send;
+			goto out;
 		}
 		if (strcasecmp(sk_provider, "internal") == 0) {
 			debug("%s: internal provider", __func__);
@@ -607,8 +712,7 @@ process_add_identity(SocketEntry *e)
 				verbose("failed provider \"%.100s\": "
 				    "realpath: %s", sk_provider,
 				    strerror(errno));
-				free(sk_provider);
-				goto send;
+				goto out;
 			}
 			free(sk_provider);
 			sk_provider = xstrdup(canonical_provider);
@@ -616,17 +720,14 @@ process_add_identity(SocketEntry *e)
 			    allowed_providers, 0) != 1) {
 				error("Refusing add key: "
 				    "provider %s not allowed", sk_provider);
-				free(sk_provider);
-				goto send;
+				goto out;
 			}
 		}
 	}
 	if ((r = sshkey_shield_private(k)) != 0) {
 		error("%s: shield private key: %s", __func__, ssh_err(r));
-		goto err;
+		goto out;
 	}
-
-	success = 1;
 	if (lifetime && !death)
 		death = monotime() + lifetime;
 	if ((id = lookup_identity(k)) == NULL) {
@@ -640,6 +741,7 @@ process_add_identity(SocketEntry *e)
 		free(id->comment);
 		free(id->sk_provider);
 	}
+	/* success */
 	id->key = k;
 	id->comment = comment;
 	id->death = death;
@@ -650,10 +752,18 @@ process_add_identity(SocketEntry *e)
 	    SSH_FP_DEFAULT)) == NULL)
 		fatal("%s: sshkey_fingerprint failed", __func__);
 	debug("%s: add %s %s \"%.100s\" (life: %u) (confirm: %u) "
-	    "(provider: %s)", __func__, sshkey_ssh_name(k), fp, comment,
-	    seconds, confirm, sk_provider == NULL ? "none" : sk_provider);
+			"(provider: %s)", sshkey_ssh_name(k), fp, comment, seconds,
+			confirm, sk_provider == NULL ? "none" : sk_provider);
 	free(fp);
-send:
+	/* transferred */
+	k = NULL;
+	comment = NULL;
+	sk_provider = NULL;
+	success = 1;
+out:
+	free(sk_provider);
+	free(comment);
+	sshkey_free(k);
 	send_status(e, success);
 }
 
@@ -667,6 +777,7 @@ process_lock_agent(SocketEntry *e, int lock)
 	static u_int fail_count = 0;
 	size_t pwlen;
 
+	debug2_f("entering");
 	/*
 	 * This is deliberately fatal: the user has requested that we lock,
 	 * but we can't parse their request properly. The only safe thing to
@@ -793,39 +904,21 @@ process_add_smartcard_key(SocketEntry *e)
 	char *provider = NULL, *pin = NULL, *sane_uri = NULL;
 	char **comments = NULL;
 	int r, i, count = 0, success = 0, confirm = 0;
-	u_int seconds;
+	u_int seconds = 0;
 	time_t death = 0;
-	u_char type;
 	struct sshkey **keys = NULL, *k;
 	Identity *id;
 
+	debug2_f("entering");
 	if ((r = sshbuf_get_cstring(e->request, &provider, NULL)) != 0 ||
 	    (r = sshbuf_get_cstring(e->request, &pin, NULL)) != 0) {
 		error("%s: buffer error: %s", __func__, ssh_err(r));
 		goto send;
 	}
-
-	while (sshbuf_len(e->request)) {
-		if ((r = sshbuf_get_u8(e->request, &type)) != 0) {
-			error("%s: buffer error: %s", __func__, ssh_err(r));
-			goto send;
-		}
-		switch (type) {
-		case SSH_AGENT_CONSTRAIN_LIFETIME:
-			if ((r = sshbuf_get_u32(e->request, &seconds)) != 0) {
-				error("%s: buffer error: %s",
-				    __func__, ssh_err(r));
-				goto send;
-			}
-			death = monotime() + seconds;
-			break;
-		case SSH_AGENT_CONSTRAIN_CONFIRM:
-			confirm = 1;
-			break;
-		default:
-			error("%s: Unknown constraint type %d", __func__, type);
-			goto send;
-		}
+   if (parse_key_constraints(e->request, NULL, &death, &seconds, &confirm,
+       NULL) != 0) {
+       error_f("failed to parse constraints");
+       goto send;
 	}
 
 	sane_uri = sanitize_pkcs11_provider(provider);
@@ -856,6 +949,7 @@ process_add_smartcard_key(SocketEntry *e)
 			idtab->nentries++;
 			success = 1;
 		}
+		/* XXX update constraints for existing keys */
 		sshkey_free(keys[i]);
 		free(comments[i]);
 	}
@@ -875,6 +969,7 @@ process_remove_smartcard_key(SocketEntry *e)
 	int r, success = 0;
 	Identity *id, *nxt;
 
+	debug2_f("entering");
 	if ((r = sshbuf_get_cstring(e->request, &provider, NULL)) != 0 ||
 	    (r = sshbuf_get_cstring(e->request, &pin, NULL)) != 0) {
 		error("%s: buffer error: %s", __func__, ssh_err(r));
@@ -1018,6 +1113,8 @@ new_socket(sock_type type, int fd)
 {
 	u_int i, old_alloc, new_alloc;
 
+	debug_f("type = %s", type == AUTH_CONNECTION ? "CONNECTION" :
+	    (type == AUTH_SOCKET ? "SOCKET" : "UNKNOWN"));
 	set_nonblock(fd);
 
 	if (fd > max_fd)
@@ -1037,7 +1134,8 @@ new_socket(sock_type type, int fd)
 		}
 	old_alloc = sockets_alloc;
 	new_alloc = sockets_alloc + 10;
-	sockets = xreallocarray(sockets, new_alloc, sizeof(sockets[0]));
+	sockets = xrecallocarray(sockets, old_alloc, new_alloc,
+	    sizeof(sockets[0]));
 	for (i = old_alloc; i < new_alloc; i++)
 		sockets[i].type = AUTH_UNUSED;
 	sockets_alloc = new_alloc;

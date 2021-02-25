@@ -807,15 +807,7 @@ but may be manually hashed using
 Use of this option may break facilities such as tab-completion that rely
 on being able to read unhashed host names from
 .Pa ~/.ssh/known_hosts .
-.It Cm HostbasedAuthentication
-Specifies whether to try rhosts based authentication with public key
-authentication.
-The argument must be
-.Cm yes
-or
-.Cm no
-(the default).
-.It Cm HostbasedKeyTypes
+.It Cm HostbasedAcceptedAlgorithms
 Specifies the key types that will be used for hostbased authentication
 as a comma-separated list of patterns.
 Alternately if the specified list begins with a
@@ -852,6 +844,15 @@ The
 option of
 .Xr ssh 1
 may be used to list supported key types.
+This was formerly named HostbasedKeyTypes.
+.It Cm HostbasedAuthentication
+Specifies whether to try rhosts based authentication with public key
+authentication.
+The argument must be
+.Cm yes
+or
+.Cm no
+(the default).
 .It Cm HostKeyAlgorithms
 Specifies the host key algorithms
 that the client wants to use in order of preference.

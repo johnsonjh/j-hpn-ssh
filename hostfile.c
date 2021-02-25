@@ -61,11 +61,7 @@
 #include "ssherr.h"
 #include "digest.h"
 #include "hmac.h"
-
-struct hostkeys {
-	struct hostkey_entry *entries;
-	u_int num_entries;
-};
+#include "sshbuf.h"
 
 /* XXX hmac is too easy to dictionary attack; use bcrypt? */
 

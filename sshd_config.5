@@ -657,7 +657,7 @@ machine's default store.
 This facility is provided to assist with operation on multi homed machines.
 The default is
 .Cm yes .
-.It Cm HostbasedAcceptedKeyTypes
+.It Cm HostbasedAcceptedAlgorithms
 Specifies the key types that will be accepted for hostbased authentication
 as a list of comma-separated patterns.
 Alternately if the specified list begins with a
@@ -690,7 +690,8 @@ rsa-sha2-512,rsa-sha2-256,ssh-rsa
 .Ed
 .Pp
 The list of available key types may also be obtained using
-.Qq ssh -Q HostbasedAcceptedKeyTypes .
+.Qq ssh -Q HostbasedAcceptedAlgorithms .
+This was formerly named HostbasedAcceptedKeyTypes.
 .It Cm HostbasedAuthentication
 Specifies whether rhosts or /etc/hosts.equiv authentication together
 with successful public key client host authentication is allowed
@@ -1168,7 +1169,7 @@ Available keywords are
 .Cm ForceCommand ,
 .Cm GatewayPorts ,
 .Cm GSSAPIAuthentication ,
-.Cm HostbasedAcceptedKeyTypes ,
+.Cm HostbasedAcceptedAlgorithms ,
 .Cm HostbasedAuthentication ,
 .Cm HostbasedUsesNameFromPacketOnly ,
 .Cm IgnoreRhosts ,

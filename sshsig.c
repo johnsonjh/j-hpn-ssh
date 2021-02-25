@@ -813,7 +813,7 @@ check_allowed_keys_line(const char *path, u_long linenum, char *line,
 	} else if (sigopts->ca && sshkey_is_cert(sign_key) &&
 	    sshkey_equal_public(sign_key->cert->signature_key, found_key)) {
 		/* Match of certificate's CA key */
-		if ((r = sshkey_cert_check_authority(sign_key, 0, 1,
+		if ((r = sshkey_cert_check_authority(sign_key, 0, 1, 0,
 		    principal, &reason)) != 0) {
 			error("%s:%lu: certificate not authorized: %s",
 			    path, linenum, reason);
@@ -896,7 +896,7 @@ cert_filter_principals(const char *path, u_long linenum,
 			continue;
 		}
 		/* Check against principals list in certificate */
-		if ((r = sshkey_cert_check_authority(cert, 0, 1,
+		if ((r = sshkey_cert_check_authority(cert, 0, 1, 0,
 		    cp, &reason)) != 0) {
 			debug("%s:%lu: principal \"%s\" not authorized: %s",
 			    path, linenum, cp, reason);

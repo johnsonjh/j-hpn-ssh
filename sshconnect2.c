@@ -2164,12 +2164,12 @@ userauth_hostbased(struct ssh *ssh)
 	int i, r, success = 0;
 
 	if (authctxt->ktypes == NULL) {
-		authctxt->oktypes = xstrdup(options.hostbased_key_types);
+		authctxt->oktypes = xstrdup(options.hostbased_accepted_algos);
 		authctxt->ktypes = authctxt->oktypes;
 	}
 
 	/*
-	 * Work through each listed type pattern in HostbasedKeyTypes,
+	 * Work through each listed type pattern in HostbasedAcceptedAlgorithms,
 	 * trying each hostkey that matches the type in turn.
 	 */
 	for (;;) {
@@ -2243,7 +2243,7 @@ userauth_hostbased(struct ssh *ssh)
 	    (r = sshbuf_put_cstring(b, authctxt->server_user)) != 0 ||
 	    (r = sshbuf_put_cstring(b, authctxt->service)) != 0 ||
 	    (r = sshbuf_put_cstring(b, authctxt->method->name)) != 0 ||
-	    (r = sshbuf_put_cstring(b, sshkey_ssh_name(private))) != 0 ||
+	    (r = sshbuf_put_cstring(b, authctxt->active_ktype)) != 0 ||
 	    (r = sshbuf_put_string(b, keyblob, keylen)) != 0 ||
 	    (r = sshbuf_put_cstring(b, chost)) != 0 ||
 	    (r = sshbuf_put_cstring(b, authctxt->local_user)) != 0) {
@@ -2264,7 +2264,7 @@ userauth_hostbased(struct ssh *ssh)
 	    (r = sshpkt_put_cstring(ssh, authctxt->server_user)) != 0 ||
 	    (r = sshpkt_put_cstring(ssh, authctxt->service)) != 0 ||
 	    (r = sshpkt_put_cstring(ssh, authctxt->method->name)) != 0 ||
-	    (r = sshpkt_put_cstring(ssh, sshkey_ssh_name(private))) != 0 ||
+	    (r = sshpkt_put_cstring(ssh, authctxt->active_ktype)) != 0 ||
 	    (r = sshpkt_put_string(ssh, keyblob, keylen)) != 0 ||
 	    (r = sshpkt_put_cstring(ssh, chost)) != 0 ||
 	    (r = sshpkt_put_cstring(ssh, authctxt->local_user)) != 0 ||

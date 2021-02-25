@@ -29,7 +29,10 @@ struct hostkey_entry {
 	struct sshkey *key;
 	HostkeyMarker marker;
 };
-struct hostkeys;
+struct hostkeys {
+	struct hostkey_entry *entries;
+	u_int num_entries;
+};
 
 struct hostkeys *init_hostkeys(void);
 void	 load_hostkeys(struct hostkeys *, const char *, const char *);

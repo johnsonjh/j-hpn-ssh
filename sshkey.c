@@ -3185,7 +3185,7 @@ sshkey_certify(struct sshkey *k, struct sshkey *ca, const char *alg,
 
 int
 sshkey_cert_check_authority(const struct sshkey *k,
-    int want_host, int require_principal,
+    int want_host, int require_principal, int wildcard_pattern,
     const char *name, const char **reason)
 {
 	u_int i, principal_matches;
@@ -3193,7 +3193,10 @@ sshkey_cert_check_authority(const struct sshkey *k,
 
 	if (reason == NULL)
 		return SSH_ERR_INVALID_ARGUMENT;
-
+	if (!sshkey_is_cert(k)) {
+		*reason = "Key is not a certificate";
+		return SSH_ERR_KEY_CERT_INVALID;
+	}
 	if (want_host) {
 		if (k->cert->type != SSH2_CERT_TYPE_HOST) {
 			*reason = "Certificate invalid: not a host certificate";
@@ -3226,7 +3229,13 @@ sshkey_cert_check_authority(const struct sshkey *k,
 	} else if (name != NULL) {
 		principal_matches = 0;
 		for (i = 0; i < k->cert->nprincipals; i++) {
-			if (strcmp(name, k->cert->principals[i]) == 0) {
+			if (wildcard_pattern) {
+				if (match_pattern(k->cert->principals[i],
+				    name)) {
+					principal_matches = 1;
+					break;
+				}
+			} else if (strcmp(name, k->cert->principals[i]) == 0) {
 				principal_matches = 1;
 				break;
 			}
@@ -3236,6 +3245,28 @@ sshkey_cert_check_authority(const struct sshkey *k,
 			    "principal";
 			return SSH_ERR_KEY_CERT_INVALID;
 		}
+	}
+	return 0;
+}
+
+int
+sshkey_cert_check_host(const struct sshkey *key, const char *host,
+    int wildcard_principals, const char *ca_sign_algorithms,
+    const char **reason)
+{
+	int r;
+
+	if ((r = sshkey_cert_check_authority(key, 1, 0, wildcard_principals,
+	    host, reason)) != 0)
+		return r;
+	if (sshbuf_len(key->cert->critical) != 0) {
+		*reason = "Certificate contains unsupported critical options";
+		return SSH_ERR_KEY_CERT_INVALID;
+	}
+	if (ca_sign_algorithms != NULL &&
+	    (r = sshkey_check_cert_sigtype(key, ca_sign_algorithms)) != 0) {
+		*reason = "Certificate signed with disallowed algorithm";
+		return SSH_ERR_KEY_CERT_INVALID;
 	}
 	return 0;
 }

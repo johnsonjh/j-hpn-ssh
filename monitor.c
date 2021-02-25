@@ -1257,7 +1257,7 @@ mm_answer_keyallowed(struct ssh *ssh, int sock, struct sshbuf *m)
 			if (auth2_key_already_used(authctxt, key))
 				break;
 			if (!key_base_type_match(auth_method, key,
-			    options.hostbased_key_types))
+			    options.hostbased_accepted_algos))
 				break;
 			allowed = hostbased_key_allowed(ssh, authctxt->pw,
 			    cuser, chost, key);

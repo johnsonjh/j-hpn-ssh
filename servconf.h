@@ -120,7 +120,7 @@ typedef struct {
 	LogLevel log_level;	/* Level for system logging. */
 	int     hostbased_authentication;	/* If true, permit ssh2 hostbased auth */
 	int     hostbased_uses_name_from_packet_only; /* experimental */
-	char   *hostbased_key_types;	/* Key types allowed for hostbased */
+	char   *hostbased_accepted_algos; /* Algos allowed for hostbased */
 	char   *hostkeyalgorithms;	/* SSH2 server key types */
 	char   *ca_sign_algorithms;	/* Allowed CA signature algorithms */
 	int     pubkey_authentication;	/* If true, permit ssh2 pubkey authentication. */
@@ -275,7 +275,7 @@ TAILQ_HEAD(include_list, include_item);
 		M_CP_STROPT(authorized_principals_file); \
 		M_CP_STROPT(authorized_principals_command); \
 		M_CP_STROPT(authorized_principals_command_user); \
-		M_CP_STROPT(hostbased_key_types); \
+		M_CP_STROPT(hostbased_accepted_algos); \
 		M_CP_STROPT(pubkey_accepted_algos); \
 		M_CP_STROPT(ca_sign_algorithms); \
 		M_CP_STROPT(routing_domain); \

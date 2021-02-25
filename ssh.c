@@ -806,8 +806,9 @@ main(int ac, char **av)
 			    strcasecmp(optarg, "PubkeyAcceptedKeyTypes") == 0 || /* deprecated name */
 			    strcasecmp(optarg, "PubkeyAcceptedAlgorithms") == 0 ||
 			    strcasecmp(optarg, "HostKeyAlgorithms") == 0 ||
-			    strcasecmp(optarg, "HostbasedKeyTypes") == 0 ||
-			    strcasecmp(optarg, "HostbasedAcceptedKeyTypes") == 0)
+			    strcasecmp(optarg, "HostbasedKeyTypes") == 0 || /* deprecated name */
+			    strcasecmp(optarg, "HostbasedAcceptedKeyTypes") == 0 || /* deprecated name */
+			    strcasecmp(optarg, "HostbasedAcceptedAlgorithms") == 0)
 				cp = sshkey_alg_list(0, 0, 1, '\n');
 			else if (strcmp(optarg, "sig") == 0)
 				cp = sshkey_alg_list(0, 1, 1, '\n');

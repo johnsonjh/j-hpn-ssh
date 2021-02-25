@@ -633,32 +633,6 @@ confirm(const char *prompt, const char *fingerprint)
 }
 
 static int
-check_host_cert(const char *host, const struct sshkey *key)
-{
-	const char *reason;
-	int r;
-
-	if (sshkey_cert_check_authority(key, 1, 0, host, &reason) != 0) {
-		error("%s", reason);
-		return 0;
-	}
-	if (sshbuf_len(key->cert->critical) != 0) {
-		error("Certificate for %s contains unsupported "
-		    "critical options(s)", host);
-		return 0;
-	}
-	if ((r = sshkey_check_cert_sigtype(key,
-	    options.ca_sign_algorithms)) != 0) {
-		logit("%s: certificate signature algorithm %s: %s", __func__,
-		    (key->cert == NULL || key->cert->signature_type == NULL) ?
-		    "(null)" : key->cert->signature_type, ssh_err(r));
-		return 0;
-	}
-
-	return 1;
-}
-
-static int
 sockaddr_is_local(struct sockaddr *hostaddr)
 {
 	switch (hostaddr->sa_family) {
@@ -751,7 +725,7 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 	char *ip = NULL, *host = NULL;
 	char hostline[1000], *hostp, *fp, *ra;
 	char msg[1024];
-	const char *type;
+	const char *type, *fail_reason;
 	const struct hostkey_entry *host_found, *ip_found;
 	int len, cancelled_forwarding = 0, confirmed;
 	int local = sockaddr_is_local(hostaddr);
@@ -845,10 +819,24 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 		    host, type, want_cert ? "certificate" : "key");
 		debug("Found %s in %s:%lu", want_cert ? "CA key" : "key",
 		    host_found->file, host_found->line);
-		if (want_cert &&
-		    !check_host_cert(options.host_key_alias == NULL ?
-		    hostname : options.host_key_alias, host_key))
-			goto fail;
+		       if (want_cert) {
+           if (sshkey_cert_check_host(host_key,
+               options.host_key_alias == NULL ?
+               hostname : options.host_key_alias, 0,
+               options.ca_sign_algorithms, &fail_reason) != 0) {
+               error("%s", fail_reason);
+               goto fail;
+           }
+           /*
+            * Do not attempt hostkey update if a certificate was
+            * successfully matched.
+            */
+           if (options.update_hostkeys != 0) {
+               options.update_hostkeys = 0;
+               debug3_f("certificate host key in use; "
+                   "disabling UpdateHostkeys");
+           }
+       }
 		if (options.check_host_ip && ip_status == HOST_NEW) {
 			if (readonly || want_cert)
 				logit("%s host key for IP address "

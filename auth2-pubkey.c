@@ -707,7 +707,7 @@ check_authkey_line(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 		reason = "Certificate does not contain an authorized principal";
 		goto fail_reason;
 	}
-	if (sshkey_cert_check_authority(key, 0, 0,
+	if (sshkey_cert_check_authority(key, 0, 0, 0,
 	   keyopts->cert_principals == NULL ? pw->pw_name : NULL, &reason) != 0)
 		goto fail_reason;
 
@@ -826,7 +826,7 @@ user_cert_trusted_ca(struct ssh *ssh, struct passwd *pw, struct sshkey *key,
 	}
 	if (use_authorized_principals && principals_opts == NULL)
 		fatal("%s: internal error: missing principals_opts", __func__);
-	if (sshkey_cert_check_authority(key, 0, 1,
+	if (sshkey_cert_check_authority(key, 0, 1, 0
 	    use_authorized_principals ? NULL : pw->pw_name, &reason) != 0)
 		goto fail_reason;
 

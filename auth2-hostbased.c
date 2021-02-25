@@ -108,8 +108,8 @@ userauth_hostbased(struct ssh *ssh)
 		    "signature format");
 		goto done;
 	}
-	if (match_pattern_list(pkalg, options.hostbased_key_types, 0) != 1) {
-		logit("%s: key type %s not in HostbasedAcceptedKeyTypes",
+	if (match_pattern_list(pkalg, options.hostbased_accepted_algos, 0) != 1) {
+		logit("%s: key type %s not in HostbasedAcceptedAlgorithms",
 		    __func__, sshkey_type(key));
 		goto done;
 	}
@@ -238,7 +238,7 @@ hostbased_key_allowed(struct ssh *ssh, struct passwd *pw,
 	debug2("%s: access allowed by auth_rhosts2", __func__);
 
 	if (sshkey_is_cert(key) &&
-	    sshkey_cert_check_authority(key, 1, 0, lookup, &reason)) {
+	    sshkey_cert_check_authority(key, 1, 0, 0, lookup, &reason)) {
 		error("%s", reason);
 		auth_debug_add("%s", reason);
 		return 0;
