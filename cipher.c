@@ -327,23 +327,27 @@ cipher_init(struct sshcipher_ctx **ccp, const struct sshcipher *cipher,
 	}
 	if (EVP_CipherInit(cc->evp, type, NULL, (u_char *)iv,
 	    (do_encrypt == CIPHER_ENCRYPT)) == 0) {
+		debug("(EVP_CipherInit(cc->evp, type, NULL, (u_char *)iv, (do_encrypt == CIPHER_ENCRYPT)) == 0");
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}
 	if (cipher_authlen(cipher) &&
 	    !EVP_CIPHER_CTX_ctrl(cc->evp, EVP_CTRL_GCM_SET_IV_FIXED,
 	    -1, (u_char *)iv)) {
+		debug("(cipher_authlen(cipher) && !EVP_CIPHER_CTX_ctrl(cc->evp, EVP_CTRL_GCM_SET_IV_FIXED, -1, (u_char *)iv))");
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}
 	klen = EVP_CIPHER_CTX_key_length(cc->evp);
 	if (klen > 0 && keylen != (u_int)klen) {
 		if (EVP_CIPHER_CTX_set_key_length(cc->evp, keylen) == 0) {
+			debug("(klen > 0 && keylen != (u_int)klen) ... (EVP_CIPHER_CTX_set_key_length(cc->evp, keylen) == 0)");
 			ret = SSH_ERR_LIBCRYPTO_ERROR;
 			goto out;
 		}
 	}
 	if (EVP_CipherInit(cc->evp, NULL, (u_char *)key, NULL, -1) == 0) {
+		debug ("EVP_CipherInit(cc->evp, NULL, (u_char *)key, NULL, -1) == 0)");
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}
@@ -403,13 +407,17 @@ cipher_crypt(struct sshcipher_ctx *cc, u_int seqnr, u_char *dest,
 			return SSH_ERR_INVALID_ARGUMENT;
 		/* increment IV */
 		if (!EVP_CIPHER_CTX_ctrl(cc->evp, EVP_CTRL_GCM_IV_GEN,
-		    1, lastiv))
+		    1, lastiv)) {
+			debug("(!EVP_CIPHER_CTX_ctrl(cc->evp, EVP_CTRL_GCM_IV_GEN, 1, lastiv))");
 			return SSH_ERR_LIBCRYPTO_ERROR;
+		}
 		/* set tag on decyption */
 		if (!cc->encrypt &&
 		    !EVP_CIPHER_CTX_ctrl(cc->evp, EVP_CTRL_GCM_SET_TAG,
-		    authlen, (u_char *)src + aadlen + len))
+		    authlen, (u_char *)src + aadlen + len)) {
+			debug("!EVP_CIPHER_CTX_ctrl(cc->evp, EVP_CTRL_GCM_SET_TAG, authlen, (u_char *)src + aadlen + len))");
 			return SSH_ERR_LIBCRYPTO_ERROR;
+		}
 	}
 	if (aadlen) {
 		if (authlen &&

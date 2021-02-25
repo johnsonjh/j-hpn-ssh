@@ -183,8 +183,10 @@ mac_compute(struct sshmac *mac, u_int32_t seqno,
 		if (ssh_hmac_init(mac->hmac_ctx, NULL, 0) < 0 ||
 		    ssh_hmac_update(mac->hmac_ctx, b, sizeof(b)) < 0 ||
 		    ssh_hmac_update(mac->hmac_ctx, data, datalen) < 0 ||
-		    ssh_hmac_final(mac->hmac_ctx, u.m, sizeof(u.m)) < 0)
-			return SSH_ERR_LIBCRYPTO_ERROR;
+		    ssh_hmac_final(mac->hmac_ctx, u.m, sizeof(u.m)) < 0) {
+				debug("(ssh_hmac_init(mac->hmac_ctx, NULL, 0) < 0 || ssh_hmac_update(mac->hmac_ctx, b, sizeof(b)) < 0 || ssh_hmac_update(mac->hmac_ctx, data, datalen) < 0 || ssh_hmac_final(mac->hmac_ctx, u.m, sizeof(u.m)) < 0)");
+				return SSH_ERR_LIBCRYPTO_ERROR;
+		}
 		break;
 	case SSH_UMAC:
 		POKE_U64(nonce, seqno);

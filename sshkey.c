@@ -476,6 +476,7 @@ sshkey_calculate_signature(EVP_PKEY *pkey, int hash_alg, u_char **sigp,
 	if (EVP_SignInit_ex(ctx, ssh_digest_to_md(hash_alg), NULL) <= 0 ||
 	    EVP_SignUpdate(ctx, data, datalen) <= 0 ||
 	    EVP_SignFinal(ctx, sig, &len, pkey) <= 0) {
+		debug("EVP_SignInit_ex(ctx, ssh_digest_to_md(hash_alg), NULL) <= 0 || EVP_SignUpdate(ctx, data, datalen) <= 0 || EVP_SignFinal(ctx, sig, &len, pkey) <= 0)");
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
 		goto error;
 	}
@@ -504,6 +505,7 @@ sshkey_verify_signature(EVP_PKEY *pkey, int hash_alg, const u_char *data,
 	}
 	if (EVP_VerifyInit_ex(ctx, ssh_digest_to_md(hash_alg), NULL) <= 0 ||
 	    EVP_VerifyUpdate(ctx, data, datalen) <= 0) {
+		debug("(EVP_VerifyInit_ex(ctx, ssh_digest_to_md(hash_alg), NULL) <= 0 || EVP_VerifyUpdate(ctx, data, datalen) <= 0)");
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
 		goto done;
 	}
@@ -516,6 +518,7 @@ sshkey_verify_signature(EVP_PKEY *pkey, int hash_alg, const u_char *data,
 		ret = SSH_ERR_SIGNATURE_INVALID;
 		break;
 	default:
+		debug("ret = EVP_VerifyFinal(ctx, sigbuf, siglen, pkey); switch (ret); ret != 0 or 1, default to error.");
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
 		break;
 	}
@@ -1704,6 +1707,7 @@ rsa_generate_private_key(u_int bits, RSA **rsap)
 	}
 	if (!BN_set_word(f4, RSA_F4) ||
 	    !RSA_generate_key_ex(private, bits, f4, NULL)) {
+		debug("!BN_set_word(f4, RSA_F4) || !RSA_generate_key_ex(private, bits, f4, NULL))");
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}
@@ -1733,6 +1737,7 @@ dsa_generate_private_key(u_int bits, DSA **dsap)
 	*dsap = NULL;
 	if (!DSA_generate_parameters_ex(private, bits, NULL, 0, NULL,
 	    NULL, NULL) || !DSA_generate_key(private)) {
+		debug("(!DSA_generate_parameters_ex(private, bits, NULL, 0, NULL, NULL, NULL) || !DSA_generate_key(private))");
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}

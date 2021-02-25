@@ -236,6 +236,7 @@ ssh_ecdsa_sk_verify(const struct sshkey *key,
 		goto out;
 	}
 	if (!ECDSA_SIG_set0(sig, sig_r, sig_s)) {
+		debug("(!ECDSA_SIG_set0(sig, sig_r, sig_s))");
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}

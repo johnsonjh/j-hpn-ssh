@@ -60,6 +60,7 @@ kex_ecdh_keypair(struct kex *kex)
 		goto out;
 	}
 	if (EC_KEY_generate_key(client_key) != 1) {
+		debug("(EC_KEY_generate_key(client_key) != 1)");
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}
@@ -106,6 +107,7 @@ kex_ecdh_enc(struct kex *kex, const struct sshbuf *client_blob,
 		goto out;
 	}
 	if (EC_KEY_generate_key(server_key) != 1) {
+		debug("(EC_KEY_generate_key(server_key) != 1)");
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}
@@ -178,6 +180,7 @@ kex_ecdh_dec_key_group(struct kex *kex, const struct sshbuf *ec_blob,
 	}
 	if (ECDH_compute_key(kbuf, klen, dh_pub, key, NULL) != (int)klen ||
 	    BN_bin2bn(kbuf, klen, shared_secret) == NULL) {
+		debug("(ECDH_compute_key(kbuf, klen, dh_pub, key, NULL) != (int)klen || BN_bin2bn(kbuf, klen, shared_secret) == NULL)");
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}

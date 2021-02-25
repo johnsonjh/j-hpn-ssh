@@ -124,10 +124,12 @@ ssh_rsa_complete_crt_parameters(struct sshkey *key, const BIGNUM *iqmp)
 	    (BN_mod(rsa_dmq1, d_consttime, aux, ctx) == 0) ||
 	    (BN_sub(aux, rsa_p, BN_value_one()) == 0) ||
 	    (BN_mod(rsa_dmp1, d_consttime, aux, ctx) == 0)) {
+		debug("((BN_sub(aux, rsa_q, BN_value_one()) == 0) || (BN_mod(rsa_dmq1, d_consttime, aux, ctx) == 0) || (BN_sub(aux, rsa_p, BN_value_one()) == 0) || (BN_mod(rsa_dmp1, d_consttime, aux, ctx) == 0))");
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}
 	if (!RSA_set0_crt_params(key->rsa, rsa_dmp1, rsa_dmq1, rsa_iqmp)) {
+		debug("(!RSA_set0_crt_params(key->rsa, rsa_dmp1, rsa_dmq1, rsa_iqmp))");
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}

@@ -84,7 +84,8 @@ kex_gen_hash(
 	sshbuf_dump(b, stderr);
 #endif
 	if (ssh_digest_buffer(hash_alg, b, hash, *hashlen) != 0) {
-		sshbuf_free(b);
+		sshbuf_free(b); 
+		debug("(ssh_digest_buffer(hash_alg, b, hash, *hashlen) != 0)");
 		return SSH_ERR_LIBCRYPTO_ERROR;
 	}
 	sshbuf_free(b);

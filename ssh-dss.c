@@ -84,6 +84,7 @@ ssh_dss_sign(const struct sshkey *key, u_char **sigp, size_t *lenp,
 
 	psig = sigb;
 	if ((sig = d2i_DSA_SIG(NULL, &psig, len)) == NULL) {
+		debug("((sig = d2i_DSA_SIG(NULL, &psig, len)) == NULL)");
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}

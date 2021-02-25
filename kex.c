@@ -1073,7 +1073,7 @@ derive_key(struct ssh *ssh, int id, u_int need, u_char *hash, u_int hashlen,
 	struct kex *kex = ssh->kex;
 	EVP_KDF_CTX *ctx = NULL;
 	u_char *key = NULL;
-	int r, key_len;
+	int r, key_len, actualsize;
 
 	if ((key_len = ssh_digest_bytes(kex->hash_alg)) == 0)
 		return SSH_ERR_INVALID_ARGUMENT;
@@ -1086,40 +1086,49 @@ derive_key(struct ssh *ssh, int id, u_int need, u_char *hash, u_int hashlen,
 	ctx = EVP_KDF_CTX_new_id(EVP_KDF_SSHKDF);
 	if (!ctx) {
 		r = SSH_ERR_LIBCRYPTO_ERROR;
+		debug("ERROR: ctx=EVP_KDF_CTX_new_id(EVP_KDF_SSHKDF); !ctx=true;");
 		goto out;
 	}
 
 	r = EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_MD, digest_to_md(kex->hash_alg));
 	if (r != 1) {
 		r = SSH_ERR_LIBCRYPTO_ERROR;
+		debug("EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_MD, digest_to_md(kex->hash_alg)) != 1");
 		goto out;
 	}
 	r = EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_KEY,
 	    sshbuf_ptr(shared_secret), sshbuf_len(shared_secret));
 	if (r != 1) {
+		debug("EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_KEY, sshbuf_ptr(shared_secret), sshbuf_len(shared_secret)) != 1");
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}
 	r = EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_SSHKDF_XCGHASH, hash, hashlen);
 	if (r != 1) {
 		r = SSH_ERR_LIBCRYPTO_ERROR;
+		debug("EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_SSHKDF_XCGHASH, hash, hashlen) != 1");
 		goto out;
 	}
 	r = EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_SSHKDF_TYPE, id);
 	if (r != 1) {
 		r = SSH_ERR_LIBCRYPTO_ERROR;
+		debug("EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_SSHKDF_TYPE, id) != 1");
 		goto out;
 	}
 	r = EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_SSHKDF_SESSION_ID,
 	    kex->session_id);
 	if (r != 1) {
 		r = SSH_ERR_LIBCRYPTO_ERROR;
+		debug("EVP_KDF_ctrl(ctx, EVP_KDF_CTRL_SET_SSHKDF_SESSION_ID, kex->session_id) != 1");
 		goto out;
 	}
 	r = EVP_KDF_derive(ctx, key, key_len);
 	if (r != 1) {
+		debug("EVP_KDF_derive(ctx, key, key_len) != 1");
+		actualsize=EVP_KDF_size(ctx);
+		fprintf(stderr, "\ndebug: r=%d, key_len=%d, actualsize=%d, key=%X\n\n", r, key_len, actualsize, &key);
 		r = SSH_ERR_LIBCRYPTO_ERROR;
-		goto out;
+		// XXX(jhj) goto out;
 	}
 #ifdef DEBUG_KEX
 	fprintf(stderr, "key '%c'== ", id);
@@ -1364,8 +1373,8 @@ kex_exchange_identification(struct ssh *ssh, int timeout_ms,
 	sshbuf_reset(our_version);
 	if (version_addendum != NULL && *version_addendum == '\0')
 		version_addendum = NULL;
-	if ((r = sshbuf_putf(our_version, "SSH-%d.%d-%.100s%s%s%s\r\n",
-	   PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2, SSH_RELEASE, SSH_HPN,
+	if ((r = sshbuf_putf(our_version, "SSH-%d.%d-%.100s%s%s\r\n",
+	   PROTOCOL_MAJOR_2, PROTOCOL_MINOR_2, SSH_RELEASE,
 	    version_addendum == NULL ? "" : " ",
 	    version_addendum == NULL ? "" : version_addendum)) != 0) {
 		oerrno = errno;

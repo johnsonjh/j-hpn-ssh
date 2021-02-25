@@ -285,14 +285,20 @@ dh_gen_key(DH *dh, int need)
 	 * Pollard Rho, Big step/Little Step attacks are O(sqrt(n)),
 	 * so double requested need here.
 	 */
-	if (!DH_set_length(dh, MINIMUM(need * 2, pbits - 1)))
-		return SSH_ERR_LIBCRYPTO_ERROR;
+	if (!DH_set_length(dh, MINIMUM(need * 2, pbits - 1))) {
+		debug("(!DH_set_length(dh, MINIMUM(need * 2, pbits - 1)))");
+		return SSH_ERR_LIBCRYPTO_ERROR; 
+	}
 
-	if (DH_generate_key(dh) == 0)
+	if (DH_generate_key(dh) == 0) {
+		debug("(DH_generate_key(dh) == 0)");
 		return SSH_ERR_LIBCRYPTO_ERROR;
+	}
 	DH_get0_key(dh, &pub_key, NULL);
-	if (!dh_pub_is_valid(dh, pub_key))
+	if (!dh_pub_is_valid(dh, pub_key)) {
+		debug("(!dh_pub_is_valid(dh, pub_key))");
 		return SSH_ERR_INVALID_FORMAT;
+	}
 	return 0;
 }
 

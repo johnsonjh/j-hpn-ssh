@@ -153,16 +153,20 @@ ssh_digest_copy_state(struct ssh_digest_ctx *from, struct ssh_digest_ctx *to)
 	if (from->alg != to->alg)
 		return SSH_ERR_INVALID_ARGUMENT;
 	/* we have bcopy-style order while openssl has memcpy-style */
-	if (!EVP_MD_CTX_copy_ex(to->mdctx, from->mdctx))
+	if (!EVP_MD_CTX_copy_ex(to->mdctx, from->mdctx)) {
+		debug("(!EVP_MD_CTX_copy_ex(to->mdctx, from->mdctx))");
 		return SSH_ERR_LIBCRYPTO_ERROR;
+	}
 	return 0;
 }
 
 int
 ssh_digest_update(struct ssh_digest_ctx *ctx, const void *m, size_t mlen)
 {
-	if (EVP_DigestUpdate(ctx->mdctx, m, mlen) != 1)
+	if (EVP_DigestUpdate(ctx->mdctx, m, mlen) != 1) {
+	debug("(EVP_DigestUpdate(ctx->mdctx, m, mlen) != 1)");
 		return SSH_ERR_LIBCRYPTO_ERROR;
+	}
 	return 0;
 }
 
@@ -182,8 +186,10 @@ ssh_digest_final(struct ssh_digest_ctx *ctx, u_char *d, size_t dlen)
 		return SSH_ERR_INVALID_ARGUMENT;
 	if (dlen < digest->digest_len) /* No truncation allowed */
 		return SSH_ERR_INVALID_ARGUMENT;
-	if (EVP_DigestFinal_ex(ctx->mdctx, d, &l) != 1)
+	if (EVP_DigestFinal_ex(ctx->mdctx, d, &l) != 1) {
+		debug("(EVP_DigestFinal_ex(ctx->mdctx, d, &l) != 1)");
 		return SSH_ERR_LIBCRYPTO_ERROR;
+	}
 	if (l != digest->digest_len) /* sanity */
 		return SSH_ERR_INTERNAL_ERROR;
 	return 0;
@@ -211,8 +217,10 @@ ssh_digest_memory(int alg, const void *m, size_t mlen, u_char *d, size_t dlen)
 	if (dlen < digest->digest_len)
 		return SSH_ERR_INVALID_ARGUMENT;
 	mdlen = dlen;
-	if (!EVP_Digest(m, mlen, d, &mdlen, digest->mdfunc(), NULL))
+	if (!EVP_Digest(m, mlen, d, &mdlen, digest->mdfunc(), NULL)) {
+		debug("(!EVP_Digest(m, mlen, d, &mdlen, digest->mdfunc(), NULL))");
 		return SSH_ERR_LIBCRYPTO_ERROR;
+	}
 	return 0;
 }
 

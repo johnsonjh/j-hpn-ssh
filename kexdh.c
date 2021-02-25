@@ -98,6 +98,7 @@ kex_dh_compute_key(struct kex *kex, BIGNUM *dh_pub, struct sshbuf *out)
 	}
 	if ((kout = DH_compute_key(kbuf, dh_pub, kex->dh)) < 0 ||
 	    BN_bin2bn(kbuf, kout, shared_secret) == NULL) {
+		debug("kout = DH_compute_key(kbuf, dh_pub, kex->dh)) < 0 || BN_bin2bn(kbuf, kout, shared_secret) == NULL)");
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}
