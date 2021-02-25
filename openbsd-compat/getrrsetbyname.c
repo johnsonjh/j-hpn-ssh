@@ -230,9 +230,9 @@ getrrsetbyname(const char *hostname, unsigned int rdclass,
 	/* turn on DNSSEC if required */
 //	if (_resp->options & RES_USE_EDNS0)
 //		_resp->options |= RES_USE_DNSSEC;
-/	if (flags & RRSET_FORCE_EDNS0)
-		resp->options |= (RES_USE_EDNS0|RES_USE_DNSSEC);
-	else
+//	if (flags & RRSET_FORCE_EDNS0)
+//		resp->options |= (RES_USE_EDNS0|RES_USE_DNSSEC);
+//	else
 		rri_flags |= RRSET_SECURE_UNSUPPORTED;
 #endif /* RES_USE_DNSEC */
 
