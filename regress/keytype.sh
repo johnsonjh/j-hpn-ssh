@@ -67,13 +67,13 @@ for ut in $ktypes; do
 		(
 			grep -v HostKey $OBJ/sshd_proxy_bak
 			echo HostKey $OBJ/key.$ht
-			echo PubkeyAcceptedKeyTypes $user_type
+			echo PubkeyAcceptedKeyAlgorithms $user_type
 			echo HostKeyAlgorithms $host_type
 		) > $OBJ/sshd_proxy
 		(
 			grep -v IdentityFile $OBJ/ssh_proxy_bak
 			echo IdentityFile $OBJ/key.$ut
-			echo PubkeyAcceptedKeyTypes $user_type
+			echo PubkeyAcceptedKeyAlgorithms $user_type
 			echo HostKeyAlgorithms $host_type
 		) > $OBJ/ssh_proxy
 		(

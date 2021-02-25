@@ -72,11 +72,11 @@ for ktype in $EXTRA_TYPES $PLAIN_TYPES; do
 			echo "AuthorizedPrincipalsFile " \
 				"$OBJ/authorized_principals_%u"
 			echo "TrustedUserCAKeys $OBJ/user_ca_key.pub"
-			echo "PubkeyAcceptedKeyTypes ${t}"
+			echo "PubkeyAcceptedKeyAlgorithms ${t}"
 		) > $OBJ/sshd_proxy
 		(
 			cat $OBJ/ssh_proxy_bak
-			echo "PubkeyAcceptedKeyTypes ${t}"
+			echo "PubkeyAcceptedKeyAlgorithms ${t}"
 		) > $OBJ/ssh_proxy
 
 		# Missing authorized_principals
@@ -149,11 +149,11 @@ for ktype in $EXTRA_TYPES $PLAIN_TYPES; do
 		(
 			cat $OBJ/sshd_proxy_bak
 			echo "UsePrivilegeSeparation $privsep"
-			echo "PubkeyAcceptedKeyTypes ${t}"
+			echo "PubkeyAcceptedKeyAlgorithms ${t}"
 		) > $OBJ/sshd_proxy
 		(
 			cat $OBJ/ssh_proxy_bak
-			echo "PubkeyAcceptedKeyTypes ${t}"
+			echo "PubkeyAcceptedKeyAlgorithms ${t}"
 		) > $OBJ/ssh_proxy
 
 		# Wrong principals list
@@ -205,12 +205,12 @@ basic_tests()
 			(
 				cat $OBJ/sshd_proxy_bak
 				echo "UsePrivilegeSeparation $privsep"
-				echo "PubkeyAcceptedKeyTypes ${t}"
+				echo "PubkeyAcceptedKeyAlgorithms ${t}"
 				echo "$extra_sshd"
 			) > $OBJ/sshd_proxy
 			(
 				cat $OBJ/ssh_proxy_bak
-				echo "PubkeyAcceptedKeyTypes ${t}"
+				echo "PubkeyAcceptedKeyAlgorithms ${t}"
 			) > $OBJ/ssh_proxy
 
 			${SSH} -i $OBJ/cert_user_key_${ktype} \
@@ -225,7 +225,7 @@ basic_tests()
 				cat $OBJ/sshd_proxy_bak
 				echo "UsePrivilegeSeparation $privsep"
 				echo "RevokedKeys $OBJ/cert_user_key_revoked"
-				echo "PubkeyAcceptedKeyTypes ${t}"
+				echo "PubkeyAcceptedKeyAlgorithms ${t}"
 				echo "$extra_sshd"
 			) > $OBJ/sshd_proxy
 			cp $OBJ/cert_user_key_${ktype}.pub \
@@ -258,7 +258,7 @@ basic_tests()
 		(
 			cat $OBJ/sshd_proxy_bak
 			echo "RevokedKeys $OBJ/user_ca_key.pub"
-			echo "PubkeyAcceptedKeyTypes ${t}"
+			echo "PubkeyAcceptedKeyAlgorithms ${t}"
 			echo "$extra_sshd"
 		) > $OBJ/sshd_proxy
 		${SSH} -i $OBJ/cert_user_key_${ktype} -F $OBJ/ssh_proxy \
@@ -271,7 +271,7 @@ basic_tests()
 	verbose "$tid: $auth CA does not authenticate"
 	(
 		cat $OBJ/sshd_proxy_bak
-		echo "PubkeyAcceptedKeyTypes ${t}"
+		echo "PubkeyAcceptedKeyAlgorithms ${t}"
 		echo "$extra_sshd"
 	) > $OBJ/sshd_proxy
 	verbose "$tid: ensure CA key does not authenticate user"
@@ -310,7 +310,7 @@ test_one()
 				echo > $OBJ/authorized_keys_$USER
 				echo "TrustedUserCAKeys $OBJ/user_ca_key.pub" \
 					>> $OBJ/sshd_proxy
-				echo "PubkeyAcceptedKeyTypes ${t}*" \
+				echo "PubkeyAcceptedKeyAlgorithms ${t}*" \
 					>> $OBJ/sshd_proxy
 				if test "x$auth_opt" != "x"; then
 					echo $auth_opt >> $OBJ/sshd_proxy

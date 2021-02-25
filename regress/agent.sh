@@ -87,8 +87,8 @@ fi
 for t in ${SSH_KEYTYPES}; do
 	trace "connect via agent using $t key"
 	if [ "$t" = "ssh-dss" ]; then
-		echo "PubkeyAcceptedKeyTypes +ssh-dss" >> $OBJ/ssh_proxy
-		echo "PubkeyAcceptedKeyTypes +ssh-dss" >> $OBJ/sshd_proxy
+		echo "PubkeyAcceptedKeyAlgorithms +ssh-dss" >> $OBJ/ssh_proxy
+		echo "PubkeyAcceptedKeyAlgorithms +ssh-dss" >> $OBJ/sshd_proxy
 	fi
 	${SSH} -F $OBJ/ssh_proxy -i $OBJ/$t-agent.pub -oIdentitiesOnly=yes \
 		somehost exit 52

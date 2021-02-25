@@ -31,12 +31,12 @@ for i in $($SSH -Q key | maybe_filter_sk); do
 done
 (
 	echo "HostKeyAlgorithms ${types}"
-	echo "PubkeyAcceptedKeyTypes *"
+	echo "PubkeyAcceptedKeyAlgorithms *"
 ) >> $OBJ/ssh_proxy
 cp $OBJ/sshd_proxy $OBJ/sshd_proxy_bak
 (
 	echo "HostKeyAlgorithms *"
-	echo "PubkeyAcceptedKeyTypes *"
+	echo "PubkeyAcceptedKeyAlgorithms *"
 ) >> $OBJ/sshd_proxy_bak
 
 HOSTS='localhost-with-alias,127.0.0.1,::1'
