@@ -37,7 +37,7 @@ adjustments to **HPN-SSH**'s buffer sizing and congestion control.
 ## **J-HPN-SSH** future plans
 
 Besides staying up-to-date with _OpenSSH-portable_, currently, plans include
-additional tuning, including assembly-level optimization, of existing code, as
+additional tuning, including assembly-level optimization of existing code, as
 well as the addition of new cryptographic functionality, likely to include new
 post-quantum algorithms, enhanced hashing and key exchange mechanisms, and new
 key systems, such as SHAKE, SHA-3, BLAKE-3, Schnorrkel/Ristretto-Sr25519,
@@ -47,11 +47,11 @@ Dilithium, SPHINCS-SHAKE256, SPHINCS+, etc.
 Experiments that are successful will be made available to the upstream
 **HPN-SSH** project. No GPL or similarly licensed code will be incorporated, and
 all newly added code will be licensed under the same terms and conditions of the
-current OpenSSH-portable and HPN-SSH distributions.
+current *OpenSSH-portable* and **HPN-SSH** distributions.
 
 ## Security information
 
-This software may contain bugs, including critical security vulnerabilties,
+This software **may** contain bugs, including **critical security vulnerabilities**,
 despite the author's best efforts.
 
 ## Warranty (or lack thereof)
@@ -125,7 +125,7 @@ buffer.
 
 ## Other **J-HPN-SSH**-specific notes
 
-### Currently, the following is the "_standard_" build configuration (on _Fedora 33_):
+### The following is the "_standard_" configuration (primarily tested on _Fedora 33_):
 
 ```shell
 make clean; make distclean; autoreconf -vfi && export LD_LIBRARY_PATH=/opt/hpnssl/lib
@@ -136,28 +136,35 @@ make clean; make distclean; autoreconf -vfi && export LD_LIBRARY_PATH=/opt/hpnss
 --with-privsep-path=/var/empty/sshd --without-zlib-version-check --with-ssl-engine \
 --with-ipaddr-display --with-pie=yes --with-systemd --with-security-key-builtin=yes \
 --with-pam --with-audit=linux --with-sandbox=seccomp_filter --with-libedit --with-4in6 \
---with-ldns CFLAGS="-I/opt/hpnssl/include" --with-ldflags="-L/opt/hpnssl/lib"
+--with-ldns CFLAGS="-I/opt/hpnssl/include" --with-ldflags="-L/opt/hpnssl/lib" && \
+make && sudo make install
 ```
 
-- `/opt/hpnssl` contains the latest stable 1.1.1 LTS OpenSSL release.
+- `/opt/hpnssl` contains the *latest stable* 1.1.1 LTS *OpenSSL* release.
 
-  - It is built simply using `./config --prefix=/opt/hpnssl`.
+  - Build with defaults: `./config --prefix=/opt/hpnssl && make && sudo make install`.
 
-    - This is due to some bugs/errors the J-HPN-SSH maintained is working to
-      track down on Fedora systems. On these systems, Kerberos and TCP-Wrappers
-      should not be enabled, as they are linked to the system OpenSSL library.
-      Linking to multiple versions of OpenSSL in such a way is not supported.
-      Also, TCP-Wrappers support has been deprecated as of RHEL 8 and Fedora 23.
+    - This is due to some bugs/errors the **J-HPN-SSH** maintainer is working to
+      track down on Red Hat/Fedora systems. Also, on these systems, *Kerberos 5* and *TCP-Wrappers*
+      should not be enabled, as they are almost always linked to the system *OpenSSL* library.
+      Linking to multiple versions of *OpenSSL* this way is **not** a supported configuration.
+      
+	- *TCP-Wrappers* support has been deprecated as of *RHEL 8* and *Fedora 23*; the
+	  `tcp_wrappers-devel` package that provides the necessary headers is no longer
+	  made available; the standard Red Hat *SSH* does not include any support for
+	  *TCP-Wrappers*. If you want to enable *TCP-Wrappers* on these systems, you will
+	  need to compile and install *TCP-Wrappers* from source code, preferably, the
+	  most recently released Red Hat SRPM's, which were distributed with *RHEL 7*.
 
-    - If you see any runtime errors such as:
+    - If you see any runtime errors such as
       `debug1: EVP_KDF_derive(ctx, key, key_len) != 1 [preauth]` or
       `ssh_dispatch_run_fatal: ... error in libcrypto [preauth]`, then you are
       likely affected by this bug, and should build a separate OpenSSL library
-      for J-HPN-SSH to use, as described above.
+      for **J-HPN-SSH** to use, as described above.
 
-- It is **highly recommend** to use the ldns libraries, as they provide well
-  tested first-class DNSSEC support. Upstream and third-party patches for
-  supporting DNSSEC without ldns have been merged, however, this configuration
+- It is **highly recommend** to use the *ldns* libraries, as they provide well
+  tested, first-class *DNSSEC* support. Upstream and third-party patches for
+  supporting *DNSSEC* without *ldns* have been merged, however, this configuration
   is currently not well tested; feedback here would be appreciated.
 
 - **_Currently, SELinux support is known to be broken, but should be fixed
