@@ -90,7 +90,7 @@ buffers often end up acting as a bottleneck for network throughput of _SCP_,
 especially on long and high bandwidth network links.
 
 Modifications to the SSH code to allow these buffers to be defined at run-time
-eliminates the bottleneck.
+eliminate the bottleneck.
 
 **HPN-SSH** is fully interoperable with other SSH servers and clients. In
 addition, **HPN-SSH** clients will be able to download faster, even from non
