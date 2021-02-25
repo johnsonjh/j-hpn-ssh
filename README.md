@@ -31,12 +31,12 @@ progress bar.
 **J-HPN-SSH** is an experimental development fork of **HPN-SSH**. It is not
 associated in any way with the upstream project. It currently incorporates
 select changes from the IBM, Red Hat, and Debian SSH distribtions, various
-other patches to keep up to date with upstream *OpenSSH-portable*, and
+other patches to keep up to date with upstream _OpenSSH-portable_, and
 various adjustments to **HPN-SSH**'s buffer sizing and congestion control.
 
 ## **J-HPN-SSH** Future Plans
 
-Besides staying up-to-date with *OpenSSH-portable*, currently, plans include
+Besides staying up-to-date with _OpenSSH-portable_, currently, plans include
 additional tuning, including assembly-level optimization, of existing code, as
 well as the addition of new cryptographic functionality, likely to include new
 post-quantum algorithms, enhanced hashing and key exchange mechanisms, and new
@@ -63,7 +63,7 @@ IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT
 NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
 PARTICULAR PURPOSE.**
 
-***THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.***
+**_THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU._**
 
 **SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY
 SERVICING, REPAIR OR CORRECTION. IN NO EVENT UNLESS REQUIRED BY APPLICABLE
@@ -124,7 +124,7 @@ buffer.
 
 ## Other J-HPN-SSH-specific notes
 
-### Currently, the following is the "_standard_" build (on *Fedora 33*):
+### Currently, the following is the "_standard_" build (on _Fedora 33_):
 
 ```shell
 make clean; make distclean; autoreconf -vfi && LD_LIBRARY_PATH=/opt/hpnssl/lib ./configure --build=x86_64-redhat-linux-gnu --host=x86_64-redhat-linux-gnu --prefix=/opt/jhpnssh --with-default-path=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin --with-superuser-path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin --with-privsep-path=/var/empty/sshd --without-zlib-version-check --with-ssl-engine --with-ipaddr-display --with-pie=yes --with-systemd --with-default-pkcs11-provider=yes --with-security-key-builtin=yes --with-pam --with-audit=linux --with-sandbox=seccomp_filter --with-libedit --with-4in6 --with-ldns --with-ldns CFLAGS="-I/opt/hpnssl/include" --with-ldflags="-L/opt/hpnssl/lib"
