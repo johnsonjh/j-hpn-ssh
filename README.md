@@ -30,17 +30,17 @@ progress bar.
 
 **J-HPN-SSH** is an experimental development fork of **HPN-SSH**. It is not
 associated in any way with the upstream project. It currently incorporates
-select changes from the IBM, Red Hat, and Debian SSH distribtions, various other
+select changes from the IBM, Red Hat, and Debian SSH distributions, various other
 patches to keep up to date with upstream _OpenSSH-portable_, and various
 adjustments to **HPN-SSH**'s buffer sizing and congestion control.
 
-## **J-HPN-SSH** Future Plans
+## **J-HPN-SSH** future plans
 
 Besides staying up-to-date with _OpenSSH-portable_, currently, plans include
 additional tuning, including assembly-level optimization, of existing code, as
 well as the addition of new cryptographic functionality, likely to include new
 post-quantum algorithms, enhanced hashing and key exchange mechanisms, and new
-key systems, such as SHAKE, SHA-3, BLAKE-3, Schnorrkel/Ristretto-Sr25519,
+key systems, such as SHAKE, SHA-3, BLAKE-3, Schnorrkel/Ristretto-Sr25519, Intermac,
 Ristretto255/Curve25519-Dalek, X448-Goldilocks, E-5321, Kyber, SIDH, Dilithium,
 SPHINCS-SHAKE256, SPHINCS+, etc.
 
@@ -49,12 +49,12 @@ Experiments that are successful will be made available to the upstream
 all newly added code will be licensed under the same terms and conditions of the
 current OpenSSH-portable and HPN-SSH distributions.
 
-## Security Information
+## Security information
 
 This software may contain bugs, including critical security vulnerabilties,
 despite the author's best efforts.
 
-## Warranty
+## Warranty (or lack thereof)
 
 **BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY FOR THE
 PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED
@@ -77,7 +77,7 @@ YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER
 PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGES.**
 
-## Licensing
+## License
 
 See the [LICENSE](https://github.com/johnsonjh/hpn-ssh/blob/master/LICENCE) file
 for full details.
@@ -87,7 +87,7 @@ for full details.
 _SCP_ and the underlying _SSH-2_ protocol implementation in _OpenSSH_ is network
 performance limited by statically defined internal flow control buffers. These
 buffers often end up acting as a bottleneck for network throughput of _SCP_,
-especially on long and high bandwith network links.
+especially on long and high bandwidth network links.
 
 Modifications to the SSH code to allow these buffers to be defined at run-time
 eliminates the bottleneck.
@@ -104,14 +104,14 @@ throughput of I/O subsystems, including the disk and memory speed. The
 improvement will also be highly influenced by the capacity of the processor to
 handle encryption (and decryption).
 
-## Performance Gap
+## Performance gap
 
 With most high-bandwidth connections, there is a performance gap between what
 _SSH_ is capable of, and what the network link has the capacity to do. This gap,
 in most situations, is the direct cause of undersized receive buffers in _SSH_'s
 congestion control mechanism.
 
-## Normal _SSH_ _SCP_ vs. **HPN-SSH** _SCP_ Performance
+## Normal _SSH_ _SCP_ vs. **HPN-SSH** _SCP_ performance
 
 **HPN-SSH** offers _significantly_ enhanced _SCP_ throughput performance.
 Increasing the size of the _SSH_ channel receive buffers has been shown to
@@ -123,12 +123,20 @@ If you are experiencing disconnects due to a failure in `buffer_append_space`,
 you should try using `-oHPNBufferSize=16384` to restrict the growth of this
 buffer.
 
-## Other J-HPN-SSH-specific notes
+## Other **J-HPN-SSH**-specific notes
 
-### Currently, the following is the "_standard_" build (on _Fedora 33_):
+### Currently, the following is the "_standard_" build configuration (on _Fedora 33_):
 
 ```shell
-make clean; make distclean; autoreconf -vfi && LD_LIBRARY_PATH=/opt/hpnssl/lib ./configure --build=x86_64-redhat-linux-gnu --host=x86_64-redhat-linux-gnu --prefix=/opt/jhpnssh --with-default-path=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin --with-superuser-path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin --with-privsep-path=/var/empty/sshd --without-zlib-version-check --with-ssl-engine --with-ipaddr-display --with-pie=yes --with-systemd --with-default-pkcs11-provider=yes --with-security-key-builtin=yes --with-pam --with-audit=linux --with-sandbox=seccomp_filter --with-libedit --with-4in6 --with-ldns --with-ldns CFLAGS="-I/opt/hpnssl/include" --with-ldflags="-L/opt/hpnssl/lib"
+make clean; make distclean; autoreconf -vfi && export LD_LIBRARY_PATH=/opt/hpnssl/lib
+./configure --build=x86_64-redhat-linux-gnu --host=x86_64-redhat-linux-gnu \
+--prefix=/opt/jhpnssh --with-default-pkcs11-provider=yes --with-ldns \
+--with-default-path=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin \
+--with-superuser-path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin \
+--with-privsep-path=/var/empty/sshd --without-zlib-version-check --with-ssl-engine \
+--with-ipaddr-display --with-pie=yes --with-systemd --with-security-key-builtin=yes \
+--with-pam --with-audit=linux --with-sandbox=seccomp_filter --with-libedit --with-4in6 \
+--with-ldns CFLAGS="-I/opt/hpnssl/include" --with-ldflags="-L/opt/hpnssl/lib"
 ```
 
 - `/opt/hpnssl` contains the latest stable 1.1.1 LTS OpenSSL release.
@@ -160,7 +168,7 @@ make clean; make distclean; autoreconf -vfi && LD_LIBRARY_PATH=/opt/hpnssl/lib .
 - Automatic resumption of failed transfers
 - AES-NI hardware acceleration for the AES-CTR cipher
 - Parallelization of the ChaCha-20 cipher
-- Inline network telemetry
+- In-line network telemetry
 - Pipelined HMAC generation
 - Enhanced distribution packaging
 
@@ -174,3 +182,4 @@ make clean; make distclean; autoreconf -vfi && LD_LIBRARY_PATH=/opt/hpnssl/lib .
 ## **HPN-SSH** Upstream Homepage
 
 - <https://www.psc.edu/research/networking/hpn-ssh/>
+
