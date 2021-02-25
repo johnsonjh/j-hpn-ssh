@@ -217,13 +217,6 @@ struct {
 static volatile sig_atomic_t received_sighup = 0;
 static volatile sig_atomic_t received_sigterm = 0;
 
-/* session identifier, used by RSA-auth */
-u_char session_id[16];
-
-/* same for ssh2 */
-u_char *session_id2 = NULL;
-u_int session_id2_len = 0;
-
 /* record remote hostname or ip */
 u_int utmp_len = HOST_NAME_MAX+1;
 
@@ -367,8 +360,6 @@ main_sigchld_handler(int sig)
 	int save_errno = errno;
 	pid_t pid;
 	int status;
-
-	debug("main_sigchld_handler: %s", strsignal(sig));
 
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0 ||
 	    (pid == -1 && errno == EINTR))
@@ -2575,11 +2566,11 @@ do_ssh2_kex(struct ssh *ssh)
 	if (options.nonemac_enabled == 1)
 		debug("WARNING: None MAC enabled");
 	
-	myproposal[PROPOSAL_KEX_ALGS] = compat_kex_proposal(
+	myproposal[PROPOSAL_KEX_ALGS] = compat_kex_proposal(ssh,
 	    options.kex_algorithms);
-	myproposal[PROPOSAL_ENC_ALGS_CTOS] = compat_cipher_proposal(
+	myproposal[PROPOSAL_ENC_ALGS_CTOS] = compat_cipher_proposal(ssh,
 	    options.ciphers);
-	myproposal[PROPOSAL_ENC_ALGS_STOC] = compat_cipher_proposal(
+	myproposal[PROPOSAL_ENC_ALGS_STOC] = compat_cipher_proposal(ssh,
 	    options.ciphers);
 	myproposal[PROPOSAL_MAC_ALGS_CTOS] =
 	    myproposal[PROPOSAL_MAC_ALGS_STOC] = options.macs;
@@ -2594,7 +2585,7 @@ do_ssh2_kex(struct ssh *ssh)
 		    options.rekey_interval);
 
 	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = compat_pkalg_proposal(
-	    list_hostkey_types());
+	    ssh, list_hostkey_types());
 
 	/* start key exchange */
 	if ((r = kex_setup(ssh, myproposal)) != 0)
@@ -2620,9 +2611,6 @@ do_ssh2_kex(struct ssh *ssh)
 	kex->sign = sshd_hostkey_sign;
 
 	ssh_dispatch_run_fatal(ssh, DISPATCH_BLOCK, &kex->done);
-
-	session_id2 = kex->session_id;
-	session_id2_len = kex->session_id_len;
 
 #ifdef DEBUG_KEXDH
 	/* send 1st encrypted/maced/compressed message */

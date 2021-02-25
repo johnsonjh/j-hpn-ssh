@@ -103,12 +103,12 @@
 #define AGENT_RBUF_LEN	(4096)
 
 typedef enum {
-	AUTH_UNUSED,
-	AUTH_SOCKET,
-	AUTH_CONNECTION
+	AUTH_UNUSED = 0,
+	AUTH_SOCKET = 1,
+	AUTH_CONNECTION = 2,
 } sock_type;
 
-typedef struct {
+typedef struct socket_entry {
 	int fd;
 	sock_type type;
 	struct sshbuf *input;
@@ -524,9 +524,9 @@ process_remove_identity(SocketEntry *e)
 	TAILQ_REMOVE(&idtab->idlist, id, next);
 	free_identity(id);
 	idtab->nentries--;
-	sshkey_free(key);
 	success = 1;
  done:
+	sshkey_free(key);
 	send_status(e, success);
 }
 

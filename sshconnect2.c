@@ -96,9 +96,6 @@ extern int tty_flag;
  * SSH2 key exchange
  */
 
-u_char *session_id2 = NULL;
-u_int session_id2_len = 0;
-
 static char *xxx_host;
 static struct sockaddr *xxx_hostaddr;
 static const struct ssh_conn_info *xxx_conn_info;
@@ -251,11 +248,11 @@ ssh_kex2(struct ssh *ssh, char *host, struct sockaddr *hostaddr, u_short port,
 
 	if ((s = kex_names_cat(options.kex_algorithms, "ext-info-c")) == NULL)
 		fatal("%s: kex_names_cat", __func__);
-	myproposal[PROPOSAL_KEX_ALGS] = compat_kex_proposal(s);
+	myproposal[PROPOSAL_KEX_ALGS] = compat_kex_proposal(ssh, s);
 	myproposal[PROPOSAL_ENC_ALGS_CTOS] =
-	    compat_cipher_proposal(options.ciphers);
+	    compat_cipher_proposal(ssh, options.ciphers);
 	myproposal[PROPOSAL_ENC_ALGS_STOC] =
-	    compat_cipher_proposal(options.ciphers);
+	    compat_cipher_proposal(ssh, options.ciphers);
 	myproposal[PROPOSAL_COMP_ALGS_CTOS] =
 	    myproposal[PROPOSAL_COMP_ALGS_STOC] =
 	    (char *)compression_alg_list(options.compression);
@@ -264,12 +261,12 @@ ssh_kex2(struct ssh *ssh, char *host, struct sockaddr *hostaddr, u_short port,
 	if (use_known_hosts_order) {
 		/* Query known_hosts and prefer algorithms that appear there */
 		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] =
-		    compat_pkalg_proposal(
+		    compat_pkalg_proposal(ssh,
 		    order_hostkeyalgs(host, hostaddr, port, cinfo));
 	} else {
 		/* Use specified HostkeyAlgorithms exactly */
 		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] =
-		    compat_pkalg_proposal(options.hostkeyalgorithms);
+		    compat_pkalg_proposal(ssh, options.hostkeyalgorithms);
 	}
 
 	if (options.rekey_limit || options.rekey_interval)
@@ -299,12 +296,9 @@ ssh_kex2(struct ssh *ssh, char *host, struct sockaddr *hostaddr, u_short port,
 
 	/* remove ext-info from the KEX proposals for rekeying */
 	myproposal[PROPOSAL_KEX_ALGS] =
-	    compat_kex_proposal(options.kex_algorithms);
+	    compat_kex_proposal(ssh, options.kex_algorithms);
 	if ((r = kex_prop2buf(ssh->kex->my, myproposal)) != 0)
 		fatal("kex_prop2buf: %s", ssh_err(r));
-
-	session_id2 = ssh->kex->session_id;
-	session_id2_len = ssh->kex->session_id_len;
 
 #ifdef DEBUG_KEXDH
 	/* send 1st encrypted/maced/compressed message */
@@ -931,7 +925,8 @@ process_gssapi_token(struct ssh *ssh, gss_buffer_t recv_tok)
 			if ((b = sshbuf_new()) == NULL)
 				fatal("%s: sshbuf_new failed", __func__);
 			ssh_gssapi_buildmic(b, authctxt->server_user,
-			    authctxt->service, "gssapi-with-mic");
+			    authctxt->service, "gssapi-with-mic",
+			    ssh->kex->session_id);
 
 			if ((gssbuf.value = sshbuf_mutable_ptr(b)) == NULL)
 				fatal("%s: sshbuf_mutable_ptr failed", __func__);
@@ -1241,7 +1236,7 @@ key_sig_algorithm(struct ssh *ssh, const struct sshkey *key)
 	 */
 	if (ssh == NULL || ssh->kex->server_sig_algs == NULL ||
 	    (key->type != KEY_RSA && key->type != KEY_RSA_CERT) ||
-	    (key->type == KEY_RSA_CERT && (datafellows & SSH_BUG_SIGTYPE))) {
+	    (key->type == KEY_RSA_CERT && (ssh->compat & SSH_BUG_SIGTYPE))) {
 		/* Filter base key signature alg against our configuration */
 		return match_list(sshkey_ssh_name(key),
 		    options.pubkey_accepted_algos, NULL);
@@ -1461,18 +1456,13 @@ sign_and_send_pubkey(struct ssh *ssh, Identity *id)
 		sshbuf_free(b);
 		if ((b = sshbuf_new()) == NULL)
 			fatal("%s: sshbuf_new failed", __func__);
-		if (datafellows & SSH_OLD_SESSIONID) {
-			if ((r = sshbuf_put(b, session_id2,
-			    session_id2_len)) != 0) {
-				fatal("%s: sshbuf_put: %s",
-				    __func__, ssh_err(r));
-			}
+		if (ssh->compat & SSH_OLD_SESSIONID) {
+			if ((r = sshbuf_putb(b, ssh->kex->session_id)) != 0)
+				fatal_fr(r, "sshbuf_putb");
 		} else {
-			if ((r = sshbuf_put_string(b, session_id2,
-			    session_id2_len)) != 0) {
-				fatal("%s: sshbuf_put_string: %s",
-				    __func__, ssh_err(r));
-			}
+			if ((r = sshbuf_put_stringb(b,
+				ssh->kex->session_id)) != 0)
+				fatal_fr(r, "sshbuf_put_stringb");
 		}
 		skip = sshbuf_len(b);
 		if ((r = sshbuf_put_u8(b, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
@@ -1488,7 +1478,7 @@ sign_and_send_pubkey(struct ssh *ssh, Identity *id)
 
 		/* generate signature */
 		r = identity_sign(sign_id, &signature, &slen,
-		    sshbuf_ptr(b), sshbuf_len(b), datafellows, alg);
+		    sshbuf_ptr(b), sshbuf_len(b), ssh->compat, alg);
 		if (r == 0)
 			break;
 		else if (r == SSH_ERR_KEY_NOT_FOUND)
@@ -1870,12 +1860,12 @@ pubkey_reset(Authctxt *authctxt)
 }
 
 static int
-try_identity(Identity *id)
+try_identity(struct ssh *ssh, Identity *id)
 {
 	if (!id->key)
 		return (0);
 	if (sshkey_type_plain(id->key->type) == KEY_RSA &&
-	    (datafellows & SSH_BUG_RSASIGMD5) != 0) {
+	    (ssh->compat & SSH_BUG_RSASIGMD5) != 0) {
 		debug("Skipped %s key %s for RSA/MD5 server",
 		    sshkey_type(id->key), id->filename);
 		return (0);
@@ -1903,7 +1893,7 @@ userauth_pubkey(struct ssh *ssh)
 		 * private key instead
 		 */
 		if (id->key != NULL) {
-			if (try_identity(id)) {
+			if (try_identity(ssh, id)) {
 				ident = format_identity(id);
 				debug("Offering public key: %s", ident);
 				free(ident);
@@ -1913,7 +1903,7 @@ userauth_pubkey(struct ssh *ssh)
 			debug("Trying private key: %s", id->filename);
 			id->key = load_identity_file(id);
 			if (id->key != NULL) {
-				if (try_identity(id)) {
+				if (try_identity(ssh, id)) {
 					id->isprivate = 1;
 					sent = sign_and_send_pubkey(ssh, id);
 				}
@@ -2238,7 +2228,7 @@ userauth_hostbased(struct ssh *ssh)
 		error("%s: sshkey_to_blob: %s", __func__, ssh_err(r));
 		goto out;
 	}
-	if ((r = sshbuf_put_string(b, session_id2, session_id2_len)) != 0 ||
+	if ((r = sshbuf_put_stringb(b, ssh->kex->session_id)) != 0 ||
 	    (r = sshbuf_put_u8(b, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
 	    (r = sshbuf_put_cstring(b, authctxt->server_user)) != 0 ||
 	    (r = sshbuf_put_cstring(b, authctxt->service)) != 0 ||

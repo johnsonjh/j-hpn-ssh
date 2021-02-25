@@ -3520,10 +3520,12 @@ int
 sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 {
 	char *tname = NULL, *curve = NULL, *xmss_name = NULL;
+	char *expect_sk_application = NULL;
 	struct sshkey *k = NULL;
 	size_t pklen = 0, sklen = 0;
 	int type, r = SSH_ERR_INTERNAL_ERROR;
 	u_char *ed25519_pk = NULL, *ed25519_sk = NULL;
+	u_char *expect_ed25519_pk = NULL;
 	u_char *xmss_pk = NULL, *xmss_sk = NULL;
 #ifdef WITH_OPENSSL
 	BIGNUM *exponent = NULL;
@@ -3556,6 +3558,14 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 			r = SSH_ERR_KEY_CERT_MISMATCH;
 			goto out;
 		}
+		/*
+		 * Several fields are redundant between certificate and
+		 * private key body, we require these to match.
+		 */
+		expect_sk_application = k->sk_application;
+		expect_ed25519_pk = k->ed25519_pk;
+		k->sk_application = NULL;
+		k->ed25519_pk = NULL;
 	} else {
 		if ((k = sshkey_new(type)) == NULL) {
 			r = SSH_ERR_ALLOC_FAIL;
@@ -3777,6 +3787,13 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 		break;
 	}
 #endif /* WITH_OPENSSL */
+	if ((expect_sk_application != NULL && (k->sk_application == NULL ||
+	    strcmp(expect_sk_application, k->sk_application) != 0)) ||
+	    (expect_ed25519_pk != NULL && (k->ed25519_pk == NULL ||
+	     memcmp(expect_ed25519_pk, k->ed25519_pk, ED25519_PK_SZ) != 0))) {
+		r = SSH_ERR_KEY_CERT_MISMATCH;
+		goto out;
+	}
 	/* success */
 	r = 0;
 	if (kp != NULL) {
@@ -3806,6 +3823,8 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 	free(xmss_name);
 	freezero(xmss_pk, pklen);
 	freezero(xmss_sk, sklen);
+	free(expect_sk_application);
+	free(expect_ed25519_pk);
 	return r;
 }
 

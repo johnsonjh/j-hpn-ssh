@@ -44,9 +44,6 @@
 
 #include "ssh-gss.h"
 
-extern u_char *session_id2;
-extern u_int session_id2_len;
-
 /* sshbuf_get for gss_buffer_desc */
 int
 ssh_gssapi_get_buffer_desc(struct sshbuf *b, gss_buffer_desc *g)
@@ -259,12 +256,12 @@ ssh_gssapi_sign(Gssctxt *ctx, gss_buffer_t buffer, gss_buffer_t hash)
 
 void
 ssh_gssapi_buildmic(struct sshbuf *b, const char *user, const char *service,
-    const char *context)
+    const char *context, const struct sshbuf *session_id)
 {
 	int r;
 
 	sshbuf_reset(b);
-	if ((r = sshbuf_put_string(b, session_id2, session_id2_len)) != 0 ||
+	if ((r = sshbuf_put_stringb(b, session_id)) != 0 ||
 	    (r = sshbuf_put_u8(b, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
 	    (r = sshbuf_put_cstring(b, user)) != 0 ||
 	    (r = sshbuf_put_cstring(b, service)) != 0 ||

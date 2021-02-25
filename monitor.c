@@ -105,7 +105,6 @@ static Gssctxt *gsscontext = NULL;
 /* Imports */
 extern ServerOptions options;
 extern u_int utmp_len;
-extern u_char session_id[];
 extern struct sshbuf *loginmsg;
 extern struct sshauthopt *auth_opts; /* XXX move to permanent ssh->authctxt? */
 
@@ -1234,7 +1233,7 @@ mm_answer_keyallowed(struct ssh *ssh, int sock, struct sshbuf *m)
 	if (key != NULL && authctxt->valid) {
 		/* These should not make it past the privsep child */
 		if (sshkey_type_plain(key->type) == KEY_RSA &&
-		    (datafellows & SSH_BUG_RSASIGMD5) != 0)
+		    ssh->compat & SSH_BUG_RSASIGMD5) != 0)
 			fatal("%s: passed a SSH_BUG_RSASIGMD5 key", __func__);
 
 		switch (type) {
@@ -1311,7 +1310,7 @@ mm_answer_keyallowed(struct ssh *ssh, int sock, struct sshbuf *m)
 }
 
 static int
-monitor_valid_userblob(const u_char *data, u_int datalen)
+monitor_valid_userblob(struct ssh *ssh, const u_char *data, u_int datalen)
 {
 	struct sshbuf *b;
 	const u_char *p;
@@ -1323,7 +1322,7 @@ monitor_valid_userblob(const u_char *data, u_int datalen)
 	if ((b = sshbuf_from(data, datalen)) == NULL)
 		fatal("%s: sshbuf_from", __func__);
 
-	if (datafellows & SSH_OLD_SESSIONID) {
+	if (ssh->compat & SSH_OLD_SESSIONID) {
 		p = sshbuf_ptr(b);
 		len = sshbuf_len(b);
 		if ((session_id2 == NULL) ||
@@ -1485,7 +1484,7 @@ mm_answer_keyverify(struct ssh *ssh, int sock, struct sshbuf *m)
 
 	switch (key_blobtype) {
 	case MM_USERKEY:
-		valid_data = monitor_valid_userblob(data, datalen);
+		valid_data = monitor_valid_userblob(ssh, data, datalen);
 		auth_method = "publickey";
 		ret = user_key_verify(ssh, key, signature, signaturelen, data,
 		    datalen, sigalg, ssh->compat, &sig_details);
@@ -1503,7 +1502,9 @@ mm_answer_keyverify(struct ssh *ssh, int sock, struct sshbuf *m)
 		break;
 	}
 	if (!valid_data)
-		fatal("%s: bad signature data blob", __func__);
+		fatal("bad %s signature data blob",
+           key_blobtype == MM_USERKEY ? "userkey" :
+           (key_blobtype == MM_HOSTKEY ? "hostkey" : "unknown"));
 
 	if ((fp = sshkey_fingerprint(key, options.fingerprint_hash,
 	    SSH_FP_DEFAULT)) == NULL)
@@ -1829,28 +1830,34 @@ monitor_apply_keystate(struct ssh *ssh, struct monitor *pmonitor)
                 fatal("%s: packet_set_state: %s", __func__, ssh_err(r));
 	sshbuf_free(child_state);
 	child_state = NULL;
-
-	if ((kex = ssh->kex) != NULL) {
-		/* XXX set callbacks */
+	if ((kex = ssh->kex) == NULL)
+		fatal_f("internal error: ssh->kex == NULL");
+	if (session_id2_len != sshbuf_len(ssh->kex->session_id)) {
+		fatal_f("incorrect session id length %zu (expected %u)",
+		    sshbuf_len(ssh->kex->session_id), session_id2_len);
+	}
+	if (memcmp(sshbuf_ptr(ssh->kex->session_id), session_id2,
+	    session_id2_len) != 0)
+		fatal_f("session ID mismatch");
+	/* XXX set callbacks */
 #ifdef WITH_OPENSSL
-		kex->kex[KEX_DH_GRP1_SHA1] = kex_gen_server;
-		kex->kex[KEX_DH_GRP14_SHA1] = kex_gen_server;
-		kex->kex[KEX_DH_GRP14_SHA256] = kex_gen_server;
-		kex->kex[KEX_DH_GRP16_SHA512] = kex_gen_server;
-		kex->kex[KEX_DH_GRP18_SHA512] = kex_gen_server;
-		kex->kex[KEX_DH_GEX_SHA1] = kexgex_server;
-		kex->kex[KEX_DH_GEX_SHA256] = kexgex_server;
+	kex->kex[KEX_DH_GRP1_SHA1] = kex_gen_server;
+	kex->kex[KEX_DH_GRP14_SHA1] = kex_gen_server;
+	kex->kex[KEX_DH_GRP14_SHA256] = kex_gen_server;
+	kex->kex[KEX_DH_GRP16_SHA512] = kex_gen_server;
+	kex->kex[KEX_DH_GRP18_SHA512] = kex_gen_server;
+	kex->kex[KEX_DH_GEX_SHA1] = kexgex_server;
+	kex->kex[KEX_DH_GEX_SHA256] = kexgex_server;
 # ifdef OPENSSL_HAS_ECC
-		kex->kex[KEX_ECDH_SHA2] = kex_gen_server;
+	kex->kex[KEX_ECDH_SHA2] = kex_gen_server;
 # endif
 #endif /* WITH_OPENSSL */
-		kex->kex[KEX_C25519_SHA256] = kex_gen_server;
-		kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_server;
-		kex->load_host_public_key=&get_hostkey_public_by_type;
-		kex->load_host_private_key=&get_hostkey_private_by_type;
-		kex->host_key_index=&get_hostkey_index;
-		kex->sign = sshd_hostkey_sign;
-	}
+	kex->kex[KEX_C25519_SHA256] = kex_gen_server;
+	kex->kex[KEX_KEM_SNTRUP761X25519_SHA512] = kex_gen_server;
+	kex->load_host_public_key=&get_hostkey_public_by_type;
+	kex->load_host_private_key=&get_hostkey_private_by_type;
+	kex->host_key_index=&get_hostkey_index;
+	kex->sign = sshd_hostkey_sign;
 }
 
 /* This function requires careful sanity checking */

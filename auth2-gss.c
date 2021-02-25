@@ -44,6 +44,7 @@
 #include "misc.h"
 #include "servconf.h"
 #include "packet.h"
+#include "kex.h"
 #include "ssh-gss.h"
 #include "monitor_wrap.h"
 
@@ -306,7 +307,7 @@ input_gssapi_mic(int type, u_int32_t plen, struct ssh *ssh)
 #endif
 		micuser = authctxt->user;
 	ssh_gssapi_buildmic(b, micuser, authctxt->service,
-	    "gssapi-with-mic");
+	    "gssapi-with-mic", ssh->kex->session_id);
 
 	if ((gssbuf.value = sshbuf_mutable_ptr(b)) == NULL)
 		fatal("%s: sshbuf_mutable_ptr failed", __func__);

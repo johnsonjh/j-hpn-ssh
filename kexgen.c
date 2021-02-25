@@ -148,6 +148,9 @@ input_kex_gen_reply(int type, u_int32_t seq, struct ssh *ssh)
 	size_t slen, hashlen;
 	int r;
 
+	debug("SSH2_MSG_KEX_ECDH_REPLY received");
+	ssh_dispatch_set(ssh, SSH2_MSG_KEX_ECDH_REPLY, &kex_protocol_error);
+
 	/* hostkey */
 	if ((r = sshpkt_getb_froms(ssh, &server_host_key_blob)) != 0)
 		goto out;
@@ -253,6 +256,9 @@ input_kex_gen_init(int type, u_int32_t seq, struct ssh *ssh)
 	u_char *signature = NULL, hash[SSH_DIGEST_MAX_LENGTH];
 	size_t slen, hashlen;
 	int r;
+
+	debug("SSH2_MSG_KEX_ECDH_INIT received");
+	ssh_dispatch_set(ssh, SSH2_MSG_KEX_ECDH_INIT, &kex_protocol_error);
 
 	if ((r = kex_load_hostkey(ssh, &server_host_private,
 	    &server_host_public)) != 0)

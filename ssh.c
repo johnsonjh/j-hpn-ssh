@@ -652,7 +652,6 @@ main(int ac, char **av)
 	u_int j;
 	struct ssh_conn_info *cinfo = NULL;
 
-
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
 
@@ -2259,7 +2258,7 @@ ssh_session2(struct ssh *ssh, const struct ssh_conn_info *cinfo)
 
 	/* If we don't expect to open a new session, then disallow it */
 	if (options.control_master == SSHCTL_MASTER_NO &&
-	    (datafellows & SSH_NEW_OPENSSH)) {
+	    (ssh->compat & SSH_NEW_OPENSSH)) {
 		debug("Requesting no-more-sessions@openssh.com");
 		if ((r = sshpkt_start(ssh, SSH2_MSG_GLOBAL_REQUEST)) != 0 ||
 		    (r = sshpkt_put_cstring(ssh,

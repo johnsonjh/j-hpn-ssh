@@ -35,6 +35,7 @@
 #include "xmalloc.h"
 #include "ssh2.h"
 #include "packet.h"
+#include "kex.h"
 #include "sshbuf.h"
 #include "log.h"
 #include "misc.h"
@@ -54,8 +55,6 @@
 
 /* import */
 extern ServerOptions options;
-extern u_char *session_id2;
-extern u_int session_id2_len;
 
 static int
 userauth_hostbased(struct ssh *ssh)
@@ -129,7 +128,7 @@ userauth_hostbased(struct ssh *ssh)
 	if ((b = sshbuf_new()) == NULL)
 		fatal("%s: sshbuf_new failed", __func__);
 	/* reconstruct packet */
-	if ((r = sshbuf_put_string(b, session_id2, session_id2_len)) != 0 ||
+	if ((r = sshbuf_put_stringb(b, ssh->kex->session_id)) != 0 ||
 	    (r = sshbuf_put_u8(b, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
 #ifdef WITH_SELINUX
 	    (authctxt->role

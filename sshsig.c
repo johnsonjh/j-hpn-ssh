@@ -857,6 +857,7 @@ sshsig_check_allowed_keys(const char *path, const struct sshkey *sign_key,
 		    principal, sig_namespace);
 		free(line);
 		line = NULL;
+		linesize = 0;
 		if (r == SSH_ERR_KEY_NOT_FOUND)
 			continue;
 		else if (r == 0) {
@@ -1002,6 +1003,7 @@ sshsig_find_principals(const char *path, const struct sshkey *sign_key,
 		    sign_key, principals);
 		free(line);
 		line = NULL;
+		linesize = 0;
 		if (r == SSH_ERR_KEY_NOT_FOUND)
 			continue;
 		else if (r == 0) {

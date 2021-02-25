@@ -132,8 +132,6 @@ struct newkeys {
 struct ssh;
 
 struct kex {
-	u_char	*session_id;
-	size_t	session_id_len;
 	struct newkeys	*newkeys[MODE_MAX];
 	u_int	we_need;
 	u_int	dh_need;
@@ -149,6 +147,7 @@ struct kex {
 	struct sshbuf *peer;
 	struct sshbuf *client_version;
 	struct sshbuf *server_version;
+	struct sshbuf *session_id;
 	sig_atomic_t done;
 	u_int	flags;
 	int	hash_alg;
@@ -194,6 +193,7 @@ int	 kex_verify_host_key(struct ssh *, struct sshkey *);
 int	 kex_send_kexinit(struct ssh *);
 int	 kex_input_kexinit(int, u_int32_t, struct ssh *);
 int	 kex_input_ext_info(int, u_int32_t, struct ssh *);
+int	 kex_protocol_error(int, u_int32_t, struct ssh *);
 int	 kex_derive_keys(struct ssh *, u_char *, u_int, const struct sshbuf *);
 int	 kex_send_newkeys(struct ssh *);
 int	 kex_start_rekex(struct ssh *);

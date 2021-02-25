@@ -316,7 +316,7 @@ ssh_tty_make_modes(struct ssh *ssh, int fd, struct termios *tiop)
 #define SSH_TTYMODE_IUTF8 42  /* for SSH_BUG_UTF8TTYMODE */
 
 #define TTYMODE(NAME, FIELD, OP) \
-	if (OP == SSH_TTYMODE_IUTF8 && (datafellows & SSH_BUG_UTF8TTYMODE)) { \
+	if (OP == SSH_TTYMODE_IUTF8 && (ssh->compat & SSH_BUG_UTF8TTYMODE)) { \
 		debug3("%s: SSH_BUG_UTF8TTYMODE", __func__); \
 	} else if ((r = sshbuf_put_u8(buf, OP)) != 0 || \
 	    (r = sshbuf_put_u32(buf, ((tio.FIELD & NAME) != 0))) != 0) \

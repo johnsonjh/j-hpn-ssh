@@ -411,7 +411,7 @@ kex_prop_free(char **proposal)
 }
 
 /* ARGSUSED */
-static int
+int
 kex_protocol_error(int type, u_int32_t seq, struct ssh *ssh)
 {
 	int r;
@@ -643,7 +643,8 @@ kex_new(void)
 	    (kex->peer = sshbuf_new()) == NULL ||
 	    (kex->my = sshbuf_new()) == NULL ||
 	    (kex->client_version = sshbuf_new()) == NULL ||
-	    (kex->server_version = sshbuf_new()) == NULL) {
+	    (kex->server_version = sshbuf_new()) == NULL ||
+	    (kex->session_id = sshbuf_new()) == NULL) {
 		kex_free(kex);
 		return NULL;
 	}
@@ -703,7 +704,7 @@ kex_free(struct kex *kex)
 	sshbuf_free(kex->client_version);
 	sshbuf_free(kex->server_version);
 	sshbuf_free(kex->client_pub);
-	free(kex->session_id);
+	sshbuf_free(kex->session_id);
 	free(kex->failed_choice);
 	free(kex->hostkey_alg);
 	free(kex->name);
@@ -1161,8 +1162,7 @@ derive_key(struct ssh *ssh, int id, u_int need, u_char *hash, u_int hashlen,
 	    ssh_digest_update_buffer(hashctx, shared_secret) != 0 ||
 	    ssh_digest_update(hashctx, hash, hashlen) != 0 ||
 	    ssh_digest_update(hashctx, &c, 1) != 0 ||
-	    ssh_digest_update(hashctx, kex->session_id,
-	    kex->session_id_len) != 0 ||
+	    ssh_digest_update_buffer(hashctx, kex->session_id) != 0 ||
 	    ssh_digest_final(hashctx, digest, mdsz) != 0) {
 		r = SSH_ERR_LIBCRYPTO_ERROR;
 		error("%s: KEX hash failed", __func__);
@@ -1214,12 +1214,16 @@ kex_derive_keys(struct ssh *ssh, u_char *hash, u_int hashlen,
 	int r;
 
 	/* save initial hash as session id */
-	if (kex->session_id == NULL) {
-		kex->session_id_len = hashlen;
-		kex->session_id = malloc(kex->session_id_len);
-		if (kex->session_id == NULL)
-			return SSH_ERR_ALLOC_FAIL;
-		memcpy(kex->session_id, hash, kex->session_id_len);
+	if ((kex->flags & KEX_INITIAL) != 0) {
+		if (sshbuf_len(kex->session_id) != 0) {
+			error_f("already have session ID at kex");
+			return SSH_ERR_INTERNAL_ERROR;
+		}
+		if ((r = sshbuf_put(kex->session_id, hash, hashlen)) != 0)
+			return r;
+	} else if (sshbuf_len(kex->session_id) == 0) {
+		error_f("no session ID in rekex");
+		return SSH_ERR_INTERNAL_ERROR;
 	}
 	for (i = 0; i < NKEYS; i++) {
 		if ((r = derive_key(ssh, 'A'+i, kex->we_need, hash, hashlen,
@@ -1511,7 +1515,7 @@ kex_exchange_identification(struct ssh *ssh, int timeout_ms,
 	
 	debug("Remote protocol version %d.%d, remote software version %.100s",
 	    remote_major, remote_minor, remote_version);
-	ssh->compat = compat_datafellows(remote_version);
+	compat_banner(ssh, remote_version);
 
 	mismatch = 0;
 	switch (remote_major) {

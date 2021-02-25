@@ -59,10 +59,10 @@
 #define SSH_BUG_DHGEX_LARGE	0x40000000
 #define SSH_BUG_LARGEWINDOW	0x80000000
 
-u_int    compat_datafellows(const char *);
-char	*compat_cipher_proposal(char *);
-char	*compat_pkalg_proposal(char *);
-char	*compat_kex_proposal(char *);
+struct ssh;
 
-extern int datafellows;
+void    compat_banner(struct ssh *, const char *);
+char	*compat_cipher_proposal(struct ssh *, char *);
+char	*compat_pkalg_proposal(struct ssh *, char *);
+char	*compat_kex_proposal(struct ssh *, char *);
 #endif

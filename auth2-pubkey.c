@@ -47,6 +47,7 @@
 #include "ssh.h"
 #include "ssh2.h"
 #include "packet.h"
+#include "kex.h"
 #include "sshbuf.h"
 #include "log.h"
 #include "misc.h"
@@ -72,8 +73,6 @@
 
 /* import */
 extern ServerOptions options;
-extern u_char *session_id2;
-extern u_int session_id2_len;
 
 static char *
 format_key(const struct sshkey *key)
@@ -178,13 +177,12 @@ userauth_pubkey(struct ssh *ssh)
 		if ((b = sshbuf_new()) == NULL)
 			fatal("%s: sshbuf_new failed", __func__);
 		if (ssh->compat & SSH_OLD_SESSIONID) {
-			if ((r = sshbuf_put(b, session_id2,
-			    session_id2_len)) != 0)
+			if ((r = sshbuf_putb(b, ssh->kex->session_id)) != 0)
 				fatal("%s: sshbuf_put session id: %s",
 				    __func__, ssh_err(r));
 		} else {
-			if ((r = sshbuf_put_string(b, session_id2,
-			    session_id2_len)) != 0)
+			if ((r = sshbuf_put_stringb(b,
+					ssh->kex->session_id)) != 0)
 				fatal("%s: sshbuf_put_string session id: %s",
 				    __func__, ssh_err(r));
 		}

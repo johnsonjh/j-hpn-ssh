@@ -1033,7 +1033,7 @@ process_escapes(struct ssh *ssh, Channel *c,
 				continue;
 
 			case 'R':
-				if (datafellows & SSH_BUG_NOREKEY)
+				if (ssh->compat & SSH_BUG_NOREKEY)
 					logit("Server does not "
 					    "support re-keying");
 				else
@@ -2014,9 +2014,6 @@ client_global_hostkeys_private_confirm(struct ssh *ssh, int type,
 
 	if ((signdata = sshbuf_new()) == NULL)
 		fatal("%s: sshbuf_new failed", __func__);
-	/* Don't want to accidentally accept an unbound signature */
-	if (ssh->kex->session_id_len == 0)
-		fatal("%s: ssh->kex->session_id_len == 0", __func__);
 	/*
 	 * Expect a signature for each of the ctx->nnew private keys we
 	 * haven't seen before. They will be in the same order as the
@@ -2029,8 +2026,8 @@ client_global_hostkeys_private_confirm(struct ssh *ssh, int type,
 		sshbuf_reset(signdata);
 		if ( (r = sshbuf_put_cstring(signdata,
 		    "hostkeys-prove-00@openssh.com")) != 0 ||
-		    (r = sshbuf_put_string(signdata, ssh->kex->session_id,
-		    ssh->kex->session_id_len)) != 0 ||
+		    (r = sshbuf_put_stringb(signdata,
+		    ssh->kex->session_id)) != 0 ||
 		    (r = sshkey_puts(ctx->keys[i], signdata)) != 0)
 			fatal("%s: failed to prepare signature: %s",
 			    __func__, ssh_err(r));

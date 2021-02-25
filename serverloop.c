@@ -798,8 +798,8 @@ server_input_hostkeys_prove(struct ssh *ssh, struct sshbuf **respp)
 		    sshkey_type_plain(key->type) == KEY_RSA;
 		if ((r = sshbuf_put_cstring(sigbuf,
 		    "hostkeys-prove-00@openssh.com")) != 0 ||
-		    (r = sshbuf_put_string(sigbuf,
-		    ssh->kex->session_id, ssh->kex->session_id_len)) != 0 ||
+		    (r = sshbuf_put_stringb(sigbuf,
+		    ssh->kex->session_id)) != 0 ||
 		    (r = sshkey_puts(key, sigbuf)) != 0 ||
 		    (r = ssh->kex->sign(ssh, key_prv, key_pub, &sig, &slen,
 		    sshbuf_ptr(sigbuf), sshbuf_len(sigbuf),

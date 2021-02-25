@@ -63,8 +63,6 @@
 
 /* import */
 extern ServerOptions options;
-extern u_char *session_id2;
-extern u_int session_id2_len;
 extern struct sshbuf *loginmsg;
 
 /* methods */
