@@ -696,8 +696,8 @@ sshsk_sign(const char *provider_path, struct sshkey *key,
 #ifdef DEBUG_SK
 	fprintf(stderr, "%s: sig_flags = 0x%02x, sig_counter = %u\n",
 	    __func__, resp->flags, resp->counter);
-	fprintf(stderr, "%s: hashed message:\n", __func__);
-	sshbuf_dump_data(message, sizeof(message), stderr);
+	fprintf(stderr, "%s: data to sign:\n", __func__);
+	sshbuf_dump_data(data, datalen, stderr);
 	fprintf(stderr, "%s: sigbuf:\n", __func__);
 	sshbuf_dump(sig, stderr);
 #endif

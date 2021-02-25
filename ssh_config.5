@@ -808,20 +808,20 @@ Use of this option may break facilities such as tab-completion that rely
 on being able to read unhashed host names from
 .Pa ~/.ssh/known_hosts .
 .It Cm HostbasedAcceptedAlgorithms
-Specifies the key types that will be used for hostbased authentication
-as a comma-separated list of patterns.
+Specifies the signature algorithms that will be used for hostbased
+authentication as a comma-separated list of patterns.
 Alternately if the specified list begins with a
 .Sq +
-character, then the specified key types will be appended to the default set
-instead of replacing them.
+character, then the specified signature algorithms will be appended
+to the default set instead of replacing them.
 If the specified list begins with a
 .Sq -
-character, then the specified key types (including wildcards) will be removed
-from the default set instead of replacing them.
+character, then the specified signature algorithms (including wildcards)
+will be removed from the default set instead of replacing them.
 If the specified list begins with a
 .Sq ^
-character, then the specified key types will be placed at the head of the
-default set.
+character, then the specified signature algorithms will be placed
+at the head of the default set.
 The default for this option is:
 .Bd -literal -offset 3n
 ecdsa-sha2-nistp256-cert-v01@openssh.com,
@@ -843,7 +843,7 @@ The
 .Fl Q
 option of
 .Xr ssh 1
-may be used to list supported key types.
+may be used to list supported signature algorithms.
 This was formerly named HostbasedKeyTypes.
 .It Cm HostbasedAuthentication
 Specifies whether to try rhosts based authentication with public key
@@ -854,20 +854,20 @@ or
 .Cm no
 (the default).
 .It Cm HostKeyAlgorithms
-Specifies the host key algorithms
+Specifies the host key signature algorithms
 that the client wants to use in order of preference.
 Alternately if the specified list begins with a
 .Sq +
-character, then the specified key types will be appended to the default set
-instead of replacing them.
+character, then the specified signature algorithms will be appended to
+the default set instead of replacing them.
 If the specified list begins with a
 .Sq -
-character, then the specified key types (including wildcards) will be removed
-from the default set instead of replacing them.
+character, then the specified signature algorithms (including wildcards)
+will be removed from the default set instead of replacing them.
 If the specified list begins with a
 .Sq ^
-character, then the specified key types will be placed at the head of the
-default set.
+character, then the specified signature algorithms will be placed
+at the head of the default set.
 The default for this option is:
 .Bd -literal -offset 3n
 ecdsa-sha2-nistp256-cert-v01@openssh.com,
@@ -888,7 +888,7 @@ rsa-sha2-512,rsa-sha2-256,ssh-rsa
 If hostkeys are known for the destination host then this default is modified
 to prefer their algorithms.
 .Pp
-The list of available key types may also be obtained using
+The list of available signature algorithms may also be obtained using
 .Qq ssh -Q HostKeyAlgorithms .
 .It Cm HostKeyAlias
 Specifies an alias that should be used instead of the
@@ -1436,7 +1436,7 @@ ssh-ed25519,sk-ssh-ed25519@openssh.com,
 rsa-sha2-512,rsa-sha2-256,ssh-rsa
 .Ed
 .Pp
-The list of available key types may also be obtained using
+The list of available signature algorithms may also be obtained using
 .Qq ssh -Q PubkeyAcceptedAlgorithms .
 .It Cm PubkeyAuthentication
 Specifies whether to try public key authentication.

@@ -317,10 +317,10 @@ static struct {
 	{ "revokedhostkeys", oRevokedHostKeys },
 	{ "fingerprinthash", oFingerprintHash },
 	{ "updatehostkeys", oUpdateHostkeys },
-	{ "hostbasedkeytypes", oHostbasedAcceptedAlgorithms }, /* obsolete */
 	{ "hostbasedalgorithms", oHostbasedAcceptedAlgorithms },
-	{ "pubkeyacceptedkeytypes", oPubkeyAcceptedAlgorithms }, /* obsolete */
+	{ "hostbasedkeytypes", oHostbasedAcceptedAlgorithms }, /* obsolete */
 	{ "pubkeyacceptedalgorithms", oPubkeyAcceptedAlgorithms },
+	{ "pubkeyacceptedkeytypes", oPubkeyAcceptedAlgorithms }, /* obsolete */
 	{ "ignoreunknown", oIgnoreUnknown },
 	{ "proxyjump", oProxyJump },
 	{ "protocolkeepalives", oProtocolKeepAlives },
