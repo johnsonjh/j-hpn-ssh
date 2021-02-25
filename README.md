@@ -1,6 +1,6 @@
 # **J-HPN-SSH**
 
-## **High Performance SSH**
+## **High-Performance SSH**
 
 [![License](https://img.shields.io/badge/License-BSD-blue.svg)](https://github.com/johnsonjh/j-hpn-ssh/blob/master/LICENSE)
 [![LocCount](https://img.shields.io/tokei/lines/github/johnsonjh/j-hpn-ssh.svg)](https://github.com/XAMPPRocky/tokei)
@@ -26,24 +26,28 @@ bulk data, modifying the AES-CTR cipher to use multiple CPU cores, more detailed
 connection logging, and peak throughput value calculations shown in the _SCP_
 progress bar.
 
-## **J-HPN-SSH** Fork Information
+## What is **J-HPN-SSH**?
 
 **J-HPN-SSH** is an experimental development fork of **HPN-SSH**. It is not
 associated in any way with the upstream project. It currently incorporates
-changes from IBM and Red Hat's SSH distribtions, as well as minor adjustments to
-buffer sizing and congestion control.
+select changes from the IBM, Red Hat, and Debian SSH distribtions, various
+other patches to keep up to date with upstream *OpenSSH-portable*, and
+various adjustments to **HPN-SSH**'s buffer sizing and congestion control.
 
 ## **J-HPN-SSH** Future Plans
 
-Current plans include the tuning and assembly-level optimization of existing
-code, as well as the addition of new cryptographic functionality, including
+Besides staying up-to-date with *OpenSSH-portable*, currently, plans include
+additional tuning, including assembly-level optimization, of existing code, as
+well as the addition of new cryptographic functionality, likely to include new
 post-quantum algorithms, enhanced hashing and key exchange mechanisms, and new
 key systems, such as SHAKE, SHA-3, BLAKE-3, Schnorrkel/Ristretto-Sr25519,
 Ristretto255/Curve25519-Dalek, X448-Goldilocks, E-5321, Kyber, SIDH, Dilithium,
 SPHINCS-SHAKE256, SPHINCS+, etc.
 
 Experiments that are successful will be made available to the upstream
-**HPN-SSH** project.
+**HPN-SSH** project. No GPL or similarly licensed code will be incorporated,
+and all newly added code will be licensed under the same terms and conditions
+of the current OpenSSH-portable and HPN-SSH distributions.
 
 ## Security Information
 
@@ -54,19 +58,22 @@ despite the author's best efforts.
 
 **BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY FOR THE
 PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED
-IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIESPROVIDE THE PROGRAM "AS IS"
-WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-PARTICULAR PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
-PROGRAM IS WITH YOU. SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
-ALL NECESSARY SERVICING, REPAIR OR CORRECTION. IN NO EVENT UNLESS REQUIRED BY
-APPLICABLE LAW OR AGREED TO IN WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER
-PARTY WHO MAY MODIFY AND/OR REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE
-LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR
-CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE PROGRAM
-(INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR
-LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE
-WITH ANY OTHERPROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF
+IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS
+IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT
+NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+PARTICULAR PURPOSE.**
+
+***THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.***
+
+**SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY
+SERVICING, REPAIR OR CORRECTION. IN NO EVENT UNLESS REQUIRED BY APPLICABLE
+LAW OR AGREED TO IN WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO
+MAY MODIFY AND/OR REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO
+YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL
+DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT
+NOT LIMITED TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES
+SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH
+ANY OTHER PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF
 THE POSSIBILITY OF SUCH DAMAGES.**
 
 ## Licensing
@@ -114,6 +121,36 @@ improve _SCP_ throughput by as much as **1,000%**.
 If you are experiencing disconnects due to a failure in `buffer_append_space`,
 you should try using `-oHPNBufferSize=16384` to restrict the growth of this
 buffer.
+
+## Other J-HPN-SSH-specific notes
+
+### Currently, the following is the "_standard_" build (on *Fedora 33*):
+
+```shell
+make clean; make distclean; autoreconf -vfi && LD_LIBRARY_PATH=/opt/hpnssl/lib ./configure --build=x86_64-redhat-linux-gnu --host=x86_64-redhat-linux-gnu --prefix=/opt/jhpnssh --with-default-path=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin --with-superuser-path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin --with-privsep-path=/var/empty/sshd --without-zlib-version-check --with-ssl-engine --with-ipaddr-display --with-pie=yes --with-systemd --with-default-pkcs11-provider=yes --with-security-key-builtin=yes --with-pam --with-audit=linux --with-sandbox=seccomp_filter --with-libedit --with-4in6 --with-ldns --with-ldns CFLAGS="-I/opt/hpnssl/include" --with-ldflags="-L/opt/hpnssl/lib"
+```
+
+- `/opt/hpnssl` contains the latest stable 1.1.1 LTS OpenSSL release, built
+  using `./config --prefix=/opt/hpnssl`.
+
+  - This is due to some bugs/errors the J-HPN-SSH maintained is working to track
+    down on Fedora systems. On these systems, Kerberos and TCP-Wrappers should
+    not be enabled, as they are linked to the system OpenSSL library. Linking to
+    multiple versions of OpenSSL in such a way is not supported. Also,
+    TCP-Wrappers support has been deprecated as of RHEL 8 and Fedora 23.
+
+  - If you see any runtime errors such as:
+    `debug1: EVP_KDF_derive(ctx, key, key_len) != 1 [preauth]` or
+    `ssh_dispatch_run_fatal: ... error in libcrypto [preauth]`, then you are
+    likely affected by this bug, and should build a separate OpenSSL library for
+    J-HPN-SSH to use, as described above.
+
+- It is **highly recommend** to use the ldns libraries, as they provide well
+  tested first-class DNSSEC support. Upstream and third-party patches for
+  supporting DNSSEC without ldns have been merged, however, this configuration
+  is currently not well tested; feedback here would be appreciated.
+
+- Currently, SELinux support is known to be broken, but should be fixed soon.
 
 ## Upstream **HPN-SSH** Future Plans
 
