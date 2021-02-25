@@ -2,4 +2,12 @@ Building J-HPN-SSH:
 
 Currently only tested with the following configuration:
 
-./autogen.sh && ./configure --build=x86_64-redhat-linux-gnu --host=x86_64-redhat-linux-gnu --prefix=/opt/jhpnssh --with-default-path=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin --with-superuser-path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin --with-privsep-path=/var/empty/sshd --without-zlib-version-check --with-ssl-engine --with-ipaddr-display --with-pie=yes --with-systemd --with-default-pkcs11-provider=yes --with-security-key-builtin=yes --with-pam --with-audit=linux --with-sandbox=seccomp_filter --with-kerberos5 --with-libedit --with-md5-passwords --with-4in6 --with-ldns
+./autogen.sh && ./configure --build=x86_64-redhat-linux-gnu --host=x86_64-redhat-linux-gnu --prefix=/opt/jhpnssh --with-default-path=/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin --with-superuser-path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin --with-privsep-path=/var/empty/sshd --without-zlib-version-check --with-ssl-engine --with-ipaddr-display --with-pie=yes --with-systemd --with-default-pkcs11-provider=yes --with-security-key-builtin=yes --with-pam --with-audit=linux --with-sandbox=seccomp_filter --with-kerberos5 --with-libedit --with-md5-passwords --with-4in6 --with-ldns --with-tcp-wrappers
+
+NOTE: tcp_wrappers has been depreceated on Red Hat systems, as of F23/RHEL8.
+Currently, the tcp_wrappers and tcp_wrappers-libs are shipped to maintain
+backwards compatibility, but the tcp_wrappers-devel package was dropped.
+This package contains only tcpd.h, a man page, and a symlink. You can easily
+adapt the SRPM or RPM from RHEL7 onto RHEL-8 or Fedora 23 and newer systems,
+otherwise, you should drop --with-tcp-wrappers from your configure invocation.
+
