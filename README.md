@@ -132,6 +132,7 @@ make clean; make distclean; autoreconf -vfi && LD_LIBRARY_PATH=/opt/hpnssl/lib .
 ```
 
 - `/opt/hpnssl` contains the latest stable 1.1.1 LTS OpenSSL release.
+
   - It is built simply using `./config --prefix=/opt/hpnssl`.
 
     - This is due to some bugs/errors the J-HPN-SSH maintained is working to track
@@ -151,7 +152,7 @@ make clean; make distclean; autoreconf -vfi && LD_LIBRARY_PATH=/opt/hpnssl/lib .
   supporting DNSSEC without ldns have been merged, however, this configuration
   is currently not well tested; feedback here would be appreciated.
 
-- ***Currently, SELinux support is known to be broken, but should be fixed soon.***
+- **_Currently, SELinux support is known to be broken, but should be fixed soon._**
 
 ## Upstream **HPN-SSH** Future Plans
 
