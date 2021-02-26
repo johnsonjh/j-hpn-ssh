@@ -71,7 +71,6 @@
 /* from ssh.c */
 extern int tty_flag;
 extern Options options;
-extern int stdin_null_flag;
 extern char *host;
 extern int subsystem_flag;
 extern struct sshbuf *command;
@@ -1913,7 +1912,7 @@ mux_client_request_session(int fd)
 
 	ssh_signal(SIGPIPE, SIG_IGN);
 
-	if (stdin_null_flag) {
+	if (options.stdin_null && stdfd_devnull(1, 0, 0) == -1)
 		if ((devnull = open(_PATH_DEVNULL, O_RDONLY)) == -1)
 			fatal("open(/dev/null): %s", strerror(errno));
 		if (dup2(devnull, STDIN_FILENO) == -1)
@@ -2148,7 +2147,7 @@ mux_client_request_stdio_fwd(int fd)
 
 	ssh_signal(SIGPIPE, SIG_IGN);
 
-	if (stdin_null_flag) {
+	if (options.stdin_null && stdfd_devnull(1, 0, 0) == -1)
 		if ((devnull = open(_PATH_DEVNULL, O_RDONLY)) == -1)
 			fatal("open(/dev/null): %s", strerror(errno));
 		if (dup2(devnull, STDIN_FILENO) == -1)

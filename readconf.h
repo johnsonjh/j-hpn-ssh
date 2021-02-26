@@ -156,6 +156,9 @@ typedef struct {
 	int	visual_host_key;
 
 	int	request_tty;
+	int	no_shell;
+	int	stdin_null;
+	int	fork_after_authentication;
 
 	int	proxy_use_fdpass;
 

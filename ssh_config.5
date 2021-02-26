@@ -686,6 +686,45 @@ Valid options are:
 and
 .Cm sha256
 (the default).
+.It Cm ForkAfterAuthentication
+Requests
+.Nm ssh
+to go to background just before command execution.
+This is useful if
+.Nm ssh
+is going to ask for passwords or passphrases, but the user
+wants it in the background.
+This implies the
+.Cm StdinNull
+configuration option being set to
+.Dq yes .
+The recommended way to start X11 programs at a remote site is with
+something like
+.Ic ssh -f host xterm ,
+which is the same as
+.Ic ssh host xterm
+if the
+.Cm ForkAfterAuthentication
+configuration option is set to
+.Dq yes .
+.Pp
+If the
+.Cm ExitOnForwardFailure
+configuration option is set to
+.Dq yes ,
+then a client started with the
+.Cm ForkAfterAuthentication
+configuration option being set to
+.Dq yes
+will wait for all remote port forwards to be successfully established
+before placing itself in the background.
+The argument to this keyword must be
+.Cm yes
+(same as the
+.Fl f
+option) or
+.Cm no
+(the default).
 .It Cm ForwardAgent
 Specifies whether the connection to the authentication agent (if any)
 will be forwarded to the remote machine.
@@ -1243,6 +1282,16 @@ The argument to this keyword must be
 or
 .Cm no
 (the default).
+.It Cm NoShell
+Do not execute a remote command.
+This is useful for just forwarding ports.
+The argument to this keyword must be
+.Cm yes
+(same as the
+.Fl N
+option) or
+.Cm no
+(the default).
 .It Cm NumberOfPasswordPrompts
 Specifies the number of password prompts before giving up.
 The argument to this keyword must be an integer.
@@ -1644,6 +1693,33 @@ be sent to the server.
 Similarly to
 .Cm SendEnv ,
 the server must be prepared to accept the environment variable.
+.It Cm StdinNull
+Redirects stdin from
+.Pa /dev/null
+(actually, prevents reading from stdin).
+This must be used when
+.Nm ssh
+is run in the background.
+A common trick is to use this to run X11 programs on a remote machine.
+For example,
+.Ic ssh shadows.cs.hut.fi emacs &
+will start an emacs on shadows.cs.hut.fi, and the X11
+connection will be automatically forwarded over an encrypted channel.
+The
+.Nm ssh
+program will be put in the background.
+(This does not work if
+.Nm ssh
+needs to ask for a password or passphrase; see also the
+.Cm ForkAfterAuthentication
+configuration option.)
+The argument to this keyword must be
+.Cm yes
+(same as the
+.Fl n
+option) or
+.Cm no
+(the default).
 .It Cm StreamLocalBindMask
 Sets the octal file creation mode mask
 .Pq umask

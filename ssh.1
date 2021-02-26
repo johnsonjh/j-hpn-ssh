@@ -259,6 +259,11 @@ then a client started with
 .Fl f
 will wait for all remote port forwards to be successfully established
 before placing itself in the background.
+Refer to the description of
+.Cm ForkAfterAuthentication
+in
+.Xr ssh_config 5
+for details.
 .Pp
 .It Fl G
 Causes
@@ -425,6 +430,11 @@ keyword for more information.
 .It Fl N
 Do not execute a remote command.
 This is useful for just forwarding ports.
+Refer to the description of
+.Cm NoShell
+in
+.Xr ssh_config 5
+for details.
 .Pp
 .It Fl n
 Redirects stdin from
@@ -446,6 +456,11 @@ program will be put in the background.
 needs to ask for a password or passphrase; see also the
 .Fl f
 option.)
+Refer to the description of
+.Cm StdinNull
+in
+.Xr ssh_config 5
+for details.
 .Pp
 .It Fl O Ar ctl_cmd
 Control an active connection multiplexing master process.

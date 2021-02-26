@@ -171,7 +171,8 @@ typedef enum {
 	oNoneEnabled, oNoneMacEnabled, oNoneSwitch,
 	oDisableMTAES,
 	oVisualHostKey,
-	oKexAlgorithms, oIPQoS, oRequestTTY, oIgnoreUnknown, oProxyUseFdpass,
+	oKexAlgorithms, oIPQoS, oRequestTTY, oNoShell, oStdinNull,
+	oForkAfterAuthentication, oIgnoreUnknown, oProxyUseFdpass,
 	oCanonicalDomains, oCanonicalizeHostname, oCanonicalizeMaxDots,
 	oCanonicalizeFallbackLocal, oCanonicalizePermittedCNAMEs,
 	oStreamLocalBindMask, oStreamLocalBindUnlink, oRevokedHostKeys,
@@ -223,7 +224,6 @@ static struct {
 	{ "smartcarddevice", oUnsupported },
 	{ "pkcs11provider", oUnsupported },
 #endif
-
 	{ "forwardagent", oForwardAgent },
 	{ "forwardx11", oForwardX11 },
 	{ "forwardx11trusted", oForwardX11Trusted },
@@ -302,10 +302,13 @@ static struct {
 	{ "kexalgorithms", oKexAlgorithms },
 	{ "ipqos", oIPQoS },
 	{ "requesttty", oRequestTTY },
+	{ "noshell", oNoShell },
+	{ "stdinnull", oStdinNull },
+	{ "forkafterauthentication", oForkAfterAuthentication },
 	{ "noneenabled", oNoneEnabled },
 	{ "nonemacenabled", oNoneMacEnabled },
 	{ "noneswitch", oNoneSwitch },
-        { "disablemtaes", oDisableMTAES },
+	{ "disablemtaes", oDisableMTAES },
 	{ "proxyusefdpass", oProxyUseFdpass },
 	{ "canonicaldomains", oCanonicalDomains },
 	{ "canonicalizefallbacklocal", oCanonicalizeFallbackLocal },
@@ -1916,6 +1919,18 @@ parse_pubkey_algos:
 		multistate_ptr = multistate_requesttty;
 		goto parse_multistate;
 
+	case oNoShell:
+		intptr = &options->no_shell;
+		goto parse_flag;
+
+	case oStdinNull:
+		intptr = &options->stdin_null;
+		goto parse_flag;
+
+	case oForkAfterAuthentication:
+		intptr = &options->fork_after_authentication;
+		goto parse_flag;
+
 	case oIgnoreUnknown:
 		charptr = &options->ignored_unknown;
 		goto parse_string;
@@ -2315,10 +2330,13 @@ initialize_options(Options * options)
 	options->ip_qos_interactive = -1;
 	options->ip_qos_bulk = -1;
 	options->request_tty = -1;
+	options->no_shell = -1;
+	options->stdin_null = -1;
+	options->fork_after_authentication = -1;
 	options->none_switch = -1;
 	options->none_enabled = -1;
 	options->nonemac_enabled = -1;
-        options->disable_multithreaded = -1;
+	options->disable_multithreaded = -1;
 	options->hpn_disabled = -1;
 	options->hpn_buffer_size = -1;
 	options->tcp_rcv_buf_poll = -1;
@@ -2335,7 +2353,6 @@ initialize_options(Options * options)
 	options->update_hostkeys = -1;
 	options->hostbased_accepted_algos = NULL;
 	options->pubkey_accepted_algos = NULL;
-	//options->known_hosts_command = NULL;
 }
 
 /*
@@ -2546,6 +2563,12 @@ fill_default_options(Options * options)
 		options->ip_qos_bulk = IPTOS_THROUGHPUT;
 	if (options->request_tty == -1)
 		options->request_tty = REQUEST_TTY_AUTO;
+	if (options->no_shell == -1)
+		options->no_shell = 0;
+	if (options->stdin_null == -1)
+		options->stdin_null = 0;
+	if (options->fork_after_authentication == -1)
+		options->fork_after_authentication = 0;
 	if (options->proxy_use_fdpass == -1)
 		options->proxy_use_fdpass = 0;
 	if (options->canonicalize_max_dots == -1)
@@ -3210,6 +3233,9 @@ dump_client_config(Options *o, const char *host)
 	dump_cfg_fmtint(oProxyUseFdpass, o->proxy_use_fdpass);
 	dump_cfg_fmtint(oPubkeyAuthentication, o->pubkey_authentication);
 	dump_cfg_fmtint(oRequestTTY, o->request_tty);
+	dump_cfg_fmtint(oNoShell, o->no_shell);
+	dump_cfg_fmtint(oStdinNull, o->stdin_null);
+	dump_cfg_fmtint(oForkAfterAuthentication, o->fork_after_authentication);
 	dump_cfg_fmtint(oStreamLocalBindUnlink, o->fwd_opts.streamlocal_bind_unlink);
 	dump_cfg_fmtint(oStrictHostKeyChecking, o->strict_host_key_checking);
 	dump_cfg_fmtint(oTCPKeepAlive, o->tcp_keep_alive);
