@@ -1580,8 +1580,9 @@ load_identity_file(Identity *id)
 	struct stat st;
 
 	if (stat(id->filename, &st) == -1) {
-		(id->userprovided ? logit : debug3)("no such identity: %s: %s",
-		    id->filename, strerror(errno));
+		do_log2(id->userprovided ?
+		    SYSLOG_LEVEL_INFO : SYSLOG_LEVEL_DEBUG3,
+		    "no such identity: %s: %s", id->filename, strerror(errno));
 		return NULL;
 	}
 	snprintf(prompt, sizeof prompt,
