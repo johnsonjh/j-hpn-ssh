@@ -1869,8 +1869,14 @@ or
 This option allows learning alternate hostkeys for a server
 and supports graceful key rotation by allowing a server to send replacement
 public keys before old ones are removed.
+.Pp
 Additional hostkeys are only accepted if the key used to authenticate the
-host was already trusted or explicitly accepted by the user.
+host was already trusted or explicitly accepted by the user, the host was
+authenticated via
+.Cm UserKnownHostsFile
+(i.e. not
+.Cm GlobalKnownHostsFile )
+and the host was authenticated using a plain key and not a certificate.
 .Pp
 .Cm UpdateHostKeys
 is enabled by default if the user has not overridden the default
