@@ -1869,9 +1869,9 @@ hostkeys_find(struct hostkey_foreach_line *l, void *_ctx)
 
 	/* UpdateHostkeys is skipped for wildcard host names */
 	if (strchr(l->hosts, '*') != NULL ||
-	    strchr(l->hosts, ',') != NULL) {
-		debug3("%s: hostkeys file %s:%ld contains wildcard or pattern",
-		     __func__, l->path, l->linenum);
+	    strchr(l->hosts, '?') != NULL) {
+		debug3("%s: hostkeys file %s:%ld contains wildcard", __func__,
+		    l->path, l->linenum);
 		ctx->wildcard_hostspec = 1;
 	}
 
