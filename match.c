@@ -53,7 +53,6 @@
  * Returns true if the given string matches the pattern (which may contain ?
  * and * as wildcards), and zero if it does not match.
  */
-
 int
 match_pattern(const char *s, const char *pattern)
 {
@@ -63,8 +62,9 @@ match_pattern(const char *s, const char *pattern)
 			return !*s;
 
 		if (*pattern == '*') {
-			/* Skip the asterisk. */
-			pattern++;
+			/* Skip this and any consecutive asterisks. */
+			while (*pattern == '*')
+				pattern++;
 
 			/* If at end of pattern, accept immediately. */
 			if (!*pattern)
