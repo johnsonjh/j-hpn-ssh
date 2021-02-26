@@ -334,7 +334,7 @@ check_key_not_revoked(struct hostkeys *hostkeys, struct sshkey *k)
  */
 static HostStatus
 check_hostkeys_by_key_or_type(struct hostkeys *hostkeys,
-    struct sshkey *k, int keytype, const struct hostkey_entry **found)
+    struct sshkey *k, int keytype, int nid, const struct hostkey_entry **found)
 {
 	u_int i;
 	HostStatus end_return = HOST_NEW;
@@ -349,6 +349,10 @@ check_hostkeys_by_key_or_type(struct hostkeys *hostkeys,
 			continue;
 		if (k == NULL) {
 			if (hostkeys->entries[i].key->type != keytype)
+				continue;
+			if (nid != -1 &&
+			    sshkey_type_plain(keytype) == KEY_ECDSA &&
+			    hostkeys->entries[i].key->ecdsa_nid != nid)
 				continue;
 			end_return = HOST_FOUND;
 			if (found != NULL)
@@ -392,14 +396,14 @@ check_key_in_hostkeys(struct hostkeys *hostkeys, struct sshkey *key,
 {
 	if (key == NULL)
 		fatal("no key to look up");
-	return check_hostkeys_by_key_or_type(hostkeys, key, 0, found);
+	return check_hostkeys_by_key_or_type(hostkeys, key, 0, -1, found);
 }
 
 int
-lookup_key_in_hostkeys_by_type(struct hostkeys *hostkeys, int keytype,
+lookup_key_in_hostkeys_by_type(struct hostkeys *hostkeys, int keytype, int nid,
     const struct hostkey_entry **found)
 {
-	return (check_hostkeys_by_key_or_type(hostkeys, NULL, keytype,
+	return (check_hostkeys_by_key_or_type(hostkeys, NULL, keytype, nid,
 	    found) == HOST_FOUND);
 }
 

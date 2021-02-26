@@ -1355,7 +1355,8 @@ show_other_keys(struct hostkeys *hostkeys, struct sshkey *key)
 	for (i = 0; type[i] != -1; i++) {
 		if (type[i] == key->type)
 			continue;
-		if (!lookup_key_in_hostkeys_by_type(hostkeys, type[i], &found))
+		if (!lookup_key_in_hostkeys_by_type(hostkeys, type[i],
+		    -1, &found))
 			continue;
 		fp = sshkey_fingerprint(found->key,
 		    options.fingerprint_hash, SSH_FP_DEFAULT);

@@ -149,7 +149,8 @@ order_hostkeyalgs(char *host, struct sockaddr *hostaddr, u_short port,
 	 */
 	best = first_alg(options.hostkeyalgorithms);
 	if (lookup_key_in_hostkeys_by_type(hostkeys,
-	    sshkey_type_plain(sshkey_type_from_name(best)), NULL)) {
+	    sshkey_type_plain(sshkey_type_from_name(best)),
+	    sshkey_ecdsa_nid_from_name(best), NULL)) {
 		debug3("%s: have matching best-preference key type %s, "
 		    "using HostkeyAlgorithms verbatim", __func__, best);
 		ret = xstrdup(options.hostkeyalgorithms);
@@ -187,7 +188,8 @@ order_hostkeyalgs(char *host, struct sockaddr *hostaddr, u_short port,
 		}
 		/* If the key appears in known_hosts then prefer it */
 		if (lookup_key_in_hostkeys_by_type(hostkeys,
-		    sshkey_type_plain(ktype), NULL)) {
+		    sshkey_type_plain(ktype),
+		    sshkey_ecdsa_nid_from_name(alg), NULL)) {
 			ALG_APPEND(first, alg);
 			continue;
 		}
