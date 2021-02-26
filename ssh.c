@@ -1559,7 +1559,7 @@ main(int ac, char **av)
 
 	/* Open a connection to the remote host. */
 	if (ssh_connect(ssh, host, host_arg, addrs, &hostaddr, options.port,
-	    options.address_family, options.connection_attempts,
+	    options.connection_attempts,
 	    &timeout_ms, options.tcp_keep_alive) != 0)
  		exit(255);
 

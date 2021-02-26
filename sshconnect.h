@@ -65,7 +65,7 @@ struct ssh_conn_info;
 
 int	 ssh_connect(struct ssh *, const char *, const char *,
 	    struct addrinfo *, struct sockaddr_storage *, u_short,
-	    int, int, int *, int);
+	    int, int *, int);
 void	 ssh_kill_proxy_command(void);
 
 void	 ssh_login(struct ssh *, Sensitive *, const char *,
