@@ -1097,6 +1097,11 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 			options.tun_open = SSH_TUNMODE_NO;
 			cancelled_forwarding = 1;
 		}
+		if (options.update_hostkeys != 0) {
+			error("UpdateHostkeys is disabled because the host "
+			    "key is not trusted.");
+			options.update_hostkeys = 0;
+		}
 		if (options.exit_on_forward_failure && cancelled_forwarding)
 			fatal("Error: forwarding disabled due to host key "
 			    "check failure");
