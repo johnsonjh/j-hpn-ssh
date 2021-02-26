@@ -56,4 +56,7 @@ https://github.com/openssh/openssh-portable/commit/eab2888cfc6cc4e2ef24bd017da98
 https://github.com/openssh/openssh-portable/commit/815209abfdd2991fb92ad7d2e33374916cdcbcf4
 https://github.com/openssh/openssh-portable/commit/7d680448db5858dc76307663f78d0b8d3c2b4a3d
 https://github.com/openssh/openssh-portable/commit/4d94b031ff88b015f0db57e140f481bff7ae1a91
+https://github.com/openssh/openssh-portable/commit/292bcb2479deb27204e3ff796539c003975a5f7a
+https://github.com/openssh/openssh-portable/commit/d5a0cd4fc430c8eda213a4010a612d4778867cd9
+https://github.com/openssh/openssh-portable/commit/10dce8ff68ef615362cfcab0c0cc33ce524e7682
 ```
