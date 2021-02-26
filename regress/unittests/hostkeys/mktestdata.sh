@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 # $OpenBSD: mktestdata.sh,v 1.2 2017/04/30 23:33:48 djm Exp $
 
 set -ex

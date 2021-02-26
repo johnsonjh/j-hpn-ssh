@@ -1,3 +1,4 @@
+#!/usr/sbin/env sh
 #	$OpenBSD: principals-command.sh,v 1.11 2019/12/16 02:39:05 djm Exp $
 #	Placed in the Public Domain.
 

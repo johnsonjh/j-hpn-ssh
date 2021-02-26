@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 # $OpenBSD: mktestdata.sh,v 1.1 2020/06/19 04:32:09 djm Exp $
 
 NAMESPACE=unittest

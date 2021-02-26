@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 #       $OpenBSD: sntrup761.sh,v 1.1 2020/12/29 00:59:15 djm Exp $
 #       Placed in the Public Domain.
 #

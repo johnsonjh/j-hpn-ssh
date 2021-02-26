@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 #	$OpenBSD: knownhosts-command.sh,v 1.1 2020/12/22 06:03:36 djm Exp $
 #	Placed in the Public Domain.
 

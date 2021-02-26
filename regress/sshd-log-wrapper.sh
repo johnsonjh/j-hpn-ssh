@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 #       $OpenBSD: sshd-log-wrapper.sh,v 1.4 2016/11/25 02:56:49 dtucker Exp $
 #       Placed in the Public Domain.
 #

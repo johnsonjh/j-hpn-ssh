@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 # $OpenBSD: mktestdata.sh,v 1.11 2020/06/19 03:48:49 djm Exp $
 
 PW=mekmitasdigoat

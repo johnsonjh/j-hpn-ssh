@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 #	$OpenBSD: keys-command.sh,v 1.6 2019/07/25 08:48:11 dtucker Exp $
 #	Placed in the Public Domain.
 

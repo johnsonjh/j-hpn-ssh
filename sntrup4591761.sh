@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 #       $OpenBSD: sntrup4591761.sh,v 1.3 2019/01/30 19:51:15 markus Exp $
 #       Placed in the Public Domain.
 #

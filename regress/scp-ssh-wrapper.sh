@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 #       $OpenBSD: scp-ssh-wrapper.sh,v 1.4 2019/07/19 03:45:44 djm Exp $
 #       Placed in the Public Domain.
 

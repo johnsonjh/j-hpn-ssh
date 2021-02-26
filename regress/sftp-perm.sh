@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 #	$OpenBSD: sftp-perm.sh,v 1.2 2013/10/17 22:00:18 djm Exp $
 #	Placed in the Public Domain.
 

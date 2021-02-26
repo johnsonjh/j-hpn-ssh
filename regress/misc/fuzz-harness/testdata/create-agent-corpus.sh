@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 # Exercise ssh-agent to generate fuzzing corpus
 

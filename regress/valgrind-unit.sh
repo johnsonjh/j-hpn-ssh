@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 UNIT_BINARY="$1"
 shift

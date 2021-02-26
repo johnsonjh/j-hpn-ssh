@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 #	$OpenBSD: test-exec.sh,v 1.76 2020/04/04 23:04:41 dtucker Exp $
 #	Placed in the Public Domain.
 
