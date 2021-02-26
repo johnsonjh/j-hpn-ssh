@@ -1555,7 +1555,10 @@ main(int ac, char **av)
 			cleanup_exit(255); /* resolve_host logs the error */
 	}
 
-	timeout_ms = options.connection_timeout * 1000;
+	if (options.connection_timeout >= INT_MAX/1000)
+		timeout_ms = INT_MAX;
+	else
+		timeout_ms = options.connection_timeout * 1000;
 
 	/* Open a connection to the remote host. */
 	if (ssh_connect(ssh, host, host_arg, addrs, &hostaddr, options.port,
