@@ -55,11 +55,10 @@ ssh_selinux_enabled(void)
 }
 
 /* Return the default security context for the given username */
-static security_context_t
+static char *
 ssh_selinux_getctxbyname(char *pwname)
 {
-	security_context_t sc = NULL;
-	char *sename = NULL, *lvl = NULL;
+	char *sc = NULL, *sename = NULL, *lvl = NULL;
 	int r;
 
 #ifdef HAVE_GETSEUSERBYNAME
@@ -105,9 +104,7 @@ ssh_selinux_getctxbyname(char *pwname)
 void
 ssh_selinux_setup_pty(char *pwname, const char *tty)
 {
-	security_context_t new_tty_ctx = NULL;
-	security_context_t user_ctx = NULL;
-	security_context_t old_tty_ctx = NULL;
+	char *new_tty_ctx = NULL, *user_ctx = NULL, *old_tty_ctx = NULL;
 	security_class_t chrclass;
 
 	if (!ssh_selinux_enabled())
@@ -160,7 +157,7 @@ ssh_selinux_change_context(const char *newname)
 	if (!ssh_selinux_enabled())
 		return;
 
-	if (getcon((security_context_t *)&oldctx) < 0) {
+	if (getcon(&oldctx) < 0) {
 		logit("%s: getcon failed with %s", __func__, strerror(errno));
 		return;
 	}
@@ -197,7 +194,7 @@ ssh_selinux_change_context(const char *newname)
 void
 ssh_selinux_setfscreatecon(const char *path)
 {
-	security_context_t context;
+	char *context;
 
 	if (!ssh_selinux_enabled())
 		return;
