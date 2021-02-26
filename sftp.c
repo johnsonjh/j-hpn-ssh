@@ -1127,7 +1127,7 @@ undo_glob_escape(char *s)
  * last argument's quote has been properly terminated or 0 otherwise.
  * This parameter is only of use if "sloppy" is set.
  */
-#define MAXARGS 	128
+#define MAXARGS		128
 #define MAXARGLEN	8192
 static char **
 makeargv(const char *arg, int *argcp, int sloppy, char *lastquote,

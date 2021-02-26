@@ -62,7 +62,7 @@
 #include "ssherr.h"
 
 #define MAX_AGENT_IDENTITIES	2048		/* Max keys in agent reply */
-#define MAX_AGENT_REPLY_LEN	(256 * 1024) 	/* Max bytes in agent reply */
+#define MAX_AGENT_REPLY_LEN	(256 * 1024)	/* Max bytes in agent reply */
 
 /* macro to check for "agent failure" message */
 #define agent_failed(x) \

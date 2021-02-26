@@ -1676,8 +1676,8 @@ key_type_allowed_by_config(struct sshkey *key)
 
 /*
  * try keys in the following order:
- * 	1. certificates listed in the config file
- * 	2. other input certificates
+ *	1. certificates listed in the config file
+ *	2. other input certificates
  *	3. agent keys that are found in the config file
  *	4. other agent keys
  *	5. keys that are only listed in the config file
