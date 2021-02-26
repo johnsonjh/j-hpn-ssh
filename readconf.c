@@ -2470,9 +2470,10 @@ fill_default_options(Options * options)
 		    xstrdup(_PATH_SSH_SYSTEM_HOSTFILE2);
 	}
 	if (options->update_hostkeys == -1) {
-		if (options->num_user_hostfiles == 0 ||
+		if (options->verify_host_key_dns <= 0 &&
+		    (options->num_user_hostfiles == 0 ||
 		    (options->num_user_hostfiles == 1 && strcmp(options->
-		    user_hostfiles[0], _PATH_SSH_USER_HOSTFILE) == 0))
+		    user_hostfiles[0], _PATH_SSH_USER_HOSTFILE) == 0)))
 			options->update_hostkeys = SSH_UPDATE_HOSTKEYS_YES;
 		else
 			options->update_hostkeys = SSH_UPDATE_HOSTKEYS_NO;

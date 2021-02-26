@@ -1875,7 +1875,9 @@ host was already trusted or explicitly accepted by the user.
 .Cm UpdateHostKeys
 is enabled by default if the user has not overridden the default
 .Cm UserKnownHostsFile
-setting, otherwise
+setting and has not enabled
+.Cm VerifyHostKeyDNS ,
+otherwise
 .Cm UpdateHostKeys
 will be set to
 .Cm no .
