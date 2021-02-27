@@ -1434,8 +1434,8 @@ do_setusercontext(struct passwd *pw)
 
 		platform_setusercontext_post_groups(pw);
 
-		if (!in_chroot && options.chroot_directory != NULL &&
-		    strcasecmp(options.chroot_directory, "none") != 0) {
+		if (!in_chroot && options.chroot_directory != NULL) { //&&
+//		    strcasecmp(options.chroot_directory, "none") != 0) {
                         tmp = tilde_expand_filename(options.chroot_directory,
 			    pw->pw_uid);
 			snprintf(uidstr, sizeof(uidstr), "%llu",
