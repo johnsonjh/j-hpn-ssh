@@ -143,7 +143,7 @@ make -j "${CPUS:-1}" && sudo make install
 - `/opt/hpnssl` contains the _latest stable_ 1.1.1 LTS _OpenSSL_ release.
 
   - Build with defaults:
-    `./config --prefix=/opt/hpnssl && make && sudo make install`.
+    `./config --prefix=/opt/hpnssl && make -j "${CPUS:-1}" && sudo make install`.
 
     - This is due to some bugs/errors the **J-HPN-SSH** maintainer is working to
       track down on Red Hat/Fedora systems. Also, on these systems, _Kerberos 5_
