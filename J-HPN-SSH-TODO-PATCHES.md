@@ -62,4 +62,5 @@ https://github.com/openssh/openssh-portable/commit/10dce8ff68ef615362cfcab0c0cc3
 https://github.com/openssh/openssh-portable/commit/4340dd43928dfe746cb7e75fe920b63c0d909a9a
 https://github.com/openssh/openssh-portable/commit/d5d05cdb3d4efd4a618aa52caab5bec73097c163
 Complete: https://github.com/openssh/openssh-portable/commit/e51dc7fab61df36e43f3bc64b673f88d388cab91
+https://bugzilla.mindrot.org/show_bug.cgi?id=1450
 ```
