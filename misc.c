@@ -161,7 +161,7 @@ set_nodelay(int fd)
 	opt = 1;
 	debug2("fd %d setting TCP_NODELAY", fd);
 	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof opt) == -1)
-		error("setsockopt TCP_NODELAY: %.100s", strerror(errno));
+		debug("setsockopt TCP_NODELAY: %.100s", strerror(errno));
 }
 
 /* Allow local port reuse in TIME_WAIT */
