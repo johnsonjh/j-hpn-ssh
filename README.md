@@ -151,8 +151,8 @@ make -j "${CPUS:-1}" && sudo make install
       to the system _OpenSSL_ library. Linking to multiple versions of _OpenSSL_
       this way is **not** a supported configuration.
 
-      - Compilation with OpenSSL 3-alpha is known to work and periodically tested,
-        however, care must be taken to avoid OpenSSL version conflicts.
+      - Compilation with OpenSSL 3-alpha is known to work (and periodically tested),
+        however, care must be taken to avoid OpenSSL version conflicts when linking.
 
   - _TCP-Wrappers_ support has been deprecated as of _RHEL 8_ and _Fedora 23_;
     the `tcp_wrappers-devel` package that provides the necessary headers is no
