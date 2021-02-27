@@ -327,6 +327,20 @@ ssh_gssapi_cleanup_creds(void)
 	}
 }
 
+void
+ssh_gssapi_free_store(void)
+{
+        if (gssapi_client.store.filename != NULL) {
+                xfree(gssapi_client.store.filename);
+                gssapi_client.store.filename = NULL;
+        }
+
+        if (gssapi_client.store.envval != NULL) {
+                xfree(gssapi_client.store.envval);
+                gssapi_client.store.envval = NULL;
+        }
+}
+
 /* As user */
 void
 ssh_gssapi_storecreds(void)
