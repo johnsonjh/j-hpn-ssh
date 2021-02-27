@@ -608,7 +608,8 @@ process_get(struct sftp_conn *conn, const char *src, const char *dst,
 	memset(&g, 0, sizeof(g));
 
 	debug3("Looking up %s", abs_src);
-	if ((r = remote_glob(conn, abs_src, GLOB_MARK, NULL, &g)) != 0) {
+	if ((r = remote_glob(conn, abs_src, GLOB_NOCHECK|GLOB_MARK,
+	    NULL, &g)) != 0) {
 		if (r == GLOB_NOSPACE) {
 			error("Too many matches for \"%s\".", abs_src);
 		} else {
