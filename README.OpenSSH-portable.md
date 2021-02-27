@@ -2,9 +2,17 @@
 
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/openssh.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:openssh)
 
-OpenSSH is a complete implementation of the SSH protocol (version 2) for secure remote login, command execution and file transfer. It includes a client `ssh` and server `sshd`, file transfer utilities `scp` and `sftp` as well as tools for key generation (`ssh-keygen`), run-time key storage (`ssh-agent`) and a number of supporting programs.
+OpenSSH is a complete implementation of the SSH protocol (version 2) for secure
+remote login, command execution and file transfer. It includes a client `ssh`
+and server `sshd`, file transfer utilities `scp` and `sftp` as well as tools for
+key generation (`ssh-keygen`), run-time key storage (`ssh-agent`) and a number
+of supporting programs.
 
-This is a port of OpenBSD's [OpenSSH](https://openssh.com) to most Unix-like operating systems, including Linux, OS X and Cygwin. Portable OpenSSH polyfills OpenBSD APIs that are not available elsewhere, adds sshd sandboxing for more operating systems and includes support for OS-native authentication and auditing (e.g. using PAM).
+This is a port of OpenBSD's [OpenSSH](https://openssh.com) to most Unix-like
+operating systems, including Linux, OS X and Cygwin. Portable OpenSSH polyfills
+OpenBSD APIs that are not available elsewhere, adds sshd sandboxing for more
+operating systems and includes support for OS-native authentication and auditing
+(e.g. using PAM).
 
 ## Documentation
 
@@ -21,23 +29,34 @@ The official documentation for OpenSSH are the man pages for each tool:
 
 ## Stable Releases
 
-Stable release tarballs are available from a number of [download mirrors](https://www.openssh.com/portable.html#downloads). We recommend the use of a stable release for most users. Please read the [release notes](https://www.openssh.com/releasenotes.html) for details of recent changes and potential incompatibilities.
+Stable release tarballs are available from a number of
+[download mirrors](https://www.openssh.com/portable.html#downloads). We
+recommend the use of a stable release for most users. Please read the
+[release notes](https://www.openssh.com/releasenotes.html) for details of recent
+changes and potential incompatibilities.
 
 ## Building Portable OpenSSH
 
 ### Dependencies
 
-Portable OpenSSH is built using autoconf and make. It requires a working C compiler, standard library and headers.
+Portable OpenSSH is built using autoconf and make. It requires a working C
+compiler, standard library and headers.
 
-`libcrypto` from either [LibreSSL](https://www.libressl.org/) or [OpenSSL](https://www.openssl.org) may also be used, but OpenSSH may be built without it supporting a subset of crypto algorithms.
+`libcrypto` from either [LibreSSL](https://www.libressl.org/) or
+[OpenSSL](https://www.openssl.org) may also be used, but OpenSSH may be built
+without it supporting a subset of crypto algorithms.
 
-[zlib](https://www.zlib.net/) is optional; without it transport compression is not supported.
+[zlib](https://www.zlib.net/) is optional; without it transport compression is
+not supported.
 
-FIDO security token support needs [libfido2](https://github.com/Yubico/libfido2) and its dependencies. Also, certain platforms and build-time options may require additional dependencies; see README.platform for details.
+FIDO security token support needs [libfido2](https://github.com/Yubico/libfido2)
+and its dependencies. Also, certain platforms and build-time options may require
+additional dependencies; see README.platform for details.
 
 ### Building a release
 
-Releases include a pre-built copy of the `configure` script and may be built using:
+Releases include a pre-built copy of the `configure` script and may be built
+using:
 
 ```
 tar zxvf openssh-X.YpZ.tar.gz
@@ -46,11 +65,16 @@ cd openssh
 make && make tests
 ```
 
-See the [Build-time Customisation](#build-time-customisation) section below for configure options. If you plan on installing OpenSSH to your system, then you will usually want to specify destination paths.
+See the [Build-time Customisation](#build-time-customisation) section below for
+configure options. If you plan on installing OpenSSH to your system, then you
+will usually want to specify destination paths.
 
 ### Building from git
 
-If building from git, you'll need [autoconf](https://www.gnu.org/software/autoconf/) installed to build the `configure` script. The following commands will check out and build portable OpenSSH from git:
+If building from git, you'll need
+[autoconf](https://www.gnu.org/software/autoconf/) installed to build the
+`configure` script. The following commands will check out and build portable
+OpenSSH from git:
 
 ```
 git clone https://github.com/openssh/openssh-portable # or https://anongit.mindrot.org/openssh.git
@@ -62,9 +86,13 @@ make && make tests
 
 ### Build-time Customisation
 
-There are many build-time customisation options available. All Autoconf destination path flags (e.g. `--prefix`) are supported (and are usually required if you want to install OpenSSH).
+There are many build-time customisation options available. All Autoconf
+destination path flags (e.g. `--prefix`) are supported (and are usually required
+if you want to install OpenSSH).
 
-For a full list of available flags, run `configure --help` but a few of the more frequently-used ones are described below. Some of these flags will require additional libraries and/or headers be installed.
+For a full list of available flags, run `configure --help` but a few of the more
+frequently-used ones are described below. Some of these flags will require
+additional libraries and/or headers be installed.
 
 | Flag                          | Meaning                                                                                                                                                                                         |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -76,8 +104,14 @@ For a full list of available flags, run `configure --help` but a few of the more
 
 ## Development
 
-Portable OpenSSH development is discussed on the [openssh-unix-dev mailing list](https://lists.mindrot.org/mailman/listinfo/openssh-unix-dev) ([archive mirror](https://marc.info/?l=openssh-unix-dev)). Bugs and feature requests are tracked on our [Bugzilla](https://bugzilla.mindrot.org/).
+Portable OpenSSH development is discussed on the
+[openssh-unix-dev mailing list](https://lists.mindrot.org/mailman/listinfo/openssh-unix-dev)
+([archive mirror](https://marc.info/?l=openssh-unix-dev)). Bugs and feature
+requests are tracked on our [Bugzilla](https://bugzilla.mindrot.org/).
 
 ## Reporting bugs
 
-_Non-security_ bugs may be reported to the developers via [Bugzilla](https://bugzilla.mindrot.org/) or via the mailing list above. Security bugs should be reported to [openssh@openssh.com](mailto:openssh.openssh.com).
+_Non-security_ bugs may be reported to the developers via
+[Bugzilla](https://bugzilla.mindrot.org/) or via the mailing list above.
+Security bugs should be reported to
+[openssh@openssh.com](mailto:openssh.openssh.com).
