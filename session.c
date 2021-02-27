@@ -2515,12 +2515,46 @@ void
 session_close(struct ssh *ssh, Session *s)
 {
 	u_int i;
+	int do_xauth;
 
 	verbose("Close session: user %s from %.200s port %d id %d",
 	    s->pw->pw_name,
 	    ssh_remote_ipaddr(ssh),
 	    ssh_remote_port(ssh),
 	    s->self);
+
+
+	do_xauth = s->display != NULL && s->auth_proto != NULL && s->auth_data != NULL;
+	if (do_xauth && options.xauth_location != NULL) {
+		pid_t pid;
+		FILE *f;
+		char cmd[1024];
+		struct passwd * pw = s->pw;
+
+		if (!(pid = fork())) {
+			permanently_set_uid(pw);
+
+			/* Remove authority data from .Xauthority if appropriate. */
+			debug("Running %.500s remove %.100s\n",
+				options.xauth_location, s->auth_display);
+            
+			snprintf(cmd, sizeof cmd, "unset XAUTHORITY && HOME=\"%.200s\" %s -q -",
+                     		s->pw->pw_dir, options.xauth_location);
+            		f = popen(cmd, "w");
+			if (f) {
+				fprintf(f, "remove %s\n", s->auth_display);
+				pclose(f);
+			} else
+				error("Could not run %s\n", cmd);
+			exit(0);
+		} else if (pid > 0) {
+			int status;
+
+			waitpid(pid, &status, 0);
+		}
+	}
+
+
 
 	if (s->ttyfd != -1)
 		session_pty_cleanup(s);
