@@ -3519,7 +3519,7 @@ channel_setup_fwd_listener_tcpip(struct ssh *ssh, int type,
 		}
 
 		set_reuseaddr(sock);
-		if (ai->ai_family == AF_INET6)
+//		if (ai->ai_family == AF_INET6)
 			sock_set_v6only(sock);
 
 		debug("Local forwarding listening on %s port %s.",
