@@ -137,7 +137,7 @@ make clean; make distclean; autoreconf -vfi && export LD_LIBRARY_PATH=/opt/hpnss
 --with-ipaddr-display --with-pie=yes --with-systemd --with-security-key-builtin=yes \
 --with-pam --with-audit=linux --with-sandbox=seccomp_filter --with-libedit --with-4in6 \
 --with-ldns CFLAGS="-I/opt/hpnssl/include" --with-ldflags="-L/opt/hpnssl/lib" && \
-make && sudo make install
+make -j "${CPUS:-1}" && sudo make install
 ```
 
 - `/opt/hpnssl` contains the _latest stable_ 1.1.1 LTS _OpenSSL_ release.
