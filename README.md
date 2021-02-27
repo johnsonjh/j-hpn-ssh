@@ -150,7 +150,7 @@ make -j "${CPUS:-1}" && sudo make install
       and _TCP-Wrappers_ should not be enabled, as they are almost always linked
       to the system _OpenSSL_ library. Linking to multiple versions of _OpenSSL_
       this way is **not** a supported configuration.
-      
+
       - Compilation with OpenSSL 3-alpha is known to work and periodically tested,
         however, care must be taken to avoid OpenSSL version conflicts.
 
