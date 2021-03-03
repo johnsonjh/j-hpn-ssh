@@ -2568,7 +2568,7 @@ subprocess(const char *tag, const char *command,
 				child_set_env(&env, &nenv, "LANG", cp);
 		}
 
-		for (i = 0; i < NSIG; i++)
+		for (i = 1; i < NSIG; i++)
 			ssh_signal(i, SIG_DFL);
 
 		if ((devnull = open(_PATH_DEVNULL, O_RDWR)) == -1) {
