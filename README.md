@@ -34,6 +34,12 @@ select changes from the IBM, Red Hat, and Debian SSH distributions, various
 other patches to keep up to date with upstream _OpenSSH-portable_, and various
 adjustments to **HPN-SSH**'s buffer sizing and congestion control.
 
+## Availability
+
+- [GitHub](https://github.com/johnsonjh/j-hpn-ssh)
+- [SourceHut](https://sr.ht/~trn/j-hpn-ssh/)
+- [NotABug](https://notabug.org/trn/j-hpn-ssh)
+
 ## J-HPN-SSH future plans
 
 Besides staying up-to-date with _OpenSSH-portable_, currently, plans include
