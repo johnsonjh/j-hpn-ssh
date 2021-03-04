@@ -42,7 +42,8 @@ well as the addition of new cryptographic functionality, likely to include new
 post-quantum algorithms, enhanced hashing and key exchange mechanisms, and new
 key systems, such as SHAKE, SHA-3, BLAKE-3, Schnorrkel/Ristretto-Sr25519,
 Intermac, Ristretto255/Curve25519-Dalek, X448-Goldilocks, E-5321, Kyber, SIDH,
-Dilithium, SPHINCS-SHAKE256, SPHINCS+, etc.
+Dilithium, SPHINCS-SHAKE256, SPHINCS+, [CSIDH](https://csidh.isogeny.org/),
+etc.
 
 Experiments that are successful will be made available to the upstream
 **HPN-SSH** project. No GPL or similarly licensed code will be incorporated, and
