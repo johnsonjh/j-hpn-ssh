@@ -12,7 +12,7 @@
 [![DeepSourceActive](https://deepsource.io/gh/johnsonjh/j-hpn-ssh.svg/?label=active+issues)](https://deepsource.io/gh/johnsonjh/j-hpn-ssh/?ref=repository-badge)
 [![DeepSourceResolved](https://deepsource.io/gh/johnsonjh/j-hpn-ssh.svg/?label=resolved+issues)](https://deepsource.io/gh/johnsonjh/j-hpn-ssh/?ref=repository-badge)
 
-## What is **HPN-SSH**?
+## What is HPN-SSH?
 
 **HPN-SSH** is a series of modifications to _OpenSSH_, the predominant
 implementation of the _SSH_ protocol. It was originally developed to address
@@ -26,7 +26,7 @@ bulk data, modifying the AES-CTR cipher to use multiple CPU cores, more detailed
 connection logging, and peak throughput value calculations shown in the _SCP_
 progress bar.
 
-## What is **J-HPN-SSH**?
+## What is J-HPN-SSH?
 
 **J-HPN-SSH** is an experimental development fork of **HPN-SSH**. It is not
 associated in any way with the upstream project. It currently incorporates
@@ -34,7 +34,7 @@ select changes from the IBM, Red Hat, and Debian SSH distributions, various
 other patches to keep up to date with upstream _OpenSSH-portable_, and various
 adjustments to **HPN-SSH**'s buffer sizing and congestion control.
 
-## **J-HPN-SSH** future plans
+## J-HPN-SSH future plans
 
 Besides staying up-to-date with _OpenSSH-portable_, currently, plans include
 additional tuning, including assembly-level optimization of existing code, as
@@ -112,21 +112,21 @@ _SSH_ is capable of, and what the network link has the capacity to do. This gap,
 in most situations, is the direct cause of undersized receive buffers in _SSH_'s
 congestion control mechanism.
 
-## Normal _SSH_ _SCP_ vs. **HPN-SSH** _SCP_ performance
+## Normal SSH SCP vs. (J-)HPN-SSH SCP performance
 
 **HPN-SSH** offers _significantly_ enhanced _SCP_ throughput performance.
 Increasing the size of the _SSH_ channel receive buffers has been shown to
 improve _SCP_ throughput by as much as **1,000%**.
 
-## Possible bug with `buffer_append_space`
+## Possible HPN-SSH bug
 
 If you are experiencing disconnects due to a failure in `buffer_append_space`,
 you should try using `-oHPNBufferSize=16384` to restrict the growth of this
 buffer.
 
-## **J-HPN-SSH**-specific notes
+## J-HPN-SSH-specific notes
 
-### This is the "_standard_" configuration, primarily tested on _Fedora 33_:
+### This is the "_standard_" configuration, primarily tested on _Fedora 33_
 
 ```shell
 make clean; make distclean; export LD_LIBRARY_PATH=/opt/hpnssl/lib && autoreconf -vfi
@@ -178,7 +178,7 @@ make -j "${CPUS:-1}" && sudo make install
 - **_Currently, SELinux support is known to be broken, but should be fixed
   soon._**
 
-## Upstream **HPN-SSH** Future Plans
+## Upstream HPN-SSH Future Plans
 
 - Automatic resumption of failed transfers
 - AES-NI hardware acceleration for the AES-CTR cipher
@@ -187,13 +187,17 @@ make -j "${CPUS:-1}" && sudo make install
 - Pipelined HMAC generation
 - Enhanced distribution packaging
 
-## **HPN-SSH** Original Authors
+## HPN-SSH Original Authors
 
 - Chris Rapier
 - Michael Stevens
 - Benjamin Bennett
 - Mike Tasota
 
-## **HPN-SSH** Upstream Homepage
+## HPN-SSH Upstream Homepage
 
 - <https://www.psc.edu/research/networking/hpn-ssh/>
+
+## OpenSSH Upstream Homepage
+
+- <https://www.openssh.com/>
