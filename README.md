@@ -37,6 +37,7 @@ adjustments to **HPN-SSH**'s buffer sizing and congestion control.
 ## Availability
 
 - [GitHub](https://github.com/johnsonjh/j-hpn-ssh)
+- [GitLab](https://gitlab.com/johnsonjh/j-hpn-ssh)
 - [SourceHut](https://sr.ht/~trn/j-hpn-ssh/)
 - [NotABug](https://notabug.org/trn/j-hpn-ssh)
 
