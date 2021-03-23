@@ -51,48 +51,48 @@ typedef struct Authmethod Authmethod;
 typedef struct KbdintDevice KbdintDevice;
 
 struct Authctxt {
-	sig_atomic_t	 success;
-	int		 authenticated;	/* authenticated and alarms cancelled */
-	int		 postponed;	/* authentication needs another step */
-	int		 valid;		/* user exists and is allowed to login */
-	int		 attempt;
-	int		 failures;
-	int		 server_caused_failure;
-	int		 force_pwchange;
-	char		*user;		/* username sent by the client */
-	char		*service;
-	struct passwd	*pw;		/* set if 'valid' */
-	char		*style;
+    sig_atomic_t	 success;
+    int		 authenticated;	/* authenticated and alarms cancelled */
+    int		 postponed;	/* authentication needs another step */
+    int		 valid;		/* user exists and is allowed to login */
+    int		 attempt;
+    int		 failures;
+    int		 server_caused_failure;
+    int		 force_pwchange;
+    char		*user;		/* username sent by the client */
+    char		*service;
+    struct passwd	*pw;		/* set if 'valid' */
+    char		*style;
 
-	/* Method lists for multiple authentication */
-	char		**auth_methods;	/* modified from server config */
-	u_int		 num_auth_methods;
+    /* Method lists for multiple authentication */
+    char		**auth_methods;	/* modified from server config */
+    u_int		 num_auth_methods;
 
-	/* Authentication method-specific data */
-	void		*methoddata;
-	void		*kbdintctxt;
+    /* Authentication method-specific data */
+    void		*methoddata;
+    void		*kbdintctxt;
 #ifdef BSD_AUTH
-	auth_session_t	*as;
+    auth_session_t	*as;
 #endif
 #ifdef KRB5
-	krb5_context	 krb5_ctx;
-	krb5_ccache	 krb5_fwd_ccache;
-	krb5_principal	 krb5_user;
-	char		*krb5_ticket_file;
-	char		*krb5_ccname;
+    krb5_context	 krb5_ctx;
+    krb5_ccache	 krb5_fwd_ccache;
+    krb5_principal	 krb5_user;
+    char		*krb5_ticket_file;
+    char		*krb5_ccname;
 #endif
-	struct sshbuf	*loginmsg;
+    struct sshbuf	*loginmsg;
 
-	/* Authentication keys already used; these will be refused henceforth */
-	struct sshkey	**prev_keys;
-	u_int		 nprev_keys;
+    /* Authentication keys already used; these will be refused henceforth */
+    struct sshkey	**prev_keys;
+    u_int		 nprev_keys;
 
-	/* Last used key and ancillary information from active auth method */
-	struct sshkey	*auth_method_key;
-	char		*auth_method_info;
+    /* Last used key and ancillary information from active auth method */
+    struct sshkey	*auth_method_key;
+    char		*auth_method_info;
 
-	/* Information exposed to session */
-	struct sshbuf	*session_info;	/* Auth info for environment */
+    /* Information exposed to session */
+    struct sshbuf	*session_info;	/* Auth info for environment */
 };
 
 /*
@@ -103,9 +103,9 @@ struct Authctxt {
  */
 
 struct Authmethod {
-	char	*name;
-	int	(*userauth)(struct ssh *);
-	int	*enabled;
+    char	*name;
+    int	(*userauth)(struct ssh *);
+    int	*enabled;
 };
 
 /*
@@ -117,12 +117,12 @@ struct Authmethod {
  */
 struct KbdintDevice
 {
-	const char *name;
-	void*	(*init_ctx)(Authctxt*);
-	int	(*query)(void *ctx, char **name, char **infotxt,
-		    u_int *numprompts, char ***prompts, u_int **echo_on);
-	int	(*respond)(void *ctx, u_int numresp, char **responses);
-	void	(*free_ctx)(void *ctx);
+    const char *name;
+    void*	(*init_ctx)(Authctxt*);
+    int	(*query)(void *ctx, char **name, char **infotxt,
+                 u_int *numprompts, char ***prompts, u_int **echo_on);
+    int	(*respond)(void *ctx, u_int numresp, char **responses);
+    void	(*free_ctx)(void *ctx);
 };
 
 int
@@ -131,9 +131,9 @@ auth_rhosts2(struct passwd *, const char *, const char *, const char *);
 int      auth_password(struct ssh *, const char *);
 
 int	 hostbased_key_allowed(struct ssh *, struct passwd *,
-	    const char *, char *, struct sshkey *);
+                           const char *, char *, struct sshkey *);
 int	 user_key_allowed(struct ssh *, struct passwd *, struct sshkey *, int,
-    struct sshauthopt **);
+                      struct sshauthopt **);
 int	 auth2_key_already_used(Authctxt *, const struct sshkey *);
 
 /*
@@ -143,8 +143,8 @@ int	 auth2_key_already_used(Authctxt *, const struct sshkey *);
 void	 auth2_authctxt_reset_info(Authctxt *);
 void	 auth2_record_key(Authctxt *, int, const struct sshkey *);
 void	 auth2_record_info(Authctxt *authctxt, const char *, ...)
-	    __attribute__((__format__ (printf, 2, 3)))
-	    __attribute__((__nonnull__ (2)));
+__attribute__((__format__ (printf, 2, 3)))
+__attribute__((__nonnull__ (2)));
 void	 auth2_update_session_info(Authctxt *, const char *, const char *);
 
 #ifdef KRB5
@@ -198,7 +198,7 @@ const char	*auth_get_canonical_hostname(struct ssh *, int);
 
 HostStatus
 check_key_in_hostfiles(struct passwd *, struct sshkey *, const char *,
-    const char *, const char *);
+                       const char *, const char *);
 
 /* hostkey handling */
 struct sshkey	*get_hostkey_by_index(int);
@@ -207,19 +207,19 @@ struct sshkey	*get_hostkey_public_by_type(int, int, int, struct ssh *);
 struct sshkey	*get_hostkey_private_by_type(int, int, int, struct ssh *);
 int	 get_hostkey_index(struct sshkey *, int, struct ssh *);
 int	 sshd_hostkey_sign(struct ssh *, struct sshkey *, struct sshkey *,
-    u_char **, size_t *, const u_char *, size_t, const char *);
+                       u_char **, size_t *, const u_char *, size_t, const char *);
 
 /* Key / cert options linkage to auth layer */
 const struct sshauthopt *auth_options(struct ssh *);
 int	 auth_activate_options(struct ssh *, struct sshauthopt *);
 void	 auth_restrict_session(struct ssh *);
 int	 auth_authorise_keyopts(struct ssh *, struct passwd *pw,
-    struct sshauthopt *, int, const char *);
+                            struct sshauthopt *, int, const char *);
 void	 auth_log_authopts(const char *, const struct sshauthopt *, int);
 
 /* debug messages during authentication */
 void	 auth_debug_add(const char *fmt,...)
-    __attribute__((format(printf, 1, 2)));
+__attribute__((format(printf, 1, 2)));
 void	 auth_debug_send(struct ssh *);
 void	 auth_debug_reset(void);
 
@@ -229,7 +229,7 @@ struct passwd *fakepw(void);
 #define	SSH_SUBPROCESS_STDOUT_CAPTURE  (1<<1)  /* Redirect stdout */
 #define	SSH_SUBPROCESS_STDERR_DISCARD  (1<<2)  /* Discard stderr */
 pid_t	subprocess(const char *, struct passwd *,
-    const char *, int, char **, FILE **, u_int flags);
+                   const char *, int, char **, FILE **, u_int flags);
 
 int	 sys_auth_passwd(struct ssh *, const char *);
 
